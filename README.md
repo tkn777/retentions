@@ -2,7 +2,7 @@
 
 A minimal cross-platform CLI tool for file retention management.  
 
-It keeps only the most recent or representative files according to simple time-based rules — and removes the rest.
+It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
 
 ---
 
