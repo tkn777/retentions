@@ -14,8 +14,8 @@ It groups files into time **buckets** (hours, days, weeks, months, years) and ke
 
 Everything outside your defined retention scope is deleted (unless `--dry-run` or `--list-only` is used).
 
-⚠️ This software deletes files. Use at your own risk.  
-The author assumes no responsibility for data loss or damage.
+⚠️ **This software deletes files. Use at your own risk.**  
+**The author assumes no responsibility for data loss or damage.**
 
 ---
 
