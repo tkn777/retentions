@@ -206,9 +206,10 @@ Copyright © 2025 Thomas Kuhlmann
 | Code | Meaning |
 |------|----------|
 | 0 | Execution successful |
-| 1 | Invalid arguments |
-| 2 | I/O or filesystem error |
+| 1 | I/O or filesystem error |
+| 2 | Invalid arguments |
 | 3 | Pattern matched no files |
+| 9 | Unexpected error |
 
 ---
 

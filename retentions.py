@@ -65,6 +65,10 @@ def parse_arguments() -> argparse.Namespace:
     return args
 
 
+class NoFilesFoundError(Exception):
+    pass
+
+
 def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
     base = Path(base_path)
     matches: list[Path] = []
@@ -76,15 +80,19 @@ def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
         raise NotADirectoryError(f"path is not a directory: {base}")
 
     # pattern is a regex
-    if re.search(r"[\\\[\]\(\)\{\}\+\?\|]", pattern):
+    if re.search(r"[\^\$\\\[\]\(\)\{\}\+\?\|]", pattern):
         used_regex = True
         pattern_compiled = re.compile(pattern)
         for file in base.iterdir():
             if file.is_file() and pattern_compiled.match(file.name):
                 matches.append(file)
+
     # pattern is a glob
     else:
         matches = [f for f in base.glob("*") if f.is_file()]
+
+    if not matches:
+        raise NoFilesFoundError(f"no files found in '{base}' using pattern as {'regex' if used_regex else 'glob'} '{pattern}'")
 
     if verbose:
         print(f"Found files: {[p.name for p in matches]} using {'regex' if used_regex else 'glob'} pattern '{pattern}'")
@@ -93,8 +101,18 @@ def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
 
 
 def main() -> None:
-    arguments = parse_arguments()
-    read_filelist(arguments.path, arguments.file_pattern, arguments.verbose)
+    try:
+        arguments = parse_arguments()
+        read_filelist(arguments.path, arguments.file_pattern, arguments.verbose)
+    except (FileNotFoundError, NotADirectoryError) as e:
+        print(f"error: {e}")
+        exit(1)
+    except NoFilesFoundError as e:
+        print(f"error: {e}")
+        exit(3)
+    except Exception as e:
+        print(f"unexpected error: {e}")
+        exit(9)
 
 
 if __name__ == "__main__":
