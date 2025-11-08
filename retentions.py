@@ -147,7 +147,7 @@ def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: Def
 
 def delete_file(arguments: argparse.Namespace, file: Path):
     if arguments.list_only:
-        print(file.absolute)
+        print(file.absolute())
     else:
         if arguments.dry_run:
             print(f"DRY-RUN DELETE: {file.name}")
