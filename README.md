@@ -1,3 +1,9 @@
+<h1 align="center" style="color:red;">⚠️ WORK IN PROGRESS ⚠️</h1>
+
+> **Note:** This project is under active development.  
+
+---
+
 # retentions
 
 A minimal cross-platform CLI tool for file retention management.  
@@ -53,18 +59,11 @@ This installs:
 
 For non-Debian systems or manual setups:
 
+Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually, e.g.:
+
 ```bash
 tar xzf retentions-0.1.0.tar.gz
 sudo cp retentions.py /usr/local/bin/retentions
-sudo chmod 755 /usr/local/bin/retentions
-```
-
-### ⚡ Option 3 – Direct (current version via wget)
-
-For quick installs or testing:
-
-```bash
-sudo wget -O /usr/local/bin/retentions https://raw.githubusercontent.com/tkn777/retentions/main/retentions.py
 sudo chmod 755 /usr/local/bin/retentions
 ```
 
@@ -85,6 +84,26 @@ No dependencies beyond Python 3.
 ```bash
 python3 retentions.py [path] [file_pattern] [options]
 ```
+
+---
+
+## 🔧 Options
+
+| Option | Description |
+|--------|--------------|
+| `path` | Base directory to scan |
+| `file_pattern` | Regex or glob pattern for matching files (use quotes to prevent shell expansion) |
+| `-H, --hours <int>` | Keep one file per hour from the last N hours |
+| `-d, --days <int>` | Keep one file per day from the last N days |
+| `-w, --weeks <int>` | Keep one file per week from the last N weeks |
+| `-m, --months <int>` | Keep one file per month from the last N months |
+| `-y, --years <int>` | Keep one file per year from the last N years |
+| `-l, --last <int>` | Always keep the N most recently modified files |
+| `--dry-run` | Show planned actions but do not delete any files |
+| `--list-only` | Output only file paths that would be deleted (incompatible with --verbose) |
+| `--verbose` | Show detailed output of KEEP/DELETE decisions and time buckets |
+
+---
 
 ### Example
 
@@ -113,21 +132,28 @@ python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose
 
 ---
 
-## 🔧 Options
+### ⚠️ Important – Quoting File Patterns
 
-| Option | Description |
-|--------|--------------|
-| `path` | Base directory to scan |
-| `file_pattern` | Regex or glob pattern for matching files |
-| `-h, --hours <int>` | Keep all files modified within the last *N* hours |
-| `-d, --days <int>` | Keep all files modified within the last *N* days |
-| `-w, --weeks <int>` | Keep one file per week (last *N* weeks) |
-| `-m, --months <int>` | Keep one file per month (last *N* months) |
-| `-y, --years <int>` | Keep one file per year (last *N* years) |
-| `-l, --last <int>` | Always keep the *N* most recent files |
-| `--dry-run` | Show actions without deleting anything |
-| `--list-only` | Output only file paths that would be deleted (incompatible with `--verbose`) |
-| `--verbose` | Detailed output (KEEP/DELETE + reason) |
+Always **quote your file patterns** when calling `retentions`.
+
+If you omit the quotes, your shell (e.g. Bash, Zsh, PowerShell) will expand the pattern **before** it reaches the program,  
+resulting in unexpected arguments or errors.
+
+#### ✅ Correct
+```bash
+retentions /data/backups '*.tar.gz'
+retentions /data/logs 'log-*.txt'
+retentions /data/temp '.*\\.bak'
+```
+
+#### ❌ Incorrect
+```bash
+retentions /data/backups *.tar.gz
+```
+(the shell expands *.tar.gz before retentions runs)
+
+retentions itself handles pattern matching internally using glob or regex,
+so quoting ensures the pattern is passed as intended.
 
 ---
 
@@ -137,8 +163,7 @@ python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose
 2. **Sort** them by modification time (newest first).  
 3. **Retain**:
    - Last `N` files (`--last`)
-   - Files within the recent `hours` / `days`
-   - Newest file per `week` / `month` / `year`
+   - Newest file per `hour` / `day` / `week` / `month` / `year`
 4. **Delete** everything else.  
 5. If `--dry-run` is enabled, print the planned actions instead of executing them.
 
@@ -149,7 +174,7 @@ python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose
 - **KISS** – no configuration files, no hidden behavior.  
 - **Deterministic** – same input, same output.  
 - **Safe by intention** – dry-run and list-only modes available.  
-- **Cross-platform** – works anywhere Python runs.  
+- **Cross-platform** – works anywhere Python 3 runs.  
 - **Plain ASCII** – no colors, no locale dependencies.
 
 ---
@@ -157,7 +182,7 @@ python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose
 ## 🪶 License
 
 MIT License  
-Copyright © 2025
+Copyright © 2025 Thomas Kuhlmann
 
 ---
 

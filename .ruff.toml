@@ -1,0 +1,10 @@
+# Maximale Zeilenlänge
+line-length = 160
+
+[format]
+quote-style = "double"
+indent-style = "space"
+
+[lint]
+select = ["E", "F", "W", "I"]
+fixable = ["ALL"]
