@@ -139,9 +139,9 @@ def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: Def
         if first_bucket_file in to_keep:  # Already kept by previous mode
             effective_count += 1
         else:
-            to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
             if verbose:
                 print(f"Keeping file '{first_bucket_file.name}': {mode} ({current_count - (effective_count - mode_count) + 1}/{mode_count})")
+            to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
         current_count += 1
 
 
@@ -172,11 +172,12 @@ def main() -> None:
 
         # Keep last N files
         if arguments.last:
+            last_files = existing_files[: arguments.last]
             if arguments.verbose:
-                for index, file in enumerate(existing_files[: arguments.last], start=1):
-                    if(file not in to_keep):
+                for index, file in enumerate(last_files, start=1):
+                    if file not in to_keep:
                         print(f"Keeping file '{file.name}': last {index}/{arguments.last}")
-            to_keep.update(existing_files[: arguments.last])
+            to_keep.update(last_files)
 
         # Delete files not to keep
         for file in existing_files:
