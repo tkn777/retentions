@@ -1,5 +1,6 @@
 import argparse
 import re
+import sys
 from pathlib import Path
 
 VERSION: str = "1.0.0"
@@ -70,14 +71,14 @@ class NoFilesFoundError(Exception):
 
 
 def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
-    base = Path(base_path)
+    base: Path = Path(base_path)
     matches: list[Path] = []
     used_regex: bool = False
 
     if not base.exists():
-        raise FileNotFoundError(f"path not found: {base}")
+        raise FileNotFoundError(f"Path not found: {base}")
     if not base.is_dir():
-        raise NotADirectoryError(f"path is not a directory: {base}")
+        raise NotADirectoryError(f"Path is not a directory: {base}")
 
     # pattern is a regex
     if re.search(r"[\^\$\\\[\]\(\)\{\}\+\?\|]", pattern):
@@ -92,7 +93,7 @@ def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
         matches = [f for f in base.glob("*") if f.is_file()]
 
     if not matches:
-        raise NoFilesFoundError(f"no files found in '{base}' using pattern as {'regex' if used_regex else 'glob'} '{pattern}'")
+        raise NoFilesFoundError(f"No files found in '{base}' using {'regex' if used_regex else 'glob'} pattern '{pattern}'")
 
     if verbose:
         print(f"Found files: {[p.name for p in matches]} using {'regex' if used_regex else 'glob'} pattern '{pattern}'")
@@ -104,14 +105,14 @@ def main() -> None:
     try:
         arguments = parse_arguments()
         read_filelist(arguments.path, arguments.file_pattern, arguments.verbose)
-    except (FileNotFoundError, NotADirectoryError) as e:
-        print(f"error: {e}")
+    except IOError as e:
+        print(f"Error: {e}", file=sys.stderr)
         exit(1)
     except NoFilesFoundError as e:
-        print(f"error: {e}")
+        print(f"Error: {e}", file=sys.stderr)
         exit(3)
     except Exception as e:
-        print(f"unexpected error: {e}")
+        print(f"Unexpected error: {e}", file=sys.stderr)
         exit(9)
 
 
