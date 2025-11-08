@@ -1,6 +1,8 @@
 import argparse
+import re
+from pathlib import Path
 
-VERSION = "1.0.0"
+VERSION: str = "1.0.0"
 
 
 def positive_int(value: str) -> int:
@@ -18,7 +20,7 @@ def parse_arguments() -> argparse.Namespace:
         prog="retentions",
         usage=("retentions path file_pattern [options]\n\nExample:\n  retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6\n \n"),
         description=("A minimal cross-platform CLI tool for file retention management"),
-        epilog="Use with caution — this tool deletes files unless --dry-run or --list-only is set.",
+        epilog="Use with caution!! This tool deletes files unless --dry-run or --list-only is set.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
@@ -55,7 +57,7 @@ def parse_arguments() -> argparse.Namespace:
     if not any([args.hours, args.days, args.weeks, args.months, args.years, args.last]):
         args.last = 10
         if args.verbose:
-            print("No retention options specified. Defaulting to --last 10")
+            print("No retention options specified -> Defaulting to --last 10")
 
     if args.verbose:
         print(f"Using arguments: {vars(args)}")
@@ -63,8 +65,36 @@ def parse_arguments() -> argparse.Namespace:
     return args
 
 
+def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
+    base = Path(base_path)
+    matches: list[Path] = []
+    used_regex: bool = False
+
+    if not base.exists():
+        raise FileNotFoundError(f"path not found: {base}")
+    if not base.is_dir():
+        raise NotADirectoryError(f"path is not a directory: {base}")
+
+    # pattern is a regex
+    if re.search(r"[\\\[\]\(\)\{\}\+\?\|]", pattern):
+        used_regex = True
+        pattern_compiled = re.compile(pattern)
+        for file in base.iterdir():
+            if file.is_file() and pattern_compiled.match(file.name):
+                matches.append(file)
+    # pattern is a glob
+    else:
+        matches = [f for f in base.glob("*") if f.is_file()]
+
+    if verbose:
+        print(f"Found files: {[p.name for p in matches]} using {'regex' if used_regex else 'glob'} pattern '{pattern}'")
+
+    return matches
+
+
 def main() -> None:
-    parse_arguments()
+    arguments = parse_arguments()
+    read_filelist(arguments.path, arguments.file_pattern, arguments.verbose)
 
 
 if __name__ == "__main__":
