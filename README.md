@@ -73,11 +73,11 @@ sudo cp retentions.py /usr/local/bin/retentions
 sudo chmod 755 /usr/local/bin/retentions
 ```
 
-#### For windows (example):
+#### For windows with powershell (example):
 
 ```powershell
 tar xzf retentions-1.0.0.tar.gz
-copy retentions.py %HOME%/Scripts
+cp retentions.py "$env:USERPROFILE\Scripts"
 ```
 
 To verify installation:
