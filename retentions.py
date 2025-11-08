@@ -102,7 +102,7 @@ def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
     matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
 
     if verbose:
-        print(f"Found files: {[p.name for p in matches]} using {'regex' if used_regex else 'glob'} pattern '{pattern}'")
+        print(f"Found files using {'regex' if used_regex else 'glob'} pattern '{pattern}': {[p.name for p in matches]}")
 
     return matches
 
@@ -172,9 +172,11 @@ def main() -> None:
 
         # Keep last N files
         if arguments.last:
-            to_keep.update(existing_files[: arguments.last])
             if arguments.verbose:
-                print(f"Keeping last {arguments.last} files: {[f.name for f in existing_files[: arguments.last]]}")
+                for index, file in enumerate(existing_files[: arguments.last], start=1):
+                    if(file not in to_keep):
+                        print(f"Keeping file '{file.name}': last {index}/{arguments.last}")
+            to_keep.update(existing_files[: arguments.last])
 
         # Delete files not to keep
         for file in existing_files:
