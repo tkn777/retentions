@@ -1,7 +1,10 @@
 import argparse
 import re
 import sys
+from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
+from typing import DefaultDict
 
 VERSION: str = "1.0.0"
 
@@ -80,8 +83,8 @@ def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
     if not base.is_dir():
         raise NotADirectoryError(f"Path is not a directory: {base}")
 
-    # pattern is a regex
-    if re.search(r"[\^\$\\\[\]\(\)\{\}\+\?\|]", pattern):
+    # pattern is a regex and is not a valid glob pattern
+    if re.search(r"[\^\$\\\[\]\(\)\{\}\+\?\|]", pattern) and not re.fullmatch(r"[\w\*\.\?\[\]\-\\]+", pattern):
         used_regex = True
         pattern_compiled = re.compile(pattern)
         for file in base.iterdir():
@@ -90,11 +93,12 @@ def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
 
     # pattern is a glob
     else:
-        matches = [f for f in base.glob("*") if f.is_file()]
+        matches = [f for f in base.glob(pattern) if f.is_file()]
 
     if not matches:
         raise NoFilesFoundError(f"No files found in '{base}' using {'regex' if used_regex else 'glob'} pattern '{pattern}'")
 
+    # sort by modification time, newest first
     matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
 
     if verbose:
@@ -103,10 +107,80 @@ def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
     return matches
 
 
+def bucket_files(files: list[Path], mode: str) -> DefaultDict[str, list[Path]]:
+    buckets: DefaultDict[str, list[Path]] = defaultdict(list)
+    for f in files:
+        ts = datetime.fromtimestamp(f.stat().st_mtime)
+        if mode == "hours":
+            key = ts.strftime("%Y-%m-%d-%H")
+        elif mode == "days":
+            key = ts.strftime("%Y-%m-%d")
+        elif mode == "weeks":
+            year, week, _ = ts.isocalendar()
+            key = f"{year}-W{week:02d}"
+        elif mode == "months":
+            key = ts.strftime("%Y-%m")
+        elif mode == "years":
+            key = str(ts.year)
+        else:
+            raise ValueError(f"invalid bucket mode: {mode}")
+        buckets[key].append(f)
+    return buckets
+
+
+def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: DefaultDict[str, list[Path]], verbose: bool) -> None:
+    sorted_keys = sorted(buckets.keys(), reverse=True)
+    effective_count = mode_count
+    current_count = 0
+    while current_count < effective_count:
+        if current_count >= len(sorted_keys):
+            break  # No more buckets
+        first_bucket_file = buckets[sorted_keys[current_count]][0]
+        if first_bucket_file in to_keep:  # Already kept by previous mode
+            effective_count += 1
+        else:
+            to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
+            if verbose:
+                print(f"Keeping file '{first_bucket_file.name}': {mode} ({current_count - (effective_count - mode_count) + 1}/{mode_count})")
+        current_count += 1
+
+
+def delete_file(arguments: argparse.Namespace, file: Path):
+    if arguments.list_only:
+        print(file.absolute)
+    else:
+        if arguments.dry_run:
+            print(f"DRY-RUN DELETE: {file.name}")
+        else:
+            file.unlink()
+            if arguments.verbose:
+                print(f"DELETED: {file.name}")
+
+
 def main() -> None:
     try:
         arguments = parse_arguments()
-        read_filelist(arguments.path, arguments.file_pattern, arguments.verbose)
+        existing_files: list[Path] = read_filelist(arguments.path, arguments.file_pattern, arguments.verbose)
+        to_keep: set[Path] = set()
+
+        # Retention by time buckets
+        for mode in ["hours", "days", "weeks", "months", "years"]:
+            mode_count = getattr(arguments, mode)
+            if mode_count:
+                buckets = bucket_files(existing_files, mode)
+                process_buckets(to_keep, mode, mode_count, buckets, arguments.verbose)
+
+        # Keep last N files
+        if arguments.last:
+            to_keep.update(existing_files[: arguments.last])
+            if arguments.verbose:
+                print(f"Keeping last {arguments.last} files: {[f.name for f in existing_files[: arguments.last]]}")
+
+        # Delete files not to keep
+        for file in existing_files:
+            if file not in to_keep:
+                delete_file(arguments, file)
+
     except IOError as e:
         print(f"Error: {e}", file=sys.stderr)
         exit(1)
