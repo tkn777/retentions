@@ -35,11 +35,11 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("-l", "--last", type=positive_int, metavar="N", help="Always keep the N most recently modified files")
 
     # mode flags
-    parser.add_argument("--dry-run", action="store_true", help="Show planned actions but do not delete any files")
-    parser.add_argument("--list-only", action="store_true", help="Output only file paths that would be deleted (incompatible with --verbose)")
-    parser.add_argument("--verbose", action="store_true", help="Show detailed output of KEEP/DELETE decisions and time buckets")
+    parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
+    parser.add_argument("-L", "--list-only", action="store_true", help="Output only file paths that would be deleted (incompatible with --verbose)")
+    parser.add_argument("-V", "--verbose", action="store_true", help="Show detailed output of KEEP/DELETE decisions and time buckets")
 
-    parser.add_argument("--version", action="version", version=f"%(prog)s {version}")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
 
     args = parser.parse_args()
 
@@ -55,14 +55,16 @@ def parse_arguments() -> argparse.Namespace:
     if not any([args.hours, args.days, args.weeks, args.months, args.years, args.last]):
         args.last = 10
         if args.verbose:
-            print("[info] No retention options specified. Defaulting to --last 10")
+            print("No retention options specified. Defaulting to --last 10")
+
+    if args.verbose:
+        print(f"Using arguments: {vars(args)}")
 
     return args
 
 
 def main() -> None:
-    arguments = parse_arguments()
-    print(arguments)
+    parse_arguments()
 
 
 if __name__ == "__main__":

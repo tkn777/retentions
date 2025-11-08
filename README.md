@@ -85,7 +85,7 @@ No dependencies beyond Python 3.
 python3 retentions.py [path] [file_pattern] [options]
 ```
 
-*Depending on your installation type, you may just call `retentions` instead of `python3 retentions.py` .*
+> *Depending on your installation type, you may just call `retentions` instead of `python3 retentions.py` .*
 
 ---
 
@@ -101,9 +101,9 @@ python3 retentions.py [path] [file_pattern] [options]
 | `-m, --months <int>` | Keep one file per month from the last N months |
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
-| `--dry-run` | Show planned actions but do not delete any files |
-| `--list-only` | Output only file paths that would be deleted (incompatible with --verbose) |
-| `--verbose` | Show detailed output of KEEP/DELETE decisions and time buckets |
+| `-X, --dry-run` | Show planned actions but do not delete any files |
+| `-L, --list-only` | Output only file paths that would be deleted (incompatible with --verbose) |
+| `-V, --verbose` | Show detailed output of KEEP/DELETE decisions and time buckets |
 
 ---
 
