@@ -65,7 +65,7 @@ For non-Debian systems or manual setups:
 
 Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually
 
-#### For linux:
+#### For linux (example):
 
 ```bash
 tar xzf retentions-1.0.0.tar.gz
