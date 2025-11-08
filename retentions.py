@@ -95,6 +95,8 @@ def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
     if not matches:
         raise NoFilesFoundError(f"No files found in '{base}' using {'regex' if used_regex else 'glob'} pattern '{pattern}'")
 
+    matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+
     if verbose:
         print(f"Found files: {[p.name for p in matches]} using {'regex' if used_regex else 'glob'} pattern '{pattern}'")
 
