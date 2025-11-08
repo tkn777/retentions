@@ -59,7 +59,7 @@ This installs:
 
 For non-Debian systems or manual setups:
 
-Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually, e.g.:
+Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually, e.g. for linux:
 
 ```bash
 tar xzf retentions-0.1.0.tar.gz
@@ -85,11 +85,13 @@ No dependencies beyond Python 3.
 python3 retentions.py [path] [file_pattern] [options]
 ```
 
+*Depending on your installation type, you may just call `retentions` instead of `python3 retentions.py` .*
+
 ---
 
-## 🔧 Options
+## 🔧 Arguments
 
-| Option | Description |
+| Argument | Description |
 |--------|--------------|
 | `path` | Base directory to scan |
 | `file_pattern` | Regex or glob pattern for matching files (use quotes to prevent shell expansion) |
@@ -141,14 +143,14 @@ resulting in unexpected arguments or errors.
 
 #### ✅ Correct
 ```bash
-retentions /data/backups '*.tar.gz'
-retentions /data/logs 'log-*.txt'
-retentions /data/temp '.*\\.bak'
+python3 retentions.py /data/backups '*.tar.gz'
+python3 retentions.py /data/logs 'log-*.txt'
+python3 retentions.py /data/temp '.*\\.bak'
 ```
 
 #### ❌ Incorrect
 ```bash
-retentions /data/backups *.tar.gz
+python3 retentions.py /data/backups *.tar.gz
 ```
 (the shell expands *.tar.gz before retentions runs)
 
