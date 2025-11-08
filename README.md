@@ -29,12 +29,16 @@ Everything outside your defined retention scope is deleted (unless `--dry-run` o
 
 - Pure **Python 3**, no external dependencies.  
 - Runs on **Linux, macOS, and Windows**.  
-- Keeps the **last N files** (`--last`) regardless of age.  
 - Supports **hourly, daily, weekly, monthly, and yearly** retention buckets.  
+- Supports **keeping the last N files** (`--last`) regardless of age.  
 - Supports **regex or glob** pattern matching.  
 - Safe modes:  
   - `--dry-run` → simulate actions  
   - `--list-only` → output only files that would be deleted  
+- Usage:
+  - `--help` (also described below in this document)
+- Version:
+  - `--version`
 - Clean, deterministic output — ASCII only, no colors, no locales.
 
 ---
@@ -59,12 +63,21 @@ This installs:
 
 For non-Debian systems or manual setups:
 
-Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually, e.g. for linux:
+Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually
+
+#### For linux:
 
 ```bash
-tar xzf retentions-0.1.0.tar.gz
+tar xzf retentions-1.0.0.tar.gz
 sudo cp retentions.py /usr/local/bin/retentions
 sudo chmod 755 /usr/local/bin/retentions
+```
+
+#### For windows (example):
+
+```powershell
+tar xzf retentions-1.0.0.tar.gz
+copy retentions.py %HOME%/Scripts
 ```
 
 To verify installation:
