@@ -183,13 +183,13 @@ def main() -> None:
 
     except IOError as e:
         print(f"Error: {e}", file=sys.stderr)
-        exit(1)
+        sys.exit(1)
     except NoFilesFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
-        exit(3)
+        sys.exit(3)
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
-        exit(9)
+        sys.exit(9)
 
 
 if __name__ == "__main__":
