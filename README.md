@@ -1,9 +1,3 @@
-<h1 align="center" style="color:red;">⚠️ WORK IN PROGRESS ⚠️</h1>
-
-> **Note:** This project is under active development.  
-
----
-
 # retentions
 
 A minimal cross-platform CLI tool for file retention management.  
