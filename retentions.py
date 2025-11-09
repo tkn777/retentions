@@ -14,9 +14,9 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import DefaultDict
+from typing import DefaultDict, NoReturn
 
-VERSION: str = "dev-1.0.0"
+VERSION: str = "dev-0.3.0"
 
 
 def positive_int(value: str) -> int:
@@ -29,10 +29,17 @@ def positive_int(value: str) -> int:
     return ivalue
 
 
+class CleanArgumentParser(argparse.ArgumentParser):
+    # Adds an empty line between usage and error message
+    def error(self, message: str) -> NoReturn:
+        self.print_usage(sys.stderr)
+        self.exit(2, f"\nError: {message}\n")
+
+
 def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
+    parser = CleanArgumentParser(
         prog="retentions",
-        usage=("retentions path file_pattern [options]\n\nExample:\n  retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6\n \n"),
+        usage=("retentions path file_pattern [options]\n\nExample:\n  retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6\n"),
         description=("A minimal cross-platform CLI tool for file retention management"),
         epilog="Use with caution!! This tool deletes files unless --dry-run or --list-only is set.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
