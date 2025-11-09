@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# deploy.sh - build retentions tar.gz, .deb, and .rpm (via alien)
-# Author: Thomas K. (tkn777)
-# License: MIT
 
 set -euo pipefail
 

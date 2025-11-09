@@ -1,6 +1,6 @@
 [project]
 name = "retentions"
-version = "0.2.0"
+dynamic = ["version"]
 description = "A minimal cross-platform CLI tool for file retention management"
 authors = [{ name = "Thomas Kuhlmann", email = "mail@thomas-kuhlmann.de" }]
 readme = "README.md"
