@@ -101,7 +101,7 @@ python3 retentions.py [path] [file_pattern] [options]
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
 | `-X, --dry-run` | Show planned actions but do not delete any files |
-| `-L, --list-only` | Output only file paths that would be deleted (incompatible with --verbose) |
+| `-L, --list-only <separator>` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
 | `-V, --verbose` | Show detailed output of KEEP/DELETE decisions and time buckets |
 
 ---
@@ -122,7 +122,7 @@ python3 retentions.py /data/backups '*.tar.gz' -d 10 -w 3 -m 6 --dry-run
 ### List-only mode (for piping into other tools)
 
 ```bash
-python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only | xargs rm
+python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\0' | xargs -0 rm
 ```
 
 ### Verbose output
