@@ -6,7 +6,7 @@ It keeps only the most recent or representative files according to simple time-b
 
 ---
 
-## 🧩 Overview
+## 🌐 Overview
 
 `retentions` is a single-file Python script that applies retention logic to a directory of files. 
 
@@ -22,7 +22,7 @@ Everything outside your defined retention scope is deleted (unless `--dry-run` o
 ## ⚙️ Features
 
 - Pure **Python 3**, no external dependencies.  
-- Runs on **Linux, macOS, and Windows**.  
+- Runs on **Linux, macOS, and Windows** (and everywhere else, where python 3 runs).  
 - Supports **hourly, daily, weekly, monthly, and yearly** retention buckets.  
 - Supports **keeping the last N files** (`--last`) regardless of age.  
 - Supports **regex or glob** pattern matching.  
@@ -33,7 +33,7 @@ Everything outside your defined retention scope is deleted (unless `--dry-run` o
   - `--help` (also described below in this document)
 - Version:
   - `--version`
-- Clean, deterministic output — ASCII only, no colors, no locales.
+- Clean, deterministic output - ASCII only, no colors, no locales.
 
 ---
 
@@ -53,7 +53,7 @@ This installs:
 - `/usr/bin/retentions`
 - documentation in `/usr/share/doc/retentions/`
 
-### 🧩 Option 2 – Redhat (.rpm)
+### 📦 Option 2 – Redhat (.rpm)
 
 Download the latest `.rpm` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
 
@@ -77,7 +77,7 @@ It includes
 - a macos variant with sheban: `macos/retentions`
 - and all the docs: `docs`
 
-### To verify installation:
+### 🔍 To verify installation:
 
 ```bash
 retentions --help
@@ -118,7 +118,7 @@ python3 retentions.py [path] [file_pattern] [options]
 
 ---
 
-### Examples
+### 🧾 Examples
 
 ```bash
 # Keep last 7 days, 4 weeks, 6 months
