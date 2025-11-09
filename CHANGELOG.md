@@ -1,5 +1,6 @@
 ### 0.3.0 - 09.11.2025
 - Added optimized verbose output from 0.2.0 also to last logic
+- Extract config to pyproject.toml
 
 ### 0.2.0 - 09.11.2025
 - Added `--regex` option to explicit define type of pattern (**breaking change**)
