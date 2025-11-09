@@ -18,10 +18,10 @@ mkdir -p "$PKG_DIR/macos" "$PKG_DIR/linux" "$PKG_DIR/docs"
 mkdir -p "$DEB_DIR/usr/bin" "$DEB_DIR/usr/share/doc/${APP}"
 
 # ---------------------------------------------------------------------------
-# Patch retentions.py VERSION
+# Patch retentions.py VERSION (supports type hints)
 # ---------------------------------------------------------------------------
 echo "==> Injecting version into retentions.py..."
-sed -i.bak -E "s/^(VERSION\s*=\s*\")[^\"]*(\")/\1${VERSION}\2/" retentions.py
+sed -i.bak -E "s/^(VERSION\s*(:\s*str)?\s*=\s*\")[^\"]*(\")/\1${VERSION}\3/" retentions.py
 
 # ---------------------------------------------------------------------------
 # macOS variant (#!/usr/bin/env python3)
@@ -42,6 +42,11 @@ echo "==> Creating Linux variant..."
     cat retentions.py
 } > "${PKG_DIR}/linux/${APP}"
 chmod 755 "${PKG_DIR}/linux/${APP}"
+
+# ---------------------------------------------------------------------------
+# Common variant
+# ---------------------------------------------------------------------------
+cp retentions.py "${PKG_DIR}/${APP}.py"
 
 # ---------------------------------------------------------------------------
 # Documentation
