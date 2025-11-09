@@ -53,7 +53,19 @@ This installs:
 - `/usr/bin/retentions`
 - documentation in `/usr/share/doc/retentions/`
 
-### 🗜️ Option 2 – Universal (tar.gz)
+### 🧩 Option 2 – Redhat (.rpm)
+
+Download the latest `.rpm` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
+
+```bash
+sudo dnf install retentions-x.y.z-n.noarch.rpm # or with yum
+```
+
+This installs:
+- `/usr/bin/retentions`
+- documentation in `/usr/share/doc/retentions/`
+
+### 🗜️ Option 3 – Universal (tar.gz)
 
 For non-Debian systems or manual setups:
 
