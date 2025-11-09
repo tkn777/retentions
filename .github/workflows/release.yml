@@ -21,8 +21,8 @@ jobs:
           sudo apt update
           sudo apt install -y alien dpkg-dev
 
-      - name: Run deploy.sh
-        run: bash deploy.sh "${GITHUB_REF_NAME#v}"
+      - name: Run release.sh
+        run: bash release.sh "${GITHUB_REF_NAME#v}"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
