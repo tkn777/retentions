@@ -42,6 +42,9 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("path", help="Base directory to scan")
     parser.add_argument("file_pattern", help="Regex or glob pattern for matching files (use quotes to prevent shell expansion)")
 
+    # argument flags
+    parser.add_argument("-r", "--regex", action="store_true", help="file_pattern is a regex (default: glob pattern)")
+
     # optional retention arguments (validated, no defaults)
     parser.add_argument("-H", "--hours", type=positive_int, metavar="N", help="Keep one file per hour from the last N hours")
     parser.add_argument("-d", "--days", type=positive_int, metavar="N", help="Keep one file per day from the last N days")
@@ -83,19 +86,17 @@ class NoFilesFoundError(Exception):
     pass
 
 
-def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
+def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: bool) -> list[Path]:
     base: Path = Path(base_path)
     matches: list[Path] = []
-    used_regex: bool = False
 
     if not base.exists():
         raise FileNotFoundError(f"Path not found: {base}")
     if not base.is_dir():
         raise NotADirectoryError(f"Path is not a directory: {base}")
 
-    # pattern is a regex and is not a valid glob pattern
-    if re.search(r"[\^\$\\\[\]\(\)\{\}\+\?\|]", pattern) and not re.fullmatch(r"[\w\*\.\?\[\]\-\\]+", pattern):
-        used_regex = True
+    # pattern is a regex
+    if use_regex:
         pattern_compiled = re.compile(pattern)
         for file in base.iterdir():
             if file.is_file() and pattern_compiled.match(file.name):
@@ -106,13 +107,13 @@ def read_filelist(base_path: str, pattern: str, verbose: bool) -> list[Path]:
         matches = [f for f in base.glob(pattern) if f.is_file()]
 
     if not matches:
-        raise NoFilesFoundError(f"No files found in '{base}' using {'regex' if used_regex else 'glob'} pattern '{pattern}'")
+        raise NoFilesFoundError(f"No files found in '{base}' using {'regex' if use_regex else 'glob'} pattern '{pattern}'")
 
     # sort by modification time (newest first), deterministic on ties
     matches = [p for p, _ in sorted(((p, p.stat().st_mtime) for p in matches), key=lambda t: (-t[1], t[0].name))]
 
     if verbose:
-        print(f"Found files using {'regex' if used_regex else 'glob'} pattern '{pattern}': {[p.name for p in matches]}")
+        print(f"Found files using {'regex' if use_regex else 'glob'} pattern '{pattern}': {[p.name for p in matches]}")
 
     return matches
 
@@ -155,7 +156,7 @@ def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: Def
         current_count += 1
 
 
-def delete_file(arguments: argparse.Namespace, file: Path):
+def delete_file(arguments: argparse.Namespace, file: Path) -> None:
     if arguments.list_only:
         print(file.absolute())
     else:
@@ -170,7 +171,7 @@ def delete_file(arguments: argparse.Namespace, file: Path):
 def main() -> None:
     try:
         arguments = parse_arguments()
-        existing_files: list[Path] = read_filelist(arguments.path, arguments.file_pattern, arguments.verbose)
+        existing_files: list[Path] = read_filelist(arguments.path, arguments.file_pattern, arguments.regex, arguments.verbose)
         to_keep: set[Path] = set()
 
         # Retention by time buckets

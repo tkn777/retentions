@@ -92,7 +92,8 @@ python3 retentions.py [path] [file_pattern] [options]
 | Argument | Description |
 |--------|--------------|
 | `path` | Base directory to scan |
-| `file_pattern` | Regex or glob pattern for matching files (use quotes to prevent shell expansion) |
+| `file_pattern` | glob pattern for matching files (use quotes to prevent shell expansion) |
+| `-r, --regex` | file_pattern is a regex (default: glob pattern) |
 | `-H, --hours <int>` | Keep one file per hour from the last N hours |
 | `-d, --days <int>` | Keep one file per day from the last N days |
 | `-w, --weeks <int>` | Keep one file per week from the last N weeks |
