@@ -53,7 +53,7 @@ Everything outside your defined retention scope is deleted (unless `--dry-run` o
 
 You can install **retentions** in several ways, depending on your system and preference.
 
-### 🧩 Option 1 – Debian / Ubuntu (.deb)
+### 🧩 Option 1 – Debian Package (.deb)
 
 Download the latest `.deb` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
 
@@ -65,7 +65,7 @@ This installs:
 - `/usr/bin/retentions`
 - documentation in `/usr/share/doc/retentions/`
 
-### 📦 Option 2 – Redhat (.rpm)
+### 📦 Option 2 – Redhat Package (.rpm)
 
 Download the latest `.rpm` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
 
