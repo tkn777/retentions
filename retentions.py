@@ -55,7 +55,14 @@ def parse_arguments() -> argparse.Namespace:
 
     # mode flags
     parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
-    parser.add_argument("-L", "--list-only", action="store_true", help="Output only file paths that would be deleted (incompatible with --verbose)")
+    parser.add_argument(
+        "--list-only",
+        "-L",
+        nargs="?",
+        const="\n",
+        default=None,
+        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator: e.g. '\0')",
+    )
     parser.add_argument("-V", "--verbose", action="store_true", help="Show detailed output of KEEP/DELETE decisions and time buckets")
 
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
@@ -75,6 +82,10 @@ def parse_arguments() -> argparse.Namespace:
         args.last = 10
         if args.verbose:
             print("No retention options specified -> Defaulting to --last 10")
+
+    # normalize list_only separator, if null byte
+    if args.list_only == "\\0":
+        args.list_only = "\0"
 
     if args.verbose:
         print(f"Using arguments: {vars(args)}")
@@ -158,7 +169,7 @@ def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: Def
 
 def delete_file(arguments: argparse.Namespace, file: Path) -> None:
     if arguments.list_only:
-        print(file.absolute())
+        print(file.absolute(), end=arguments.list_only)
     else:
         if arguments.dry_run:
             print(f"DRY-RUN DELETE: {file.name}")
