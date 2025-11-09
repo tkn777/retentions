@@ -56,12 +56,13 @@ def parse_arguments() -> argparse.Namespace:
     # mode flags
     parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
     parser.add_argument(
-        "--list-only",
         "-L",
+        "--list-only",
         nargs="?",
         const="\n",
-        default=None,
-        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator: e.g. '\0')",
+        default=argparse.SUPPRESS,
+        metavar="sp",
+        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')",
     )
     parser.add_argument("-V", "--verbose", action="store_true", help="Show detailed output of KEEP/DELETE decisions and time buckets")
 
