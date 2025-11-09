@@ -7,9 +7,9 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
 
-# -----------------------------------------------------------------------------
-# Ruff: Formatter + Linter + Import-Sortierung (ersetzt .ruff.toml)
-# -----------------------------------------------------------------------------
+[project.optional-dependencies]
+dev = ["ruff>=0.14.0", "mypy>=1.11.0"]
+
 [tool.ruff]
 line-length = 160
 select = ["E", "F", "W", "I"] # PEP8 + Pyflakes + isort-Regeln
@@ -19,19 +19,12 @@ fixable = ["ALL"]
 quote-style = "double" # doppelte Anführungszeichen erzwingen
 indent-style = "space" # Spaces statt Tabs
 
-# -----------------------------------------------------------------------------
-# Mypy: Typprüfung (wie VS Code Pylance strict)
-# -----------------------------------------------------------------------------
 [tool.mypy]
-python_version = "3.13"
+python_version = ">=3.9"
 strict = true
 disallow_untyped_defs = true
-ignore_missing_imports = true
-show_error_codes = true
+hide_error_codes = false
 
-# -----------------------------------------------------------------------------
-# Optional: Einheitliches Zeilenende für alle Tools
-# -----------------------------------------------------------------------------
 [tool.black]
 line-length = 160
 skip-string-normalization = true
