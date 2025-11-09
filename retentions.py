@@ -1,3 +1,13 @@
+#
+# retentions
+#
+# A minimal cross-platform CLI tool for file retention management
+#
+# Copyright (c) 2025 Thomas Kuhlmann
+#
+# Licensed under the MIT License. See LICENSE file in the project root for license information.
+#
+
 import argparse
 import re
 import sys
@@ -6,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import DefaultDict
 
-VERSION: str = "1.0.0"
+VERSION: str = "dev-1.0.0"
 
 
 def positive_int(value: str) -> int:
