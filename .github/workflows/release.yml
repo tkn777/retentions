@@ -1,0 +1,38 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"   # läuft nur bei Tags wie v1.0.0
+
+permissions:
+  contents: write   # erlaubt das Erstellen des Releases
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt update
+          sudo apt install -y alien dpkg-dev
+
+      - name: Run deploy.sh
+        run: bash deploy.sh "${GITHUB_REF_NAME#v}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Retentions ${{ github.ref_name }}"
+          body: |
+            Automated release for **${{ github.ref_name }}**
+            (See CHANGELOG.md in the repository for details.)
+          files: |
+            build/retentions-*.tar.gz
+            build/retentions_*.deb
+            build/retentions-*.rpm
+            build/SHA256SUMS.txt
