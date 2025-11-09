@@ -80,7 +80,7 @@ Description: Simple file retention cleanup tool (CLI)
  A minimal cross-platform retention utility for pruning old file sets.
 EOF
 
-dpkg-deb --build "$DEB_DIR" "${BUILD_DIR}/${APP}_${VERSION}_all.deb"
+dpkg-deb --build --root-owner-group "$DEB_DIR" "${BUILD_DIR}/${APP}_${VERSION}_all.deb"
 echo "    -> ${BUILD_DIR}/${APP}_${VERSION}_all.deb"
 
 # ---------------------------------------------------------------------------
