@@ -124,7 +124,7 @@ def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: bool) 
     matches = [p for p, _ in sorted(((p, p.stat().st_mtime) for p in matches), key=lambda t: (-t[1], t[0].name))]
 
     if verbose:
-        print(f"Found files using {'regex' if use_regex else 'glob'} pattern '{pattern}': {[p.name for p in matches]}")
+        print(f"Found {len(matches)} files using {'regex' if use_regex else 'glob'} pattern '{pattern}': {[p.name for p in matches]}")
 
     return matches
 
@@ -162,21 +162,25 @@ def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: Def
             effective_count += 1
         else:
             if verbose:
-                print(f"Keeping file '{first_bucket_file.name}': {mode} ({current_count - (effective_count - mode_count) + 1}/{mode_count})")
+                print(
+                    f"Keeping file '{first_bucket_file.name}': {mode} {current_count - (effective_count - mode_count) + 1}/{mode_count} "
+                    f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
+                )
             to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
         current_count += 1
 
 
 def delete_file(arguments: argparse.Namespace, file: Path) -> None:
+    mtime = datetime.fromtimestamp(file.stat().st_mtime)
     if arguments.list_only:
         print(file.absolute(), end=arguments.list_only)
     else:
         if arguments.dry_run:
-            print(f"DRY-RUN DELETE: {file.name}")
+            print(f"DRY-RUN DELETE: {file.name} (mtime: {mtime})")
         else:
             file.unlink()
             if arguments.verbose:
-                print(f"DELETED: {file.name}")
+                print(f"DELETED: {file.name} (mtime: {mtime})")
 
 
 def main() -> None:
