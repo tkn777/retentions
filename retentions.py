@@ -166,6 +166,11 @@ def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: Def
                     f"Keeping file '{first_bucket_file.name}': {mode} {current_count - (effective_count - mode_count) + 1}/{mode_count} "
                     f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                 )
+                for file_to_delete in buckets[sorted_keys[current_count]][1:]:
+                    print(
+                        f"NOT Keeping file '{file_to_delete.name}': {mode} "
+                        f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
+                    )
             to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
         current_count += 1
 
