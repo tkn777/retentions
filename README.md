@@ -71,7 +71,7 @@ It includes
 retentions --help
 ```
 
-All installation methods require **Python 3.7+**.
+All installation methods require **Python 3.9+**.
 
 No dependencies beyond Python 3.
 
