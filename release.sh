@@ -24,8 +24,10 @@ echo "==> Injecting version into retentions.py..."
 sed -i.bak -E "s/^(VERSION\s*(:\s*str)?\s*=\s*\")[^\"]*(\")/\1${VERSION}\3/" retentions.py
 
 # ---------------------------------------------------------------------------
-# macOS variant (#!/usr/bin/env python3)
+# TAR.GZ (cross-platform release)
 # ---------------------------------------------------------------------------
+
+# macOS variant (#!/usr/bin/env python3)
 echo "==> Creating macOS variant..."
 {
     echo "#!/usr/bin/env python3"
@@ -33,9 +35,7 @@ echo "==> Creating macOS variant..."
 } > "${PKG_DIR}/macos/${APP}"
 chmod 755 "${PKG_DIR}/macos/${APP}"
 
-# ---------------------------------------------------------------------------
 # Linux variant (#!/usr/bin/python3)
-# ---------------------------------------------------------------------------
 echo "==> Creating Linux variant..."
 {
     echo "#!/usr/bin/python3"
@@ -43,20 +43,15 @@ echo "==> Creating Linux variant..."
 } > "${PKG_DIR}/linux/${APP}"
 chmod 755 "${PKG_DIR}/linux/${APP}"
 
-# ---------------------------------------------------------------------------
 # Common variant
-# ---------------------------------------------------------------------------
+echo "==> Copy common variant..."
 cp retentions.py "${PKG_DIR}/${APP}.py"
 
-# ---------------------------------------------------------------------------
 # Documentation
-# ---------------------------------------------------------------------------
 echo "==> Copying docs..."
 cp README.md LICENSE CHANGELOG.md "$PKG_DIR/docs/" 2>/dev/null || true
 
-# ---------------------------------------------------------------------------
-# TAR.GZ (cross-platform release)
-# ---------------------------------------------------------------------------
+# Create archive
 echo "==> Creating tar.gz package..."
 tar -C "$BUILD_DIR" -czf "${BUILD_DIR}/${APP}-${VERSION}.tar.gz" "${APP}-${VERSION}"
 echo "    -> ${BUILD_DIR}/${APP}-${VERSION}.tar.gz"
@@ -89,15 +84,17 @@ dpkg-deb --build "$DEB_DIR" "${BUILD_DIR}/${APP}_${VERSION}_all.deb"
 echo "    -> ${BUILD_DIR}/${APP}_${VERSION}_all.deb"
 
 # ---------------------------------------------------------------------------
-# RPM (via alien)
+# RPM (via alien, isolated temp dir)
 # ---------------------------------------------------------------------------
 echo "==> Converting .deb to .rpm..."
 (
-    cd "$BUILD_DIR"
+    TMPDIR="$(mktemp -d)"
+    cp "${BUILD_DIR}/${APP}_${VERSION}_all.deb" "$TMPDIR/"
+    cd "$TMPDIR"
     alien --to-rpm --scripts "${APP}_${VERSION}_all.deb" >/dev/null
+    mv ./*.rpm "${OLDPWD}/"
+    rm -rf "$TMPDIR"
 )
-RPM_FILE=$(find "$BUILD_DIR" -maxdepth 1 -name "${APP}-*.rpm" | head -n1)
-echo "    -> ${RPM_FILE:-${BUILD_DIR}/${APP}-${VERSION}-noarch.rpm}"
 
 # ---------------------------------------------------------------------------
 # SHA256 Checksums
