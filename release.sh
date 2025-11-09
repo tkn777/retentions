@@ -101,7 +101,8 @@ echo "    -> ${BUILD_DIR}/${APP}_${VERSION}_all.deb"
 echo "==> Generating SHA256 checksums..."
 (
     cd "$BUILD_DIR"
-    find . -type f -maxdepth 1 -exec sha256sum {} + > SHA256SUMS.txt
+    find . -maxdepth 1 -type f ! -name "SHA256SUMS.txt" -printf "%f\n" \
+        | xargs sha256sum > SHA256SUMS.txt
 )
 echo "    -> ${BUILD_DIR}/SHA256SUMS.txt"
 
