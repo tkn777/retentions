@@ -53,7 +53,7 @@ cp README.md LICENSE CHANGELOG.md "$PKG_DIR/docs/" 2>/dev/null || true
 
 # Create archive
 echo "==> Creating tar.gz package..."
-tar -C "$BUILD_DIR" -czf "${BUILD_DIR}/${APP}-${VERSION}.tar.gz" "${APP}-${VERSION}"
+tar --owner=0 --group=0 -C "$BUILD_DIR" -czf "${BUILD_DIR}/${APP}-${VERSION}.tar.gz" "${APP}-${VERSION}"
 echo "    -> ${BUILD_DIR}/${APP}-${VERSION}.tar.gz"
 
 # ---------------------------------------------------------------------------
