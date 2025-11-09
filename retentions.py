@@ -207,7 +207,7 @@ def main() -> None:
             if arguments.verbose:
                 for index, file in enumerate(last_files, start=1):
                     if file not in to_keep:
-                        print(f"Keeping file '{file.name}': last {index}/{arguments.last}")
+                        print(f"Keeping file '{file.name}': last {index}/{arguments.last} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})")
             to_keep.update(last_files)
 
         # Delete files not to keep

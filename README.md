@@ -106,26 +106,26 @@ python3 retentions.py [path] [file_pattern] [options]
 
 ---
 
-### Example
+### Examples
 
 ```bash
 # Keep last 7 days, 4 weeks, 6 months
 python3 retentions.py /data/backups '*.tar.gz' -d 7 -w 4 -m 6
 ```
 
-### Dry run (no deletion)
+#### Dry run (no deletion)
 
 ```bash
 python3 retentions.py /data/backups '*.tar.gz' -d 10 -w 3 -m 6 --dry-run
 ```
 
-### List-only mode (for piping into other tools)
+#### List-only mode (for piping into other tools)
 
 ```bash
 python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\0' | xargs -0 rm
 ```
 
-### Verbose output
+#### Verbose output
 
 ```bash
 python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose
@@ -163,8 +163,8 @@ so quoting ensures the pattern is passed as intended.
 1. **Collect all matching files** under the given path.  
 2. **Sort** them by modification time (newest first).  
 3. **Retain**:
-   - Last `N` files (`--last`)
    - Newest file per `hour` / `day` / `week` / `month` / `year`
+   - Last `N` files (`--last`)
 4. **Delete** everything else.  
 5. If `--dry-run` is enabled, print the planned actions instead of executing them.
 
