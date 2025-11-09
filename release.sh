@@ -75,7 +75,7 @@ Section: utils
 Priority: optional
 Architecture: all
 Depends: python3 (>= 3.9)
-Maintainer: Thomas K. <tkn777@users.noreply.github.com>
+Maintainer: Thomas Kuhlmann <mail@thomas-kuhlmann.de>
 Description: Simple file retention cleanup tool (CLI)
  A minimal cross-platform retention utility for pruning old file sets.
 EOF
