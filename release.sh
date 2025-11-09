@@ -86,13 +86,12 @@ echo "    -> ${BUILD_DIR}/${APP}_${VERSION}_all.deb"
 # ---------------------------------------------------------------------------
 # RPM (via alien, isolated temp dir)
 # ---------------------------------------------------------------------------
-echo "==> Converting .deb to .rpm..."
 (
     TMPDIR="$(mktemp -d)"
     cp "${BUILD_DIR}/${APP}_${VERSION}_all.deb" "$TMPDIR/"
     cd "$TMPDIR"
     alien --to-rpm --scripts "${APP}_${VERSION}_all.deb" >/dev/null
-    mv ./*.rpm "${OLDPWD}/"
+    mv ./*.rpm "${OLDPWD}/build/"
     rm -rf "$TMPDIR"
 )
 
@@ -102,7 +101,7 @@ echo "==> Converting .deb to .rpm..."
 echo "==> Generating SHA256 checksums..."
 (
     cd "$BUILD_DIR"
-    sha256sum * > SHA256SUMS.txt
+    find . -type f -maxdepth 1 -exec sha256sum {} + > SHA256SUMS.txt
 )
 echo "    -> ${BUILD_DIR}/SHA256SUMS.txt"
 

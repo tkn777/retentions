@@ -46,7 +46,7 @@ You can install **retentions** in several ways, depending on your system and pre
 Download the latest `.deb` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
 
 ```bash
-sudo dpkg -i retentions_1.0.0.deb
+sudo dpkg -i retentions_x.y.z.deb
 ```
 
 This installs:
@@ -59,22 +59,13 @@ For non-Debian systems or manual setups:
 
 Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually
 
-#### For linux (example):
+It includes
+- the common python script: `retentions.py`
+- a common linux variant with shebang: `linux/retentions`
+- a macos variant with sheban: `macos/retentions`
+- and all the docs: `docs`
 
-```bash
-tar xzf retentions-1.0.0.tar.gz
-sudo cp retentions.py /usr/local/bin/retentions
-sudo chmod 755 /usr/local/bin/retentions
-```
-
-#### For windows with powershell (example):
-
-```powershell
-tar xzf retentions-1.0.0.tar.gz
-cp retentions.py "$env:USERPROFILE\Scripts"
-```
-
-To verify installation:
+### To verify installation:
 
 ```bash
 retentions --help
