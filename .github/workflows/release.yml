@@ -28,6 +28,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "Retentions ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
           body: |
             Automated release for **${{ github.ref_name }}**
             (See CHANGELOG.md in the repository for details.)
