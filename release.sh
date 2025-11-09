@@ -15,7 +15,7 @@ echo "==> Building version ${VERSION}"
 echo "==> Cleaning old build artifacts..."
 rm -rf "$BUILD_DIR"
 mkdir -p "$PKG_DIR/macos" "$PKG_DIR/linux" "$PKG_DIR/docs"
-mkdir -p "$DEB_DIR/usr/bin" "$DEB_DIR/usr/share/doc/${APP}"
+mkdir -p "$DEB_DIR/usr/bin" "$DEB_DIR/usr/share/doc/${APP}" "$DEB_DIR/DEBIAN"
 
 # ---------------------------------------------------------------------------
 # Patch retentions.py VERSION (supports type hints)
