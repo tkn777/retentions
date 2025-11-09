@@ -37,6 +37,18 @@ Everything outside your defined retention scope is deleted (unless `--dry-run` o
 
 ---
 
+## 🧠 Logic Summary
+
+1. **Collect all matching files** under the given path.  
+2. **Sort** them by modification time (newest first).  
+3. **Retain**:
+   - Newest file per `hour` / `day` / `week` / `month` / `year`
+   - Last `N` files (`--last`)
+4. **Delete** everything else.  
+5. If `--dry-run` is enabled, print the planned actions instead of executing them.
+
+---
+
 ## 🧰 Installation
 
 You can install **retentions** in several ways, depending on your system and preference.
@@ -167,18 +179,6 @@ python3 retentions.py /data/backups *.tar.gz
 
 retentions itself handles pattern matching internally using glob or regex,
 so quoting ensures the pattern is passed as intended.
-
----
-
-## 🧠 Logic Summary
-
-1. **Collect all matching files** under the given path.  
-2. **Sort** them by modification time (newest first).  
-3. **Retain**:
-   - Newest file per `hour` / `day` / `week` / `month` / `year`
-   - Last `N` files (`--last`)
-4. **Delete** everything else.  
-5. If `--dry-run` is enabled, print the planned actions instead of executing them.
 
 ---
 
