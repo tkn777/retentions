@@ -78,10 +78,12 @@ def parse_arguments() -> argparse.Namespace:
         "-V",
         "--verbose",
         type=int,
+        nargs="?",
         choices=[0, 1, 2],
-        default=0,
-        metavar="LEVEL",
-        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output (default: 0)",
+        default=None,
+        const="2",
+        metavar="level",
+        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output (default: 2, if specified without value)",
     )
     parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
 
@@ -93,17 +95,28 @@ def parse_arguments() -> argparse.Namespace:
     if args.list_only and args.verbose > 0:
         parser.error("--list-only and --verbose cannot be used together")
 
+    # default verbosity
+    if not args.verbose:
+        args.verbose = 0
+
     # dry-run implies verbose (unless list-only)
     if args.dry_run and not args.list_only:
         args.verbose = 2
 
-    # default to --last 10 if no retention options given
+    # raise error, if no retention options specified
     if not any([args.hours, args.days, args.weeks, args.quarters, args.months, args.years, args.last]):
         parser.error("You need to specify at least one retention option: --hours, --days, --weeks, --months, --quarters, --years or --last")
 
     # normalize list_only separator, if null byte
     if args.list_only == "\\0":
         args.list_only = "\0"
+
+    # validate regex
+    if args.regex:
+        try:
+            re.compile(args.file_pattern)
+        except re.error:
+            parser.error(f"Invalid regular expression: {args.file_pattern}")
 
     if args.verbose >= 2:
         print(f"Using arguments: {vars(args)}")
@@ -171,7 +184,7 @@ def bucket_files(files: list[Path], mode: str) -> DefaultDict[str, list[Path]]:
     return buckets
 
 
-def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: DefaultDict[str, list[Path]], verbose: int) -> None:
+def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: DefaultDict[str, list[Path]], verbose: int) -> None:
     sorted_keys = sorted(buckets.keys(), reverse=True)
     effective_count = mode_count
     current_count = 0
@@ -192,8 +205,13 @@ def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: Def
                         f"Pruning file '{file_to_delete.name}': {mode} "
                         f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                     )
+                    to_prune.add(file_to_delete)
             to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
         current_count += 1
+
+
+def is_file_to_delete(to_keep: set[Path], file: Path) -> bool:
+    return file not in to_keep
 
 
 def delete_file(arguments: argparse.Namespace, file: Path) -> None:
@@ -202,10 +220,11 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
         print(file.absolute(), end=arguments.list_only)
     else:
         if arguments.dry_run:
-            print(f"DRY-RUN DELETE: {file.name} (mtime: {mtime})")
+            if arguments.verbose >= 1:
+                print(f"DRY-RUN DELETE: {file.name} (mtime: {mtime})")
         else:
             if arguments.verbose >= 1:
-                print(f"DELETEING: {file.name} (mtime: {mtime})")
+                print(f"DELETING: {file.name} (mtime: {mtime})")
             try:
                 file.unlink()
             except IOError as e:
@@ -217,13 +236,14 @@ def main() -> None:
         arguments = parse_arguments()
         existing_files: list[Path] = read_filelist(arguments.path, arguments.file_pattern, arguments.regex, arguments.verbose)
         to_keep: set[Path] = set()
+        to_prune: set[Path] = set()
 
         # Retention by time buckets
         for mode in ["hours", "days", "weeks", "months", "quarters", "years"]:
             mode_count = getattr(arguments, mode)
             if mode_count:
                 buckets = bucket_files(existing_files, mode)
-                process_buckets(to_keep, mode, mode_count, buckets, arguments.verbose)
+                process_buckets(to_keep, to_prune, mode, mode_count, buckets, arguments.verbose)
 
         # Keep last N files
         if arguments.last:
@@ -234,9 +254,27 @@ def main() -> None:
                         print(f"Keeping file '{file.name}': last {index}/{arguments.last} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})")
             to_keep.update(last_files)
 
+        # Verbose files to prune but not kept by any retention rule
+        if arguments.verbose >= 2:
+            for file in [f for f in existing_files if f not in to_keep | to_prune]:
+                print(f"Pruning file '{file.name}': not kept by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})")
+                to_prune.add(file)
+
+        # Summary
+        if arguments.verbose >= 2:
+            print(f"Total files found: {len(existing_files)}")
+            print(f"Total files to keep: {len(to_keep)}")
+            print(f"Total files to delete: {len(to_prune)}")
+
+        # Security checks
+        if not len(existing_files) == len(to_keep) + len(to_prune):
+            raise RuntimeError("File count mismatch: some files are neither kept nor pruned!!")
+        if not len(to_prune) == sum(1 for f in existing_files if is_file_to_delete(to_keep, f)):
+            raise RuntimeError("File deletion count mismatch!!")
+
         # Delete files not to keep
         for file in existing_files:
-            if file not in to_keep:
+            if is_file_to_delete(to_keep, file):
                 delete_file(arguments, file)
 
     except IOError as e:
@@ -245,7 +283,6 @@ def main() -> None:
     except NoFilesFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(3)
-
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
         sys.exit(9)
