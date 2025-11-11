@@ -248,9 +248,15 @@ done
 
 ---
 
+## 📜 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for recent updates.
+
+---
+
 ## 💖 Sponsoring
 
-If you find `retentions` useful, consider supporting its future development via PayPal:
+If you find `retentions` useful, consider supporting its future development via PayPal: 
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/kuhlmannthomas)
 
