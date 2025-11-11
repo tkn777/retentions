@@ -71,12 +71,12 @@ def parse_arguments() -> argparse.Namespace:
         "--list-only",
         nargs="?",
         const="\n",
-        default=argparse.SUPPRESS,
+        default=None,
         metavar="sp",
         help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')",
     )
     parser.add_argument(
-        "-V", "--verbose", choices=[0, 1, 2], default=0, metavar="LEVEL", help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output"
+        "-V", "--verbose", type=int, choices=[0, 1, 2], default=0, metavar="LEVEL", help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output"
     )
 
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
@@ -241,9 +241,11 @@ def main() -> None:
     except NoFilesFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(3)
-    except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
-        sys.exit(9)
+
+
+#    except Exception as e:
+#        print(f"Unexpected error: {e}", file=sys.stderr)
+#        sys.exit(9)
 
 
 if __name__ == "__main__":
