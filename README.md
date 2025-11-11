@@ -129,8 +129,8 @@ python3 retentions.py [path] [file_pattern] <options>
 | `file_pattern` | glob pattern for matching files (use quotes to prevent shell expansion) |
 | `-r, --regex` | file_pattern is a regex (default: glob pattern) |
 
-⚠️ `path` and `file_pattern` are mandatory
-
+⚠️ `path` and `file_pattern` are mandatory\
+&nbsp;
 
 | Retention options | Description |
 |--------|--------------|
@@ -142,8 +142,8 @@ python3 retentions.py [path] [file_pattern] <options>
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
 
-⚠️ At least one retention option has to be specified
-
+⚠️ At least one retention option has to be specified\
+&nbsp;
 
 | Behavior options | Description |
 |--------|--------------|
@@ -151,8 +151,8 @@ python3 retentions.py [path] [file_pattern] <options>
 | `-V, --verbose <int>` | Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output (default: 2, if specified without value) |
 | `-X, --dry-run` | Show planned actions but do not delete any files |
 
-💡 Using `--dry-run` is a good option to start with `retentions` 😏
-
+💡 Using `--dry-run` is a good option to start with `retentions` 😏\
+&nbsp;
 
 | Common options | Description |
 |--------|--------------|
