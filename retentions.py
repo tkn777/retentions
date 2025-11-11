@@ -232,7 +232,7 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
                 print("Error while deleting file '{file.name}':", e, file=sys.stderr)
 
 
-class SecurityCheckFailedError(Exception):
+class IntegrityCheckFailedError(Exception):
     pass
 
 
@@ -271,11 +271,11 @@ def main() -> None:
             print(f"Total files keep:   {len(to_keep):03d}")
             print(f"Total files delete: {len(to_prune):03d}")
 
-        # Security checks
+        # Integerity checks
         if not len(existing_files) == len(to_keep) + len(to_prune):
-            raise SecurityCheckFailedError("File count mismatch: some files are neither kept nor pruned!! [Security-check]")
+            raise IntegrityCheckFailedError("File count mismatch: some files are neither kept nor pruned!! [Security-check]")
         if not len(to_prune) == sum(1 for f in existing_files if is_file_to_delete(to_keep, f)):
-            raise SecurityCheckFailedError("File deletion count mismatch!! [Security-check]")
+            raise IntegrityCheckFailedError("File deletion count mismatch!! [Security-check]")
 
         # Delete files not to keep
         for file in existing_files:
@@ -288,7 +288,7 @@ def main() -> None:
     except NoFilesFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(3)
-    except SecurityCheckFailedError as e:
+    except IntegrityCheckFailedError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(7)
     except Exception as e:
