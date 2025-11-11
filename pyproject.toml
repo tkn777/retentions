@@ -28,6 +28,8 @@ warn_unused_ignores = true
 warn_return_any = true
 warn_redundant_casts = true
 warn_unreachable = true
+strict_optional = true
+no_implicit_optional = true
 
 [tool.black]
 line-length = 160
