@@ -12,15 +12,15 @@ dev = ["ruff>=0.14.0", "mypy>=1.11.0"]
 
 [tool.ruff]
 line-length = 160
-select = ["E", "F", "W", "I"] # PEP8 + Pyflakes + isort-Regeln
-fixable = ["ALL"]
+lint.select = ["E", "F", "W", "I"] # PEP8 + Pyflakes + isort-Regeln
+lint.fixable = ["ALL"]
 
 [tool.ruff.format]
 quote-style = "double" # doppelte Anführungszeichen erzwingen
 indent-style = "space" # Spaces statt Tabs
 
 [tool.mypy]
-python_version = ">=3.9"
+python_version = "3.9"
 strict = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
