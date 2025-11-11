@@ -46,7 +46,7 @@ def parse_arguments() -> argparse.Namespace:
         add_help=False,
     )
 
-    parser.add_argument('-H', '--help', action='help')
+    parser.add_argument("-H", "--help", action="help")
 
     # positional arguments
     parser.add_argument("path", help="Base directory to scan")
@@ -75,31 +75,33 @@ def parse_arguments() -> argparse.Namespace:
         metavar="sp",
         help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')",
     )
-    parser.add_argument("-V", "--verbose", action="store_true", help="Show detailed output of KEEP/DELETE decisions and time buckets")
+    parser.add_argument(
+        "-V", "--verbose", choices=[0, 1, 2], default=0, metavar="LEVEL", help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output"
+    )
 
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
 
     args = parser.parse_args()
 
     # incompatible flags
-    if args.list_only and args.verbose:
+    if args.list_only and args.verbose > 0:
         parser.error("--list-only and --verbose cannot be used together")
 
     # dry-run implies verbose (unless list-only)
     if args.dry_run and not args.list_only:
-        args.verbose = True
+        args.verbose = 2
 
     # default to --last 10 if no retention options given
     if not any([args.hours, args.days, args.weeks, args.months, args.years, args.last]):
         args.last = 10
-        if args.verbose:
+        if args.verbose >= 2:
             print("No retention options specified -> Defaulting to --last 10")
 
     # normalize list_only separator, if null byte
     if args.list_only == "\\0":
         args.list_only = "\0"
 
-    if args.verbose:
+    if args.verbose >= 2:
         print(f"Using arguments: {vars(args)}")
 
     return args
@@ -109,7 +111,7 @@ class NoFilesFoundError(Exception):
     pass
 
 
-def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: bool) -> list[Path]:
+def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: int) -> list[Path]:
     base: Path = Path(base_path)
     matches: list[Path] = []
 
@@ -135,7 +137,7 @@ def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: bool) 
     # sort by modification time (newest first), deterministic on ties
     matches = [p for p, _ in sorted(((p, p.stat().st_mtime) for p in matches), key=lambda t: (-t[1], t[0].name))]
 
-    if verbose:
+    if verbose >= 2:
         print(f"Found {len(matches)} files using {'regex' if use_regex else 'glob'} pattern '{pattern}': {[p.name for p in matches]}")
 
     return matches
@@ -165,7 +167,7 @@ def bucket_files(files: list[Path], mode: str) -> DefaultDict[str, list[Path]]:
     return buckets
 
 
-def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: DefaultDict[str, list[Path]], verbose: bool) -> None:
+def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: DefaultDict[str, list[Path]], verbose: int) -> None:
     sorted_keys = sorted(buckets.keys(), reverse=True)
     effective_count = mode_count
     current_count = 0
@@ -176,14 +178,14 @@ def process_buckets(to_keep: set[Path], mode: str, mode_count: int, buckets: Def
         if first_bucket_file in to_keep:  # Already kept by previous mode
             effective_count += 1
         else:
-            if verbose:
+            if verbose >= 2:
                 print(
                     f"Keeping file '{first_bucket_file.name}': {mode} {current_count - (effective_count - mode_count) + 1}/{mode_count} "
                     f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                 )
                 for file_to_delete in buckets[sorted_keys[current_count]][1:]:
                     print(
-                        f"NOT Keeping file '{file_to_delete.name}': {mode} "
+                        f"Pruning file '{file_to_delete.name}': {mode} "
                         f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                     )
             to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
@@ -198,7 +200,7 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
         if arguments.dry_run:
             print(f"DRY-RUN DELETE: {file.name} (mtime: {mtime})")
         else:
-            if arguments.verbose:
+            if arguments.verbose >= 1:
                 print(f"DELETEING: {file.name} (mtime: {mtime})")
             try:
                 file.unlink()
@@ -222,7 +224,7 @@ def main() -> None:
         # Keep last N files
         if arguments.last:
             last_files = existing_files[: arguments.last]
-            if arguments.verbose:
+            if arguments.verbose >= 2:
                 for index, file in enumerate(last_files, start=1):
                     if file not in to_keep:
                         print(f"Keeping file '{file.name}': last {index}/{arguments.last} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})")
