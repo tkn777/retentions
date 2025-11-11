@@ -46,7 +46,7 @@ cp retentions.py "${PKG_DIR}/${APP}.py"
 
 # Documentation
 echo "==> Copying docs..."
-cp README.md LICENSE CHANGELOG.md "$PKG_DIR/docs/" 2>/dev/null || true
+cp README.md LICENSE CHANGELOG.md SECURITY.md "$PKG_DIR/docs/" 2>/dev/null || true
 
 # Create archive
 echo "==> Creating tar.gz package..."
