@@ -7,7 +7,7 @@ A tiny, cross-platform CLI tool to apply backup-like retention rules to any file
 It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
 
 ```bash
-retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6 # Keeps last 7 days, last 4 weeks, lasst 6 month
+retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, last 4 weeks, lasst 6 month
 ```
 
 ---
@@ -29,7 +29,7 @@ Everything outside your defined retention scope is deleted (unless `--dry-run` o
 
 - Pure **Python 3**, no external dependencies.  
 - Runs on **Linux, macOS, and Windows** (and everywhere else, where python 3 runs).  
-- Supports **hourly, daily, weekly, monthly, and yearly** retention buckets.  
+- Supports **hourly, daily, weekly, monthly, quarterly and yearly** retention buckets.  
 - Supports **keeping the last N files** (`--last`) regardless of age.  
 - Supports **regex or glob** pattern matching.  
 - Safe modes:  
@@ -127,6 +127,7 @@ python3 retentions.py [path] [file_pattern] <options>
 
 ⚠️ `path` and `file_pattern` are mandatory
 
+
 | Retention options | Description |
 |--------|--------------|
 | `-h, --hours <int>` | Keep one file per hour from the last N hours |
@@ -139,11 +140,15 @@ python3 retentions.py [path] [file_pattern] <options>
 
 ⚠️ At least one retention option hase to be specified
 
+
 | Behaviour options | Description |
 |--------|--------------|
 | `-L, --list-only <separator>` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
 | `-V, --verbose <int>` | Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output |
 | `-X, --dry-run` | Show planned actions but do not delete any files |
+
+💡 Using `--dry-run` is a good option to start with `retentions` 😏
+
 
 | Common options | Description |
 |--------|--------------|
