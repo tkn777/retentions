@@ -6,6 +6,7 @@
 - Added `--quarters` (or `-Q`) option to keep the last `N` qarters
 - Added security checks
 - Fix some argument handling
+- Improved output of verbose
 - Added CI workflow for linting and simple test
 - Added `SECURITY.md` and `CONTRIBUTING.md`
 
