@@ -142,7 +142,7 @@ python3 retentions.py [path] [file_pattern] <options>
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
 
-📝 Every retention option can be combined with any (or all) others\
+📝 Every retention option can be combined with any (or all) others
 
 🧠 Logic:
 - The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` cannot also be marked as keep with the retention `--week`.
