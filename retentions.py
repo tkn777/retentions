@@ -258,6 +258,7 @@ def main() -> None:
                     if file not in to_keep:
                         print(f"Keeping file '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})")
             to_keep.update(last_files)
+            to_prune.difference_update(last_files)
 
         # Verbose files to prune but not kept by any retention rule
         if arguments.verbose >= 2:
