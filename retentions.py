@@ -1,7 +1,7 @@
 #
 # retentions
 #
-# A minimal cross-platform CLI tool for file retention management
+# A tiny, cross-platform CLI tool to apply backup-like retention rules to any file set.
 #
 # Copyright (c) 2025 Thomas Kuhlmann
 #
@@ -240,10 +240,9 @@ def main() -> None:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(3)
 
-
-#    except Exception as e:
-#        print(f"Unexpected error: {e}", file=sys.stderr)
-#        sys.exit(9)
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr)
+        sys.exit(9)
 
 
 if __name__ == "__main__":

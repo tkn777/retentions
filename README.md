@@ -1,12 +1,18 @@
-# retentions
+<p align="left">
+  <img src="resources/retentions-logo.png" alt="retentions logo" height=100>
+</p>
 
-A minimal cross-platform CLI tool for file retention management.  
+A tiny, cross-platform CLI tool to apply backup-like retention rules to any file set. 
 
 It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
 
+```bash
+retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6 # Keeps last 7 days, last 4 weeks, lasst 6 month
+```
+
 ---
 
-## 🌐 Overview
+## 🌐 Overview  
 
 `retentions` is a single-file Python script that applies retention logic to a directory of files. 
 
@@ -79,7 +85,7 @@ This installs:
 
 ### 🗜️ Option 3 – Universal (tar.gz)
 
-For non-Debian systems or manual setups:
+For non-Debian-based or non-Redhat-based systems:
 
 Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually
 
@@ -104,7 +110,7 @@ No dependencies beyond Python 3.
 ## 🖥️ Usage
 
 ```bash
-python3 retentions.py [path] [file_pattern] [options]
+python3 retentions.py [path] [file_pattern] <options>
 ```
 
 > *Depending on your installation type, you may just call `retentions` instead of `python3 retentions.py` .*
@@ -113,23 +119,38 @@ python3 retentions.py [path] [file_pattern] [options]
 
 ## 🔧 Arguments
 
-| Argument | Description |
+| Arguments | Description |
 |--------|--------------|
 | `path` | Base directory to scan |
 | `file_pattern` | glob pattern for matching files (use quotes to prevent shell expansion) |
 | `-r, --regex` | file_pattern is a regex (default: glob pattern) |
-| `-H, --hours <int>` | Keep one file per hour from the last N hours |
+
+⚠️ `path` and `file_pattern` are mandatory
+
+| Retention options | Description |
+|--------|--------------|
+| `-h, --hours <int>` | Keep one file per hour from the last N hours |
 | `-d, --days <int>` | Keep one file per day from the last N days |
 | `-w, --weeks <int>` | Keep one file per week from the last N weeks |
 | `-m, --months <int>` | Keep one file per month from the last N months |
 | `-q, --quarters <int>` | Keep one file per quarter from the last N quarters |
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
-| `-X, --dry-run` | Show planned actions but do not delete any files |
+
+⚠️ At least one retention option hase to be specified
+
+| Behaviour options | Description |
+|--------|--------------|
 | `-L, --list-only <separator>` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
 | `-V, --verbose <int>` | Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output |
+| `-X, --dry-run` | Show planned actions but do not delete any files |
+
+| Common options | Description |
+|--------|--------------|
 | `-H, --help` | Show the help / usage of `retentions` |
 | `--version` | Show the version of `retentions` |
+
+💡 Common options can be used without any other arguments.
 
 ---
 
@@ -164,8 +185,7 @@ python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose
 
 Always **quote your file patterns** when calling `retentions`.
 
-If you omit the quotes, your shell (e.g. Bash, Zsh, PowerShell) will expand the pattern **before** it reaches the program,  
-resulting in unexpected arguments or errors.
+If you omit the quotes, your shell (e.g. Bash, Zsh, PowerShell) will expand the pattern **before** it reaches the program, resulting in unexpected arguments or errors.
 
 #### ✅ Correct
 ```bash
@@ -180,25 +200,7 @@ python3 retentions.py /data/backups *.tar.gz
 ```
 (the shell expands *.tar.gz before retentions runs)
 
-retentions itself handles pattern matching internally using glob or regex,
-so quoting ensures the pattern is passed as intended.
-
----
-
-## 📦 Design Principles
-
-- **KISS** – no configuration files, no hidden behavior.  
-- **Deterministic** – same input, same output.  
-- **Safe by intention** – dry-run and list-only modes available.  
-- **Cross-platform** – works anywhere Python 3 runs.  
-- **Plain ASCII** – no colors, no locale dependencies.
-
----
-
-## 🪶 License
-
-MIT License  
-Copyright © 2025 Thomas Kuhlmann
+retentions itself handles pattern matching internally using glob or regex, so quoting ensures the pattern is passed as intended.
 
 ---
 
@@ -214,6 +216,16 @@ Copyright © 2025 Thomas Kuhlmann
 
 ---
 
+## 📦 Design Principles
+
+- **KISS** – no configuration files, no hidden behavior.  
+- **Deterministic** – same input, same output.  
+- **Safe by intention** – dry-run and list-only modes available.  
+- **Cross-platform** – works anywhere Python 3 runs.  
+- **Plain ASCII** – no colors, no locale dependencies.
+
+---
+
 ## 💡 Tip
 
 Use `--list-only` to integrate with external scripts or pipelines:
@@ -223,6 +235,25 @@ python3 retentions.py /data/logs '*.log' -d 3 -w 2 --list-only | while read f; d
     echo "Would delete $f"
 done
 ```
+
+---
+
+## 💖 Sponsoring
+
+If you find **retentions** useful and want to support its development,  
+you can do so via this PayPal link:
+
+[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/kuhlmannthomas)
+
+Your support helps to maintain and improve open-source tools like this one.  
+Thank you!
+
+---
+
+## 🪶 License
+
+MIT License  
+Copyright © 2025 Thomas Kuhlmann
 
 ---
 
