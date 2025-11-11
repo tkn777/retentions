@@ -274,7 +274,7 @@ def main() -> None:
             print(f"Total files keep:   {len(to_keep):03d}")
             print(f"Total files delete: {len(to_prune):03d}")
 
-        # Integerity checks
+        # Integrity checks
         if not len(existing_files) == len(to_keep) + len(to_prune):
             raise IntegrityCheckFailedError("File count mismatch: some files are neither kept nor pruned!! [Security-check]")
         if not len(to_prune) == sum(1 for f in existing_files if is_file_to_delete(to_keep, f)):
