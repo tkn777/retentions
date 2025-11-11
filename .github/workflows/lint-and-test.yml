@@ -1,0 +1,38 @@
+name: Lint and Test
+
+on: [push, pull_request]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install ruff mypy
+
+      - name: Run Ruff Lint
+        run: ruff check .
+
+      - name: Run Ruff Format Check
+        run: ruff format --check .
+
+      - name: Run Type Checking
+        run: mypy .
+
+      - name: Test CLI --help and --version
+        run: |
+          echo "Testing retentions.py CLI on Python ${{ matrix.python-version }}"
+          python retentions.py --help > /dev/null
+          python retentions.py --version > /dev/null
