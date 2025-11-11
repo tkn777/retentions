@@ -46,8 +46,6 @@ def parse_arguments() -> argparse.Namespace:
         add_help=False,
     )
 
-    parser.add_argument("-H", "--help", action="help")
-
     # positional arguments
     parser.add_argument("path", help="Base directory to scan")
     parser.add_argument("file_pattern", help="glob pattern for matching files (use quotes to prevent shell expansion")
@@ -82,12 +80,13 @@ def parse_arguments() -> argparse.Namespace:
         choices=[0, 1, 2],
         default=None,
         const="2",
-        metavar="level",
+        metavar="lev",
         help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output (default: 2, if specified without value)",
     )
     parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
 
-    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+    parser.add_argument("-R", "--version", action="version", version=f"%(prog)s {VERSION}")
+    parser.add_argument("-H", "--help", action="help", help="Show this help message and exit")
 
     args = parser.parse_args()
 
@@ -268,9 +267,9 @@ def main() -> None:
 
         # Security checks
         if not len(existing_files) == len(to_keep) + len(to_prune):
-            raise RuntimeError("File count mismatch: some files are neither kept nor pruned!!")
+            raise RuntimeError("File count mismatch: some files are neither kept nor pruned!! [Security-check]")
         if not len(to_prune) == sum(1 for f in existing_files if is_file_to_delete(to_keep, f)):
-            raise RuntimeError("File deletion count mismatch!!")
+            raise RuntimeError("File deletion count mismatch!! [Security-check]")
 
         # Delete files not to keep
         for file in existing_files:
