@@ -2,6 +2,7 @@
 - **BREAKING CHANGE**: An exception while deleting a file does not terminate the programm, just print an error message.
 - **BREAKING CHANGE**: Use `-H` (or `--help`) for help  and `-h` (or `--hours`) for hours to keep
 - **BREAKING CHANGE**: `--verbose` (or `-V`) takes an int argument as log level (Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output)
+- **BREAKING CHANGE**: If no retention options are specified, an error is raise (before: `--last=10` was used as default)
 - Added --quartes option to keep the last N qarters
 
 ### 0.2.0 - 09.11.2025

@@ -92,10 +92,8 @@ def parse_arguments() -> argparse.Namespace:
         args.verbose = 2
 
     # default to --last 10 if no retention options given
-    if not any([args.hours, args.days, args.weeks, args.months, args.years, args.last]):
-        args.last = 10
-        if args.verbose >= 2:
-            print("No retention options specified -> Defaulting to --last 10")
+    if not any([args.hours, args.days, args.weeks, args.quarters, args.months, args.years, args.last]):
+        parser.error("You need to specify at least one retention option: --hours, --days, --weeks, --months, --quarters, --years or --last")
 
     # normalize list_only separator, if null byte
     if args.list_only == "\\0":
