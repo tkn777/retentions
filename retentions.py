@@ -193,7 +193,10 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
         else:
             file.unlink()
             if arguments.verbose:
-                print(f"DELETED: {file.name} (mtime: {mtime})")
+                try:
+                    print(f"DELETED: {file.name} (mtime: {mtime})")
+                except IOError as e:
+                    print("Error while deleting file:", e, file=sys.stderr)
 
 
 def main() -> None:
