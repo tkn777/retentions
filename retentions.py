@@ -50,7 +50,7 @@ def parse_arguments() -> argparse.Namespace:
 
     # positional arguments
     parser.add_argument("path", help="Base directory to scan")
-    parser.add_argument("file_pattern", help="Regex or glob pattern for matching files (use quotes to prevent shell expansion)")
+    parser.add_argument("file_pattern", help="glob pattern for matching files (use quotes to prevent shell expansion")
 
     # argument flags
     parser.add_argument("-r", "--regex", action="store_true", help="file_pattern is a regex (default: glob pattern)")
@@ -65,7 +65,6 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("-l", "--last", type=positive_int, metavar="N", help="Always keep the N most recently modified files")
 
     # mode flags
-    parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
     parser.add_argument(
         "-L",
         "--list-only",
@@ -76,8 +75,15 @@ def parse_arguments() -> argparse.Namespace:
         help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')",
     )
     parser.add_argument(
-        "-V", "--verbose", type=int, choices=[0, 1, 2], default=0, metavar="LEVEL", help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output"
+        "-V",
+        "--verbose",
+        type=int,
+        choices=[0, 1, 2],
+        default=0,
+        metavar="LEVEL",
+        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output (default: 0)",
     )
+    parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
 
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
 

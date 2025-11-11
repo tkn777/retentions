@@ -2,13 +2,17 @@
   <img src="resources/retentions-logo.png" alt="retentions logo" height=100>
 </p>
 
-A tiny, cross-platform CLI tool to apply backup-like retention rules to any file set. 
+A tiny, cross-platform CLI tool to apply backup-style retention rules to any file set. 
 
 It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
 
 ```bash
-retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, last 4 weeks, lasst 6 month
+retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days (`-d`), 4 weeks (`-d`) and 6 months (`-m`)
 ```
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/tkn777/retentions)](https://github.com/tkn777/retentions/releases)
+[![Platform](https://img.shields.io/badge/platform-linux%20|%20macos%20|%20windows-lightgrey)]()
 
 ---
 
@@ -20,15 +24,15 @@ It groups files into time **buckets** (hours, days, weeks, months, years) and ke
 
 Everything outside your defined retention scope is deleted (unless `--dry-run` or `--list-only` is used).
 
-⚠️ **This software deletes files. Use at your own risk.**  
-**The author assumes no responsibility for data loss or damage.**
+⚠️ **Warning:** This tool permanently deletes files outside the defined retention scope.  
+Use `--dry-run` first to verify behavior. The author assumes no liability for data loss.
 
 ---
 
 ## ⚙️ Features
 
 - Pure **Python 3**, no external dependencies.  
-- Runs on **Linux, macOS, and Windows** (and everywhere else, where python 3 runs).  
+- Runs on **Linux, macOS, and Windows** (and anywhere else Python 3 runs).  
 - Supports **hourly, daily, weekly, monthly, quarterly and yearly** retention buckets.  
 - Supports **keeping the last N files** (`--last`) regardless of age.  
 - Supports **regex or glob** pattern matching.  
@@ -89,10 +93,10 @@ For non-Debian-based or non-Redhat-based systems:
 
 Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually
 
-It includes
-- the common python script: `retentions.py`
+The archive includes:
+- the common Python script: `retentions.py`
 - a common linux variant with shebang: `linux/retentions`
-- a macos variant with sheban: `macos/retentions`
+- a macOS variant with shebang: `macos/retentions`
 - and all the docs: `docs`
 
 ### 🔍 To verify installation:
@@ -113,7 +117,7 @@ No dependencies beyond Python 3.
 python3 retentions.py [path] [file_pattern] <options>
 ```
 
-> *Depending on your installation type, you may just call `retentions` instead of `python3 retentions.py` .*
+*If you installed via .deb or .rpm or a shebanged version from the tar.gz, you can simply run `retentions` instead of `python3 retentions.py`.*
 
 ---
 
@@ -121,7 +125,7 @@ python3 retentions.py [path] [file_pattern] <options>
 
 | Arguments | Description |
 |--------|--------------|
-| `path` | Base directory to scan |
+| `path` | base directory to scan |
 | `file_pattern` | glob pattern for matching files (use quotes to prevent shell expansion) |
 | `-r, --regex` | file_pattern is a regex (default: glob pattern) |
 
@@ -138,13 +142,13 @@ python3 retentions.py [path] [file_pattern] <options>
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
 
-⚠️ At least one retention option hase to be specified
+⚠️ At least one retention option has to be specified
 
 
-| Behaviour options | Description |
+| Behavior options | Description |
 |--------|--------------|
 | `-L, --list-only <separator>` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
-| `-V, --verbose <int>` | Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output |
+| `-V, --verbose <int>` | Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output (default: 0) |
 | `-X, --dry-run` | Show planned actions but do not delete any files |
 
 💡 Using `--dry-run` is a good option to start with `retentions` 😏
@@ -181,7 +185,8 @@ python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\0' | xar
 #### Verbose output
 
 ```bash
-python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose
+# Detailed logging
+python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose 2
 ```
 
 ---
@@ -203,7 +208,7 @@ python3 retentions.py /data/temp '.*\\.bak'
 ```bash
 python3 retentions.py /data/backups *.tar.gz
 ```
-(the shell expands *.tar.gz before retentions runs)
+(your shell expands *.tar.gz before retentions runs)
 
 retentions itself handles pattern matching internally using glob or regex, so quoting ensures the pattern is passed as intended.
 
@@ -215,7 +220,7 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 |------|----------|
 | 0 | Execution successful |
 | 1 | I/O or filesystem error |
-| 2 | Invalid arguments |
+| 2 | Invalid or conflicting arguments |
 | 3 | Pattern matched no files |
 | 9 | Unexpected error |
 
@@ -225,8 +230,8 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 
 - **KISS** – no configuration files, no hidden behavior.  
 - **Deterministic** – same input, same output.  
-- **Safe by intention** – dry-run and list-only modes available.  
-- **Cross-platform** – works anywhere Python 3 runs.  
+- **Safe by design** – dry-run and list-only modes available.  
+- **Cross-platform** – runs anywhere Python 3 does.  
 - **Plain ASCII** – no colors, no locale dependencies.
 
 ---
@@ -245,13 +250,12 @@ done
 
 ## 💖 Sponsoring
 
-If you find **retentions** useful and want to support its development,  
-you can do so via this PayPal link:
+If you find `retentions` useful, consider supporting its future development via PayPal:
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/kuhlmannthomas)
 
-Your support helps to maintain and improve open-source tools like this one.  
-Thank you!
+Your support helps maintain and improve open-source tools like this one.
+Thank you for your generosity!
 
 ---
 
@@ -264,10 +268,3 @@ Copyright © 2025 Thomas Kuhlmann
 
 Simple. Predictable. Cross-platform.  
 Just **retentions**.
-
-<style>
-th {
-  background-color: #97a9b8;
-  color: white;
-}
-</style>
