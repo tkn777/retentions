@@ -7,7 +7,7 @@ A tiny, cross-platform CLI tool to apply backup-style retention rules to any fil
 It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
 
 ```bash
-retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days (`-d`), 4 weeks (`-d`) and 6 months (`-m`)
+retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 weeks and 6 months
 ```
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
