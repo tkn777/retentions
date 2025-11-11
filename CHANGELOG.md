@@ -1,5 +1,6 @@
 ### 0.3.0 - 11.11.2025
 - **BREAKING CHANGE**: An exception while deleting a file does not terminate the programm, just print an error message.
+- **BREAKING CHANGE**: Use -H for help (or --help) and -h (or --hours) for hours to keep
 - Added --quartes option to keep the last N qarters
 
 ### 0.2.0 - 09.11.2025

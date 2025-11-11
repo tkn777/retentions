@@ -43,7 +43,10 @@ def parse_arguments() -> argparse.Namespace:
         description=("A minimal cross-platform CLI tool for file retention management"),
         epilog="Use with caution!! This tool deletes files unless --dry-run or --list-only is set.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False,
     )
+
+    parser.add_argument('-H', '--help', action='help')
 
     # positional arguments
     parser.add_argument("path", help="Base directory to scan")
@@ -53,7 +56,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("-r", "--regex", action="store_true", help="file_pattern is a regex (default: glob pattern)")
 
     # optional retention arguments (validated, no defaults)
-    parser.add_argument("-H", "--hours", type=positive_int, metavar="N", help="Keep one file per hour from the last N hours")
+    parser.add_argument("-h", "--hours", type=positive_int, metavar="N", help="Keep one file per hour from the last N hours")
     parser.add_argument("-d", "--days", type=positive_int, metavar="N", help="Keep one file per day from the last N days")
     parser.add_argument("-w", "--weeks", type=positive_int, metavar="N", help="Keep one file per week from the last N weeks")
     parser.add_argument("-m", "--months", type=positive_int, metavar="N", help="Keep one file per month from the last N months")

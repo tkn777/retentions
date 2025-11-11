@@ -128,6 +128,8 @@ python3 retentions.py [path] [file_pattern] [options]
 | `-X, --dry-run` | Show planned actions but do not delete any files |
 | `-L, --list-only <separator>` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
 | `-V, --verbose` | Show detailed output of KEEP/DELETE decisions and time buckets |
+| `-H, --help` | Show the help / usage of `retentions` |
+| `--version` | Show the version of `retentions` |
 
 ---
 
