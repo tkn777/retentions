@@ -87,7 +87,7 @@ echo "    -> ${BUILD_DIR}/${APP}_${VERSION}_all.deb"
     TMPDIR="$(mktemp -d)"
     cp "${BUILD_DIR}/${APP}_${VERSION}_all.deb" "$TMPDIR/"
     cd "$TMPDIR"
-    alien --to-rpm --scripts --release=1 "${APP}_${VERSION}_all.deb" >/dev/null
+    alien --to-rpm --scripts --version="${VERSION}-1" "${APP}_${VERSION}_all.deb" >/dev/null
     mv ./*.rpm "${OLDPWD}/build/"
     rm -rf "$TMPDIR"
 )
