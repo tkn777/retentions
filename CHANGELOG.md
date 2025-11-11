@@ -1,3 +1,6 @@
+### 0.3.1 - 11.11.2025
+- Fixed bug regarding `--last` (verbose does not always fit, but functionally it is correct)
+
 ### 0.3.0 - 11.11.2025
 - **BREAKING CHANGE**: An exception while deleting a file does not terminate the programm, just print an error message.
 - **BREAKING CHANGE**: Use `-H` (or `--help`) for help  and `-h` (or `--hours`) for hours to keep
