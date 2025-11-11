@@ -157,7 +157,7 @@ python3 retentions.py [path] [file_pattern] <options>
 | Common options | Description |
 |--------|--------------|
 | `-H, --help` | Show the help / usage of `retentions` |
-| `--version` | Show the version of `retentions` |
+| `-R, --version` | Show the version of `retentions` |
 
 💡 Common options can be used without any other arguments.
 
