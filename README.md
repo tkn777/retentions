@@ -51,9 +51,9 @@ Use `--dry-run` first to verify behavior. The author assumes no liability for da
 
 1. **Collect all matching files** under the given path.  
 2. **Sort** them by modification time (newest first).  
-3. **Retain**:
-   - Newest file per `hour` / `day` / `week` / `month` / `year`
-   - Last `N` files (`--last`)
+3. **Keep**:
+   - Newest file per retention period (cumulative): `hour` / `day` / `week` / `month` / `quarter` / `year`
+   - Last `N` files (`--last`) (regardless from other retention periods)
 4. **Delete** everything else.  
 5. If `--dry-run` is enabled, print the planned actions instead of executing them.
 
@@ -142,8 +142,11 @@ python3 retentions.py [path] [file_pattern] <options>
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
 
-💡 Every retention option can be combined with any (or all) others\
-📝 `--last` keeps just the `N` most recently modified files, so it may keep files the other retention options may not keep\
+📝 Notices:
+- Every retention option can be combined with any (or all) others
+- The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` cannot also be marked as keep with the retention `--week`.
+- One exception here is `--last`. It always marks the last `N` files as keep, regardless of all other retentions.
+
 ⚠️ At least one retention option has to be specified
 &nbsp;
 
