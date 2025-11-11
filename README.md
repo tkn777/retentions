@@ -122,6 +122,7 @@ python3 retentions.py [path] [file_pattern] [options]
 | `-d, --days <int>` | Keep one file per day from the last N days |
 | `-w, --weeks <int>` | Keep one file per week from the last N weeks |
 | `-m, --months <int>` | Keep one file per month from the last N months |
+| `-q, --quarters <int>` | Keep one file per quarter from the last N quarters |
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
 | `-X, --dry-run` | Show planned actions but do not delete any files |

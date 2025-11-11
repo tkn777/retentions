@@ -57,6 +57,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("-d", "--days", type=positive_int, metavar="N", help="Keep one file per day from the last N days")
     parser.add_argument("-w", "--weeks", type=positive_int, metavar="N", help="Keep one file per week from the last N weeks")
     parser.add_argument("-m", "--months", type=positive_int, metavar="N", help="Keep one file per month from the last N months")
+    parser.add_argument("-q", "--quarters", type=positive_int, metavar="N", help="Keep one file per quarter from the last N quarters")
     parser.add_argument("-y", "--years", type=positive_int, metavar="N", help="Keep one file per year from the last N years")
     parser.add_argument("-l", "--last", type=positive_int, metavar="N", help="Always keep the N most recently modified files")
 
@@ -152,6 +153,9 @@ def bucket_files(files: list[Path], mode: str) -> DefaultDict[str, list[Path]]:
             key = ts.strftime("%Y-%m")
         elif mode == "years":
             key = str(ts.year)
+        elif mode == "quarters":
+            quarter = (ts.month - 1) // 3 + 1
+            key = f"{ts.year}-Q{quarter}"
         else:
             raise ValueError(f"invalid bucket mode: {mode}")
         buckets[key].append(f)
@@ -206,7 +210,7 @@ def main() -> None:
         to_keep: set[Path] = set()
 
         # Retention by time buckets
-        for mode in ["hours", "days", "weeks", "months", "years"]:
+        for mode in ["hours", "days", "weeks", "months", "quarters", "years"]:
             mode_count = getattr(arguments, mode)
             if mode_count:
                 buckets = bucket_files(existing_files, mode)
