@@ -142,7 +142,8 @@ python3 retentions.py [path] [file_pattern] <options>
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
 
-⚠️ At least one retention option has to be specified\
+💡 Every retention option can be combined with any (or all) others\
+⚠️ At least one retention option has to be specified
 &nbsp;
 
 | Behavior options | Description |
