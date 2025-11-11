@@ -6,6 +6,14 @@ and submit changes.
 
 ------------------------------------------------------------------------
 
+## Consider starting a discussion
+
+Consider starting a **Discussion** before opening a pull request.\
+This helps confirm that the idea fits the project goals and prevents
+unnecessary work.
+
+------------------------------------------------------------------------
+
 ## Getting Started
 
 1.  Fork this repository and clone your fork:
@@ -74,21 +82,17 @@ Example:
 
 ## Pull Requests
 
-1.  Consider starting a **Discussion** before opening a pull request.\
-    This helps confirm that the idea fits the project goals and prevents
-    unnecessary work.
-
-2.  Create a feature branch:
+1.  Create a feature branch:
 
     ``` bash
     git checkout -b feature/my-change
     ```
 
-3.  Commit and push your changes.
+2.  Commit and push your changes.
 
-4.  Open a pull request against the `main` branch.
+3.  Open a pull request against the `main` branch.
 
-5.  Describe **what** the change does and **why** it's needed.
+4.  Describe **what** the change does and **why** it's needed.
 
 Small, focused PRs are preferred over large ones.
 
@@ -96,7 +100,7 @@ Small, focused PRs are preferred over large ones.
 
 ## Reporting Issues
 
-If you find a bug or have a feature request, please open an issue.\
+If you find a bug or have a feature request, please open an issue or start a discusstion.\
 Include details about your environment (`python --version`, OS, etc.)
 and steps to reproduce the problem.
 
