@@ -264,3 +264,10 @@ Copyright © 2025 Thomas Kuhlmann
 
 Simple. Predictable. Cross-platform.  
 Just **retentions**.
+
+<style>
+th {
+  background-color: #97a9b8;
+  color: white;
+}
+</style>
