@@ -222,6 +222,7 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 | 1 | I/O or filesystem error |
 | 2 | Invalid or conflicting arguments |
 | 3 | Pattern matched no files |
+| 7 | Security check failed |
 | 9 | Unexpected error |
 
 ---

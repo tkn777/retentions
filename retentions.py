@@ -232,6 +232,10 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
                 print("Error while deleting file '{file.name}':", e, file=sys.stderr)
 
 
+class SecurityCheckFailedError(Exception):
+    pass
+
+
 def main() -> None:
     try:
         arguments = parse_arguments()
@@ -269,9 +273,9 @@ def main() -> None:
 
         # Security checks
         if not len(existing_files) == len(to_keep) + len(to_prune):
-            raise RuntimeError("File count mismatch: some files are neither kept nor pruned!! [Security-check]")
+            raise SecurityCheckFailedError("File count mismatch: some files are neither kept nor pruned!! [Security-check]")
         if not len(to_prune) == sum(1 for f in existing_files if is_file_to_delete(to_keep, f)):
-            raise RuntimeError("File deletion count mismatch!! [Security-check]")
+            raise SecurityCheckFailedError("File deletion count mismatch!! [Security-check]")
 
         # Delete files not to keep
         for file in existing_files:
@@ -284,6 +288,9 @@ def main() -> None:
     except NoFilesFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(3)
+    except SecurityCheckFailedError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(7)
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
         sys.exit(9)
