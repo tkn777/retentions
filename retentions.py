@@ -196,7 +196,7 @@ def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_cou
         else:
             if verbose >= 2:
                 print(
-                    f"Keeping file '{first_bucket_file.name}': {mode} {current_count - (effective_count - mode_count) + 1}/{mode_count} "
+                    f"Keeping file '{first_bucket_file.name}': {mode} {(current_count - (effective_count - mode_count) + 1):02d}/{mode_count:02d} "
                     f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                 )
                 for file_to_delete in buckets[sorted_keys[current_count]][1:]:
@@ -244,13 +244,13 @@ def main() -> None:
                 buckets = bucket_files(existing_files, mode)
                 process_buckets(to_keep, to_prune, mode, mode_count, buckets, arguments.verbose)
 
-        # Keep last N files
+        # Keep last N files (addtional to time-based retention)
         if arguments.last:
             last_files = existing_files[: arguments.last]
             if arguments.verbose >= 2:
                 for index, file in enumerate(last_files, start=1):
                     if file not in to_keep:
-                        print(f"Keeping file '{file.name}': last {index}/{arguments.last} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})")
+                        print(f"Keeping file '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})")
             to_keep.update(last_files)
 
         # Verbose files to prune but not kept by any retention rule
@@ -261,9 +261,9 @@ def main() -> None:
 
         # Summary
         if arguments.verbose >= 2:
-            print(f"Total files found: {len(existing_files)}")
-            print(f"Total files to keep: {len(to_keep)}")
-            print(f"Total files to delete: {len(to_prune)}")
+            print(f"Total files found:  {len(existing_files):03d}")
+            print(f"Total files keep:   {len(to_keep):03d}")
+            print(f"Total files delete: {len(to_prune):03d}")
 
         # Security checks
         if not len(existing_files) == len(to_keep) + len(to_prune):
