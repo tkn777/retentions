@@ -191,12 +191,12 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
         if arguments.dry_run:
             print(f"DRY-RUN DELETE: {file.name} (mtime: {mtime})")
         else:
-            file.unlink()
             if arguments.verbose:
-                try:
-                    print(f"DELETED: {file.name} (mtime: {mtime})")
-                except IOError as e:
-                    print("Error while deleting file:", e, file=sys.stderr)
+                print(f"DELETEING: {file.name} (mtime: {mtime})")
+            try:
+                file.unlink()
+            except IOError as e:
+                print("Error while deleting file '{file.name}':", e, file=sys.stderr)
 
 
 def main() -> None:
