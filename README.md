@@ -143,6 +143,7 @@ python3 retentions.py [path] [file_pattern] <options>
 | `-l, --last <int>` | Always keep the N most recently modified files |
 
 💡 Every retention option can be combined with any (or all) others\
+📝 `--last` keeps just the `N` most recently modified files, so it may keep files the other retention options may not keep\
 ⚠️ At least one retention option has to be specified
 &nbsp;
 
@@ -214,6 +215,12 @@ python3 retentions.py /data/backups *.tar.gz
 retentions itself handles pattern matching internally using glob or regex, so quoting ensures the pattern is passed as intended.
 
 ---
+
+## 📝 Notices
+
+- If you are using `--verbose` a file may be verbosed as marked to prune and later verbosed as marked to keep. (This is because of the special logic of `--last`)
+
+--- 
 
 ## ⚡ Exit Codes
 

@@ -1,3 +1,6 @@
+### 0.3.2 - 11.11.2025
+- Fixed verbose regarding latest
+
 ### 0.3.1 - 11.11.2025
 - Fixed bug regarding `--last` (verbose does not always fit, but functionally it is correct)
 
