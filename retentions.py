@@ -191,7 +191,7 @@ def create_retention_buckets(files: list[Path], mode: str) -> dict[str, list[Pat
 
 
 def process_retention_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: dict[str, list[Path]], verbose: int, prune_keep_decisions: dict[Path, str]) -> None:
-    sorted_keys = sorted(buckets.keys(), reverse=True)
+    sorted_keys = sorted(buckets.keys(), reverse=True) # newest first
     effective_count = mode_count
     current_count = 0
     while current_count < effective_count:
@@ -218,10 +218,10 @@ def process_retention_buckets(to_keep: set[Path], to_prune: set[Path], mode: str
 
 
 def process_last_n(existing_files: list[Path], to_keep: set[Path], to_prune: set[Path], arguments: argparse.Namespace, prune_keep_decisions: dict[Path, str]) -> None:
-    last_files = existing_files[: arguments.last]
+    last_files = existing_files[: arguments.last] # Get the N most recently modified files regardless from any retention rule (newest first)
     if arguments.verbose >= 2:
         for index, file in enumerate(last_files, start=1):
-            if file not in to_keep:
+            if file not in to_keep: # Retention rules may have already kept this file, their message takes precedence
                 prune_keep_decisions[file] = f"Keeping '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
     to_keep.update(last_files)
     to_prune.difference_update(last_files)  # ensure last N files are not pruned
@@ -234,27 +234,31 @@ def is_file_to_delete(to_keep: set[Path], file: Path) -> bool:
 def delete_file(arguments: argparse.Namespace, file: Path) -> None:
     mtime = datetime.fromtimestamp(file.stat().st_mtime)
     if arguments.list_only:
-        print(file.absolute(), end=arguments.list_only)
+        print(file.absolute(), end=arguments.list_only)  # List mode
     else:
         if arguments.dry_run:
             if arguments.verbose >= 1:
-                print(f"DRY-RUN DELETE: {file.name} (mtime: {mtime})")
+                print(f"DRY-RUN DELETE: {file.name} (mtime: {mtime})")  # Just simulate deletion
         else:
             if arguments.verbose >= 1:
                 print(f"DELETING: {file.name} (mtime: {mtime})")
             try:
                 file.unlink()
-            except OSError as e:
+            except OSError as e:  # Catch deletion error, print it, and continue
                 print("Error while deleting file '{file.name}':", e, file=sys.stderr)
 
 
 def main() -> None:
     try:
+        # Parse arguments
         arguments = parse_arguments()
+
+        # Read file list
         existing_files: list[Path] = read_filelist(arguments.path, arguments.file_pattern, arguments.regex, arguments.verbose)
-        to_keep: set[Path] = set()
-        to_prune: set[Path] = set()
-        prune_keep_decisions: dict[Path, str] = {}
+
+        to_keep: set[Path] = set()  # Files marked to keep
+        to_prune: set[Path] = set()  # Files marked for deletion
+        prune_keep_decisions: dict[Path, str] = {}  # For verbose output of decisions
 
         # Retention by time buckets
         for mode in ["hours", "days", "weeks", "months", "quarters", "years"]:
@@ -278,7 +282,7 @@ def main() -> None:
             for file, message in prune_keep_decisions.items():
                 print(message)
 
-        # Summary
+        # Summary of keep / prune counts
         if arguments.verbose >= 2:
             print(f"Total files found: {len(existing_files):03d}")
             print(f"Total files keep:  {len(to_keep):03d}")
