@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install ruff mypy
+          pip install ruff mypy bandit
 
       - name: Run Ruff Lint
         run: ruff check .
@@ -30,6 +30,9 @@ jobs:
 
       - name: Run Type Checking
         run: mypy .
+
+      - name: Run Bandit (security scan)
+        run: bandit -r . -lll
 
       - name: Test CLI --help and --version
         run: |

@@ -16,7 +16,8 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import DefaultDict, NoReturn
+from typing import NoReturn
+
 
 VERSION: str = "dev-0.3.0"
 
@@ -161,8 +162,8 @@ def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: int) -
     return matches
 
 
-def bucket_files(files: list[Path], mode: str) -> DefaultDict[str, list[Path]]:
-    buckets: DefaultDict[str, list[Path]] = defaultdict(list)
+def bucket_files(files: list[Path], mode: str) -> defaultdict[str, list[Path]]:
+    buckets: defaultdict[str, list[Path]] = defaultdict(list)
     for f in files:
         ts = datetime.fromtimestamp(f.stat().st_mtime)
         if mode == "hours":
@@ -185,7 +186,7 @@ def bucket_files(files: list[Path], mode: str) -> DefaultDict[str, list[Path]]:
     return buckets
 
 
-def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: DefaultDict[str, list[Path]], verbose: int) -> None:
+def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: defaultdict[str, list[Path]], verbose: int) -> None:
     sorted_keys = sorted(buckets.keys(), reverse=True)
     effective_count = mode_count
     current_count = 0
@@ -228,7 +229,7 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
                 print(f"DELETING: {file.name} (mtime: {mtime})")
             try:
                 file.unlink()
-            except IOError as e:
+            except OSError as e:
                 print("Error while deleting file '{file.name}':", e, file=sys.stderr)
 
 
@@ -285,7 +286,7 @@ def main() -> None:
             if is_file_to_delete(to_keep, file):
                 delete_file(arguments, file)
 
-    except IOError as e:
+    except OSError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
     except NoFilesFoundError as e:
