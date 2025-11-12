@@ -1,3 +1,6 @@
+### 0.5.0 - 12.11.2025
+- Add verbose of buckets
+
 ### 0.4.0 - 12.11.2025
 - Changed verbose of prune / keep decisions
 - Optimized and supplement lint workflow
