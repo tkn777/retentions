@@ -1,5 +1,6 @@
 .vscode/
 .vscode/settings.json
+.continue
 .venv/
 __pycache__/
 build/
