@@ -184,7 +184,7 @@ def create_retention_buckets(existing_files: list[Path], mode: str, verbose: int
         buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from the timestamp of the file
     if verbose >= 3:
         for key, files in buckets.items():
-            print(f"Buckets: {key} - {', '.join(f'{p.name} ({datetime.fromtimestamp(get_mtime(p)):%Y-%m-%d %H:%M:%S})' for p in files)}")
+            print(f"Buckets: {key} - {', '.join(f'{p.name} ({datetime.fromtimestamp(get_mtime(p))})' for p in files)}")
     return buckets
 
 
