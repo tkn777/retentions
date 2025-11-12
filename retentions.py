@@ -166,32 +166,34 @@ def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: int) -
     return matches
 
 
-def create_retention_buckets(files: list[Path], mode: str) -> dict[str, list[Path]]:
+def create_retention_buckets(existing_files: list[Path], mode: str, verbose: int) -> dict[str, list[Path]]:
     buckets: dict[str, list[Path]] = defaultdict(list)
-    for f in files:
-        ts = datetime.fromtimestamp(f.stat().st_mtime)
+    for file in existing_files:
+        timestamp = datetime.fromtimestamp(file.stat().st_mtime)
         if mode == "hours":
-            key = ts.strftime("%Y-%m-%d-%H")
+            key = timestamp.strftime("%Y-%m-%d-%H")
         elif mode == "days":
-            key = ts.strftime("%Y-%m-%d")
+            key = timestamp.strftime("%Y-%m-%d")
         elif mode == "weeks":
-            year, week, _ = ts.isocalendar()
+            year, week, _ = timestamp.isocalendar()
             key = f"{year}-W{week:02d}"
         elif mode == "months":
-            key = ts.strftime("%Y-%m")
+            key = timestamp.strftime("%Y-%m")
         elif mode == "years":
-            key = str(ts.year)
+            key = str(timestamp.year)
         elif mode == "quarters":
-            quarter = (ts.month - 1) // 3 + 1
-            key = f"{ts.year}-Q{quarter}"
+            quarter = (timestamp.month - 1) // 3 + 1
+            key = f"{timestamp.year}-Q{quarter}"
         else:
             raise ValueError(f"invalid bucket mode: {mode}")
-        buckets[key].append(f)
+        buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from timestamp of file
+        if verbose >= 2:
+            print(f"Buckets: {key} - {[p.name for p in buckets[key]]}")
     return buckets
 
 
 def process_retention_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: dict[str, list[Path]], verbose: int, prune_keep_decisions: dict[Path, str]) -> None:
-    sorted_keys = sorted(buckets.keys(), reverse=True) # newest first
+    sorted_keys = sorted(buckets.keys(), reverse=True)  # newest first
     effective_count = mode_count
     current_count = 0
     while current_count < effective_count:
@@ -214,14 +216,14 @@ def process_retention_buckets(to_keep: set[Path], to_prune: set[Path], mode: str
                         f"Pruning '{file_to_prune.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                     )
                 to_prune.add(file_to_prune)
-        current_count += 1  # advance to next bucket
+        current_count += 1
 
 
 def process_last_n(existing_files: list[Path], to_keep: set[Path], to_prune: set[Path], arguments: argparse.Namespace, prune_keep_decisions: dict[Path, str]) -> None:
-    last_files = existing_files[: arguments.last] # Get the N most recently modified files regardless from any retention rule (newest first)
+    last_files = existing_files[: arguments.last]  # Get the N most recently modified files regardless from any retention rule (newest first)
     if arguments.verbose >= 2:
         for index, file in enumerate(last_files, start=1):
-            if file not in to_keep: # Retention rules may have already kept this file, their message takes precedence
+            if file not in to_keep:  # Retention rules may have already kept this file, their message takes precedence
                 prune_keep_decisions[file] = f"Keeping '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
     to_keep.update(last_files)
     to_prune.difference_update(last_files)  # ensure last N files are not pruned
@@ -264,7 +266,7 @@ def main() -> None:
         for mode in ["hours", "days", "weeks", "months", "quarters", "years"]:
             mode_count = getattr(arguments, mode)
             if mode_count:
-                buckets = create_retention_buckets(existing_files, mode)
+                buckets = create_retention_buckets(existing_files, mode, arguments.verbose)
                 process_retention_buckets(to_keep, to_prune, mode, mode_count, buckets, arguments.verbose, prune_keep_decisions)
 
         # Keep last N files (additional to time-based retention)
