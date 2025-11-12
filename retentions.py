@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import NoReturn
 
 
-VERSION: str = "dev-0.3.0"
+VERSION: str = "dev-0.5.0"
 
 
 class IntegrityCheckFailedError(Exception):
@@ -186,9 +186,10 @@ def create_retention_buckets(existing_files: list[Path], mode: str, verbose: int
             key = f"{timestamp.year}-Q{quarter}"
         else:
             raise ValueError(f"invalid bucket mode: {mode}")
-        buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from timestamp of file
-        if verbose >= 2:
-            print(f"Buckets: {key} - {[p.name for p in buckets[key]]}")
+        buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from the timestamp of the file
+    if verbose >= 2:
+        for key, files in buckets.items():
+            print(f"Buckets: {key} - {', '.join(f'{p.name} ({datetime.fromtimestamp(p.stat().st_mtime):%Y-%m-%d %H:%M:%S})' for p in files)}")
     return buckets
 
 
@@ -212,9 +213,7 @@ def process_retention_buckets(to_keep: set[Path], to_prune: set[Path], mode: str
             to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
             for file_to_prune in buckets[sorted_keys[current_count]][1:]:
                 if verbose >= 2:
-                    prune_keep_decisions[file_to_prune] = (
-                        f"Pruning '{file_to_prune.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
-                    )
+                    prune_keep_decisions[file_to_prune] = f"Pruning '{file_to_prune.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(file_to_prune.stat().st_mtime)})"
                 to_prune.add(file_to_prune)
         current_count += 1
 

@@ -1,5 +1,6 @@
 ### 0.5.0 - 12.11.2025
-- Add verbose of buckets
+- Add verbose of created buckets
+- Fixed bug verbose mtime in processing buckets
 
 ### 0.4.0 - 12.11.2025
 - Changed verbose of prune / keep decisions
