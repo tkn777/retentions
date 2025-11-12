@@ -1,4 +1,6 @@
-### 0.6.0 - 12.11.2025
+### 0.5.1 - 12.11.2025
+- Fixed bug regarding const of verbose argument
+- Fixed bug regarding verbose vs. list-only argument
 
 ### 0.5.0 - 12.11.2025
 - Add verbose of created buckets

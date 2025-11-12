@@ -80,7 +80,7 @@ def parse_arguments() -> argparse.Namespace:
         help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')"
     )
     parser.add_argument(
-        "-V", "--verbose", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const="2", metavar="lev",
+        "-V", "--verbose", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const=2, metavar="lev",
         help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output, 3 = debug output (default: 2, if specified without value)"
     )
     # fmt: on
@@ -91,13 +91,13 @@ def parse_arguments() -> argparse.Namespace:
 
     args = parser.parse_args()
 
-    # incompatible flags
-    if args.list_only and args.verbose > 0:
-        parser.error("--list-only and --verbose cannot be used together")
-
     # default verbosity
     if not args.verbose:
         args.verbose = 0
+
+    # incompatible flags
+    if args.list_only and args.verbose > 0:
+        parser.error("--list-only and --verbose cannot be used together")
 
     # dry-run implies verbose (unless list-only)
     if args.dry_run and not args.list_only and not args.verbose:
