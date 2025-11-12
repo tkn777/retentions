@@ -166,7 +166,7 @@ def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: int) -
     return matches
 
 
-def create_bucket_files(files: list[Path], mode: str) -> dict[str, list[Path]]:
+def create_retention_buckets(files: list[Path], mode: str) -> dict[str, list[Path]]:
     buckets: dict[str, list[Path]] = defaultdict(list)
     for f in files:
         ts = datetime.fromtimestamp(f.stat().st_mtime)
@@ -190,7 +190,7 @@ def create_bucket_files(files: list[Path], mode: str) -> dict[str, list[Path]]:
     return buckets
 
 
-def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: dict[str, list[Path]], verbose: int, prune_keep_decisions: dict[Path, str]) -> None:
+def process_retention_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: dict[str, list[Path]], verbose: int, prune_keep_decisions: dict[Path, str]) -> None:
     sorted_keys = sorted(buckets.keys(), reverse=True)
     effective_count = mode_count
     current_count = 0
@@ -201,28 +201,30 @@ def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_cou
         if first_bucket_file in to_keep:  # Already kept by previous mode
             effective_count += 1
         else:
+            # Keep first entry of bucket, prune the rest
             if verbose >= 2:
                 prune_keep_decisions[first_bucket_file] = (
                     f"Keeping '{first_bucket_file.name}': {mode} {(current_count - (effective_count - mode_count) + 1):02d}/{mode_count:02d} "
                     f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                 )
-                for file_to_delete in buckets[sorted_keys[current_count]][1:]:
-                    prune_keep_decisions[file_to_delete] = (
-                        f"Pruning '{file_to_delete.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
-                    )
-                    to_prune.add(file_to_delete)
             to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
-        current_count += 1
+            for file_to_prune in buckets[sorted_keys[current_count]][1:]:
+                if verbose >= 2:
+                    prune_keep_decisions[file_to_prune] = (
+                        f"Pruning '{file_to_prune.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
+                    )
+                to_prune.add(file_to_prune)
+        current_count += 1  # advance to next bucket
 
 
-def process_last(existing_files: list[Path], to_keep: set[Path], to_prune: set[Path], arguments: argparse.Namespace, prune_keep_decisions: dict[Path, str]) -> None:
+def process_last_n(existing_files: list[Path], to_keep: set[Path], to_prune: set[Path], arguments: argparse.Namespace, prune_keep_decisions: dict[Path, str]) -> None:
     last_files = existing_files[: arguments.last]
     if arguments.verbose >= 2:
         for index, file in enumerate(last_files, start=1):
             if file not in to_keep:
                 prune_keep_decisions[file] = f"Keeping '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
     to_keep.update(last_files)
-    to_prune.difference_update(last_files)
+    to_prune.difference_update(last_files)  # ensure last N files are not pruned
 
 
 def is_file_to_delete(to_keep: set[Path], file: Path) -> bool:
@@ -258,12 +260,12 @@ def main() -> None:
         for mode in ["hours", "days", "weeks", "months", "quarters", "years"]:
             mode_count = getattr(arguments, mode)
             if mode_count:
-                buckets = create_bucket_files(existing_files, mode)
-                process_buckets(to_keep, to_prune, mode, mode_count, buckets, arguments.verbose, prune_keep_decisions)
+                buckets = create_retention_buckets(existing_files, mode)
+                process_retention_buckets(to_keep, to_prune, mode, mode_count, buckets, arguments.verbose, prune_keep_decisions)
 
         # Keep last N files (additional to time-based retention)
         if arguments.last:
-            process_last(existing_files, to_keep, to_prune, arguments, prune_keep_decisions)
+            process_last_n(existing_files, to_keep, to_prune, arguments, prune_keep_decisions)
 
         # Verbose files to prune but not kept by any retention rule
         if arguments.verbose >= 2:
@@ -271,7 +273,7 @@ def main() -> None:
                 prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
                 to_prune.add(file)
 
-        # Output prune/keep decisions
+        # Output prune / keep decisions
         if arguments.verbose >= 2:
             for file, message in prune_keep_decisions.items():
                 print(message)
@@ -282,13 +284,13 @@ def main() -> None:
             print(f"Total files keep:  {len(to_keep):03d}")
             print(f"Total files prune: {len(to_prune):03d}")
 
-        # Integrity checks
+        # Simple integrity checks
         if not len(existing_files) == len(to_keep) + len(to_prune):
             raise IntegrityCheckFailedError("File count mismatch: some files are neither kept nor pruned!! [Security-check]")
         if not len(to_prune) == sum(1 for f in existing_files if is_file_to_delete(to_keep, f)):
             raise IntegrityCheckFailedError("File deletion count mismatch!! [Security-check]")
 
-        # Delete files not to keep
+        # Delete files not to keep (or list them)
         for file in existing_files:
             if is_file_to_delete(to_keep, file):
                 delete_file(arguments, file)
