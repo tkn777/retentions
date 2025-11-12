@@ -118,7 +118,7 @@ def parse_arguments() -> argparse.Namespace:
         except re.error:
             parser.error(f"Invalid regular expression: {args.file_pattern}")
 
-    if args.verbose >= 2:
+    if args.verbose >= 3:
         print(f"Using arguments: {vars(args)}")
 
     return args
