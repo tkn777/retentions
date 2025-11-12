@@ -20,7 +20,7 @@ retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 week
 
 `retentions` is a single-file Python script that applies retention logic to a directory of files. 
 
-It groups files into time **buckets** (hours, days, weeks, months, years) and keeps only one representative file per bucket, typically the most recent one.  
+It groups files into time **buckets** (hours, days, weeks, months, quarters, years) and keeps only one representative file per bucket, typically the most recent one.  
 
 Everything outside your defined retention scope is deleted (unless `--dry-run` or `--list-only` is used).
 
@@ -117,7 +117,7 @@ No dependencies beyond Python 3.
 python3 retentions.py [path] [file_pattern] <options>
 ```
 
-*If you installed via .deb or .rpm or a shebanged version from the tar.gz, you can simply run `retentions` instead of `python3 retentions.py`.*
+*If you installed via .deb or .rpm or a shebang'ed version from the tar.gz, you can simply run `retentions` instead of `python3 retentions.py`.*
 
 ---
 
@@ -217,12 +217,6 @@ python3 retentions.py /data/backups *.tar.gz
 (your shell expands *.tar.gz before retentions runs)
 
 retentions itself handles pattern matching internally using glob or regex, so quoting ensures the pattern is passed as intended.
-
----
-
-## 📝 Notices
-
-- If you are using `--verbose` a file may be verbosed as marked to prune and later verbosed as marked to keep. (This is because of the special logic of `--last`)
 
 --- 
 

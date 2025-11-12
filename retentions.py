@@ -22,14 +22,22 @@ from typing import NoReturn
 VERSION: str = "dev-0.3.0"
 
 
+class IntegrityCheckFailedError(Exception):
+    pass
+
+
+class NoFilesFoundError(Exception):
+    pass
+
+
 def positive_int(value: str) -> int:
     try:
-        ivalue = int(value)
-        if ivalue <= 0:
+        int_value = int(value)
+        if int_value <= 0:
             raise ValueError
     except ValueError:
         raise argparse.ArgumentTypeError(f"Invalid value '{value}': must be an integer > 0")
-    return ivalue
+    return int_value
 
 
 class CleanArgumentParser(argparse.ArgumentParser):
@@ -126,10 +134,6 @@ def parse_arguments() -> argparse.Namespace:
     return args
 
 
-class NoFilesFoundError(Exception):
-    pass
-
-
 def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: int) -> list[Path]:
     base: Path = Path(base_path)
     matches: list[Path] = []
@@ -162,8 +166,8 @@ def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: int) -
     return matches
 
 
-def bucket_files(files: list[Path], mode: str) -> defaultdict[str, list[Path]]:
-    buckets: defaultdict[str, list[Path]] = defaultdict(list)
+def create_bucket_files(files: list[Path], mode: str) -> dict[str, list[Path]]:
+    buckets: dict[str, list[Path]] = defaultdict(list)
     for f in files:
         ts = datetime.fromtimestamp(f.stat().st_mtime)
         if mode == "hours":
@@ -186,7 +190,7 @@ def bucket_files(files: list[Path], mode: str) -> defaultdict[str, list[Path]]:
     return buckets
 
 
-def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: defaultdict[str, list[Path]], verbose: int) -> None:
+def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: dict[str, list[Path]], verbose: int, prune_keep_decisions: dict[Path, str]) -> None:
     sorted_keys = sorted(buckets.keys(), reverse=True)
     effective_count = mode_count
     current_count = 0
@@ -198,18 +202,27 @@ def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_cou
             effective_count += 1
         else:
             if verbose >= 2:
-                print(
+                prune_keep_decisions[first_bucket_file] = (
                     f"Mark file to keep  '{first_bucket_file.name}': {mode} {(current_count - (effective_count - mode_count) + 1):02d}/{mode_count:02d} "
                     f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                 )
                 for file_to_delete in buckets[sorted_keys[current_count]][1:]:
-                    print(
-                        f"Mark file to prune '{file_to_delete.name}': {mode} "
-                        f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
+                    prune_keep_decisions[file_to_delete] = (
+                        f"Mark file to prune '{file_to_delete.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                     )
                     to_prune.add(file_to_delete)
             to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
         current_count += 1
+
+
+def process_last(existing_files: list[Path], to_keep: set[Path], to_prune: set[Path], arguments: argparse.Namespace, prune_keep_decisions: dict[Path, str]) -> None:
+    last_files = existing_files[: arguments.last]
+    if arguments.verbose >= 2:
+        for index, file in enumerate(last_files, start=1):
+            if file not in to_keep:
+                prune_keep_decisions[file] = f"Mark file to keep  '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
+    to_keep.update(last_files)
+    to_prune.difference_update(last_files)
 
 
 def is_file_to_delete(to_keep: set[Path], file: Path) -> bool:
@@ -233,41 +246,35 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
                 print("Error while deleting file '{file.name}':", e, file=sys.stderr)
 
 
-class IntegrityCheckFailedError(Exception):
-    pass
-
-
 def main() -> None:
     try:
         arguments = parse_arguments()
         existing_files: list[Path] = read_filelist(arguments.path, arguments.file_pattern, arguments.regex, arguments.verbose)
         to_keep: set[Path] = set()
         to_prune: set[Path] = set()
+        prune_keep_decisions: dict[Path, str] = {}
 
         # Retention by time buckets
         for mode in ["hours", "days", "weeks", "months", "quarters", "years"]:
             mode_count = getattr(arguments, mode)
             if mode_count:
-                buckets = bucket_files(existing_files, mode)
-                process_buckets(to_keep, to_prune, mode, mode_count, buckets, arguments.verbose)
+                buckets = create_bucket_files(existing_files, mode)
+                process_buckets(to_keep, to_prune, mode, mode_count, buckets, arguments.verbose, prune_keep_decisions)
 
-        # Keep last N files (addtional to time-based retention)
+        # Keep last N files (additional to time-based retention)
         if arguments.last:
-            last_files = existing_files[: arguments.last]
-            if arguments.verbose >= 2:
-                for index, file in enumerate(last_files, start=1):
-                    if file not in to_keep:
-                        print(
-                            f"Mark file to keep  '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
-                        )
-            to_keep.update(last_files)
-            to_prune.difference_update(last_files)
+            process_last(existing_files, to_keep, to_prune, arguments, prune_keep_decisions)
 
         # Verbose files to prune but not kept by any retention rule
         if arguments.verbose >= 2:
             for file in [f for f in existing_files if f not in to_keep | to_prune]:
-                print(f"Mark file to prune '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})")
+                prune_keep_decisions[file] = f"Mark file to prune '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
                 to_prune.add(file)
+
+        # Output prune/keep decisions
+        if arguments.verbose >= 2:
+            for file, message in prune_keep_decisions.items():
+                print(message)
 
         # Summary
         if arguments.verbose >= 2:

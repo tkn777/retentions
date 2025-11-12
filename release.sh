@@ -3,7 +3,7 @@
 set -euo pipefail
 
 APP="retentions"
-VERSION="${1:-0.0.0}"   # Version wird vom Workflow übergeben
+VERSION="${1:-0.0.0}"
 BUILD_DIR="build"
 PKG_DIR="${BUILD_DIR}/${APP}-${VERSION}"
 DEB_DIR="${BUILD_DIR}/deb"

@@ -46,7 +46,7 @@ unnecessary work.
 
 ## Code Style and Linting
 
-This project uses **Ruff** and **Mypy** for style and type checking.
+This project uses **Ruff** and **mypy** for style and type checking.
 
 Run all checks before committing:
 
@@ -100,7 +100,7 @@ Small, focused PRs are preferred over large ones.
 
 ## Reporting Issues
 
-If you find a bug or have a feature request, please open an issue or start a discusstion.\
+If you find a bug or have a feature request, please open an issue or start a discussion.\
 Include details about your environment (`python --version`, OS, etc.)
 and steps to reproduce the problem.
 

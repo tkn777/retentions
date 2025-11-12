@@ -3,10 +3,10 @@ name: Build & Release
 on:
   push:
     tags:
-      - "v*"   # läuft nur bei Tags wie v1.0.0
+      - "v*"
 
 permissions:
-  contents: write   # erlaubt das Erstellen des Releases
+  contents: write
 
 jobs:
   release:
