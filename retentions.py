@@ -77,11 +77,11 @@ def parse_arguments() -> argparse.Namespace:
     # mode flags
     parser.add_argument(
         "-L", "--list-only", nargs="?", const="\n", default=None, metavar="sp",
-        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')",
+        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')"
     )
     parser.add_argument(
         "-V", "--verbose", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const="2", metavar="lev",
-        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output, 3 = debug output (default: 2, if specified without value)",
+        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output, 3 = debug output (default: 2, if specified without value)"
     )
     # fmt: on
     parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
@@ -100,7 +100,7 @@ def parse_arguments() -> argparse.Namespace:
         args.verbose = 0
 
     # dry-run implies verbose (unless list-only)
-    if args.dry_run and not args.list_only:
+    if args.dry_run and not args.list_only and not args.verbose:
         args.verbose = 2
 
     # raise error, if no retention options specified
@@ -114,7 +114,7 @@ def parse_arguments() -> argparse.Namespace:
     # validate regex
     if args.regex:
         try:
-            re.compile(args.file_pattern)
+            args.regex_compiled = re.compile(args.file_pattern)
         except re.error:
             parser.error(f"Invalid regular expression: {args.file_pattern}")
 
@@ -124,34 +124,27 @@ def parse_arguments() -> argparse.Namespace:
     return args
 
 
-def read_filelist(base_path: str, pattern: str, use_regex: bool, verbose: int) -> list[Path]:
-    base: Path = Path(base_path)
-    matches: list[Path] = []
-
+def read_filelist(arguments: argparse.Namespace) -> list[Path]:
+    base: Path = Path(arguments.path)
     if not base.exists():
         raise FileNotFoundError(f"Path not found: {base}")
     if not base.is_dir():
         raise NotADirectoryError(f"Path is not a directory: {base}")
 
-    # pattern is a regex
-    if use_regex:
-        pattern_compiled = re.compile(pattern)
-        for file in base.iterdir():
-            if file.is_file() and pattern_compiled.match(file.name):
-                matches.append(file)
-
-    # pattern is a glob
+    matches: list[Path] = []
+    if arguments.regex:
+        matches = [f for f in base.iterdir() if f.is_file() and (arguments.regex_compiled.match(f.name))]
     else:
-        matches = [f for f in base.glob(pattern) if f.is_file()]
+        matches = [f for f in base.glob(arguments.file_pattern) if f.is_file()]
 
     if not matches:
-        raise NoFilesFoundError(f"No files found in '{base}' using {'regex' if use_regex else 'glob'} pattern '{pattern}'")
+        raise NoFilesFoundError(f"No files found in '{base}' using {'regex' if arguments.regex else 'glob'} pattern '{arguments.file_pattern}'")
 
     # sort by modification time (newest first), deterministic on ties
     matches = [p for p, _ in sorted(((p, p.stat().st_mtime) for p in matches), key=lambda t: (-t[1], t[0].name))]
 
-    if verbose >= 2:
-        print(f"Found {len(matches)} files using {'regex' if use_regex else 'glob'} pattern '{pattern}': {[p.name for p in matches]}")
+    if arguments.verbose >= 2:
+        print(f"Found {len(matches)} files using {'regex' if arguments.regex else 'glob'} pattern '{arguments.file_pattern}': {[p.name for p in matches]}")
 
     return matches
 
@@ -256,7 +249,7 @@ def main() -> None:
         arguments = parse_arguments()
 
         # Read file list
-        existing_files: list[Path] = read_filelist(arguments.path, arguments.file_pattern, arguments.regex, arguments.verbose)
+        existing_files: list[Path] = read_filelist(arguments)
 
         to_keep: set[Path] = set()  # Files marked to keep
         to_prune: set[Path] = set()  # Files marked for deletion
