@@ -154,7 +154,7 @@ python3 retentions.py [path] [file_pattern] <options>
 | Behavior options | Description |
 |--------|--------------|
 | `-L, --list-only <separator>` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
-| `-V, --verbose <int>` | Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output (default: 2, if specified without value) |
+| `-V, --verbose <int>` | Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output, 3 debug output (default: 2, if specified without value) |
 | `-X, --dry-run` | Show planned actions but do not delete any files |
 
 💡 Using `--dry-run` is a good option to start with `retentions` 😏\

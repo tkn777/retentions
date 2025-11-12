@@ -73,27 +73,17 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("-y", "--years", type=positive_int, metavar="N", help="Keep one file per year from the last N years")
     parser.add_argument("-l", "--last", type=positive_int, metavar="N", help="Always keep the N most recently modified files")
 
+    # fmt: off
     # mode flags
     parser.add_argument(
-        "-L",
-        "--list-only",
-        nargs="?",
-        const="\n",
-        default=None,
-        metavar="sp",
+        "-L", "--list-only", nargs="?", const="\n", default=None, metavar="sp",
         help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')",
     )
     parser.add_argument(
-        "-V",
-        "--verbose",
-        type=int,
-        nargs="?",
-        choices=[0, 1, 2],
-        default=None,
-        const="2",
-        metavar="lev",
-        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output (default: 2, if specified without value)",
+        "-V", "--verbose", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const="2", metavar="lev",
+        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output, 3 = debug output (default: 2, if specified without value)",
     )
+    # fmt: on
     parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
 
     parser.add_argument("-R", "--version", action="version", version=f"%(prog)s {VERSION}")
@@ -187,13 +177,15 @@ def create_retention_buckets(existing_files: list[Path], mode: str, verbose: int
         else:
             raise ValueError(f"invalid bucket mode: {mode}")
         buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from the timestamp of the file
-    if verbose >= 2:
+    if verbose >= 3:
         for key, files in buckets.items():
             print(f"Buckets: {key} - {', '.join(f'{p.name} ({datetime.fromtimestamp(p.stat().st_mtime):%Y-%m-%d %H:%M:%S})' for p in files)}")
     return buckets
 
 
-def process_retention_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: dict[str, list[Path]], verbose: int, prune_keep_decisions: dict[Path, str]) -> None:
+def process_retention_buckets(
+    to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: dict[str, list[Path]], verbose: int, prune_keep_decisions: dict[Path, str]
+) -> None:
     sorted_keys = sorted(buckets.keys(), reverse=True)  # newest first
     effective_count = mode_count
     current_count = 0
@@ -202,6 +194,8 @@ def process_retention_buckets(to_keep: set[Path], to_prune: set[Path], mode: str
             break  # No more buckets
         first_bucket_file = buckets[sorted_keys[current_count]][0]
         if first_bucket_file in to_keep:  # Already kept by previous mode
+            if verbose >= 3:
+                print(f"Skipping '{first_bucket_file.name}' for mode {mode} as already kept by previous mode")
             effective_count += 1
         else:
             # Keep first entry of bucket, prune the rest
@@ -210,20 +204,27 @@ def process_retention_buckets(to_keep: set[Path], to_prune: set[Path], mode: str
                     f"Keeping '{first_bucket_file.name}': {mode} {(current_count - (effective_count - mode_count) + 1):02d}/{mode_count:02d} "
                     f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                 )
-            to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
+            to_keep.add(first_bucket_file)
             for file_to_prune in buckets[sorted_keys[current_count]][1:]:
                 if verbose >= 2:
-                    prune_keep_decisions[file_to_prune] = f"Pruning '{file_to_prune.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(file_to_prune.stat().st_mtime)})"
+                    prune_keep_decisions[file_to_prune] = (
+                        f"Pruning '{file_to_prune.name}': {mode} "
+                        f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(file_to_prune.stat().st_mtime)})"
+                    )
                 to_prune.add(file_to_prune)
         current_count += 1
 
 
-def process_last_n(existing_files: list[Path], to_keep: set[Path], to_prune: set[Path], arguments: argparse.Namespace, prune_keep_decisions: dict[Path, str]) -> None:
+def process_last_n(
+    existing_files: list[Path], to_keep: set[Path], to_prune: set[Path], arguments: argparse.Namespace, prune_keep_decisions: dict[Path, str]
+) -> None:
     last_files = existing_files[: arguments.last]  # Get the N most recently modified files regardless from any retention rule (newest first)
     if arguments.verbose >= 2:
         for index, file in enumerate(last_files, start=1):
             if file not in to_keep:  # Retention rules may have already kept this file, their message takes precedence
-                prune_keep_decisions[file] = f"Keeping '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
+                prune_keep_decisions[file] = (
+                    f"Keeping '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
+                )
     to_keep.update(last_files)
     to_prune.difference_update(last_files)  # ensure last N files are not pruned
 
