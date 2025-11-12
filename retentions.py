@@ -203,12 +203,12 @@ def process_buckets(to_keep: set[Path], to_prune: set[Path], mode: str, mode_cou
         else:
             if verbose >= 2:
                 prune_keep_decisions[first_bucket_file] = (
-                    f"Mark file to keep  '{first_bucket_file.name}': {mode} {(current_count - (effective_count - mode_count) + 1):02d}/{mode_count:02d} "
+                    f"Keeping '{first_bucket_file.name}': {mode} {(current_count - (effective_count - mode_count) + 1):02d}/{mode_count:02d} "
                     f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                 )
                 for file_to_delete in buckets[sorted_keys[current_count]][1:]:
                     prune_keep_decisions[file_to_delete] = (
-                        f"Mark file to prune '{file_to_delete.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
+                        f"Pruning '{file_to_delete.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
                     )
                     to_prune.add(file_to_delete)
             to_keep.add(first_bucket_file)  # keep the most recent file in the bucket
@@ -220,7 +220,7 @@ def process_last(existing_files: list[Path], to_keep: set[Path], to_prune: set[P
     if arguments.verbose >= 2:
         for index, file in enumerate(last_files, start=1):
             if file not in to_keep:
-                prune_keep_decisions[file] = f"Mark file to keep  '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
+                prune_keep_decisions[file] = f"Keeping '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
     to_keep.update(last_files)
     to_prune.difference_update(last_files)
 
@@ -268,7 +268,7 @@ def main() -> None:
         # Verbose files to prune but not kept by any retention rule
         if arguments.verbose >= 2:
             for file in [f for f in existing_files if f not in to_keep | to_prune]:
-                prune_keep_decisions[file] = f"Mark file to prune '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
+                prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
                 to_prune.add(file)
 
         # Output prune/keep decisions
