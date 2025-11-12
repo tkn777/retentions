@@ -1,3 +1,5 @@
+### 0.6.0 - 12.11.2025
+
 ### 0.5.0 - 12.11.2025
 - Add verbose of created buckets
 - Fixed bug verbose mtime in processing buckets

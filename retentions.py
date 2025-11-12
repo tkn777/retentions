@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import NoReturn
 
 
-VERSION: str = "dev-0.5.0"
+VERSION: str = "dev-0.6.0"
 
 
 class IntegrityCheckFailedError(Exception):
@@ -186,9 +186,9 @@ def process_retention_buckets(
         if current_count >= len(sorted_keys):
             break  # No more buckets
         first_bucket_file = buckets[sorted_keys[current_count]][0]
-        if first_bucket_file in to_keep:  # Already kept by previous mode
+        if first_bucket_file in to_keep:  # Already kept by one previous mode
             if verbose >= 3:
-                print(f"Skipping '{first_bucket_file.name}' for mode {mode} as already kept by previous mode")
+                print(f"Skipping '{first_bucket_file.name}' for mode {mode} as already kept by one previous mode")
             effective_count += 1
         else:
             # Keep first entry of bucket, prune the rest
