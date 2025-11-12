@@ -2,7 +2,7 @@
   <img src="resources/retentions-logo.png" alt="retentions logo" height=100>
 </p>
 
-A tiny, cross-platform CLI tool to apply backup-style retention rules to any file set. 
+A small, cross-platform CLI tool to apply backup-style retention rules to any file set. 
 
 It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
 
