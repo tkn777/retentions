@@ -30,6 +30,13 @@ class NoFilesFoundError(Exception):
     pass
 
 
+_mtime_cache: dict[Path, float] = {}
+
+
+def get_mtime(file: Path) -> float:
+    return _mtime_cache.setdefault(file, file.stat().st_mtime)
+
+
 def positive_int(value: str) -> int:
     try:
         int_value = int(value)
@@ -146,7 +153,7 @@ def read_filelist(arguments: argparse.Namespace) -> list[Path]:
             raise ValueError(f"File '{file}' is not a child of base directory '{base}'")
 
     # sort by modification time (newest first), deterministic on ties
-    matches = [p for p, _ in sorted(((p, p.stat().st_mtime) for p in matches), key=lambda t: (-t[1], t[0].name))]
+    matches = [p for p, _ in sorted(((p, get_mtime(p)) for p in matches), key=lambda t: (-t[1], t[0].name))]
 
     if arguments.verbose >= 2:
         print(f"Found {len(matches)} files using {'regex' if arguments.regex else 'glob'} pattern '{arguments.file_pattern}': {[p.name for p in matches]}")
@@ -157,7 +164,7 @@ def read_filelist(arguments: argparse.Namespace) -> list[Path]:
 def create_retention_buckets(existing_files: list[Path], mode: str, verbose: int) -> dict[str, list[Path]]:
     buckets: dict[str, list[Path]] = defaultdict(list)
     for file in existing_files:
-        timestamp = datetime.fromtimestamp(file.stat().st_mtime)
+        timestamp = datetime.fromtimestamp(get_mtime(file))
         if mode == "hours":
             key = timestamp.strftime("%Y-%m-%d-%H")
         elif mode == "days":
@@ -177,7 +184,7 @@ def create_retention_buckets(existing_files: list[Path], mode: str, verbose: int
         buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from the timestamp of the file
     if verbose >= 3:
         for key, files in buckets.items():
-            print(f"Buckets: {key} - {', '.join(f'{p.name} ({datetime.fromtimestamp(p.stat().st_mtime):%Y-%m-%d %H:%M:%S})' for p in files)}")
+            print(f"Buckets: {key} - {', '.join(f'{p.name} ({datetime.fromtimestamp(get_mtime(p)):%Y-%m-%d %H:%M:%S})' for p in files)}")
     return buckets
 
 
@@ -200,14 +207,13 @@ def process_retention_buckets(
             if verbose >= 2:
                 prune_keep_decisions[first_bucket_file] = (
                     f"Keeping '{first_bucket_file.name}': {mode} {(current_count - (effective_count - mode_count) + 1):02d}/{mode_count:02d} "
-                    f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(first_bucket_file.stat().st_mtime)})"
+                    f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(get_mtime(first_bucket_file))})"
                 )
             to_keep.add(first_bucket_file)
             for file_to_prune in buckets[sorted_keys[current_count]][1:]:
                 if verbose >= 2:
                     prune_keep_decisions[file_to_prune] = (
-                        f"Pruning '{file_to_prune.name}': {mode} "
-                        f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(file_to_prune.stat().st_mtime)})"
+                        f"Pruning '{file_to_prune.name}': {mode} (key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(get_mtime(file_to_prune))})"
                     )
                 to_prune.add(file_to_prune)
         current_count += 1
@@ -220,9 +226,7 @@ def process_last_n(
     if arguments.verbose >= 2:
         for index, file in enumerate(last_files, start=1):
             if file not in to_keep:  # Retention rules may have already kept this file, their message takes precedence
-                prune_keep_decisions[file] = (
-                    f"Keeping '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
-                )
+                prune_keep_decisions[file] = f"Keeping '{file.name}': last {index:02d}/{arguments.last:02d} (mtime: {datetime.fromtimestamp(get_mtime(file))})"
     to_keep.update(last_files)
     to_prune.difference_update(last_files)  # ensure last N files are not pruned
 
@@ -232,7 +236,7 @@ def is_file_to_delete(to_keep: set[Path], file: Path) -> bool:
 
 
 def delete_file(arguments: argparse.Namespace, file: Path) -> None:
-    mtime = datetime.fromtimestamp(file.stat().st_mtime)
+    mtime = datetime.fromtimestamp(get_mtime(file))
     if arguments.list_only:
         print(file.absolute(), end=arguments.list_only)  # List mode
     else:
@@ -274,7 +278,7 @@ def main() -> None:
         # Verbose files to prune but not kept by any retention rule
         for file in [f for f in existing_files if f not in to_keep | to_prune]:
             if arguments.verbose >= 2:
-                prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
+                prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(get_mtime(file))})"
             to_prune.add(file)
 
         # Output prune / keep decisions
