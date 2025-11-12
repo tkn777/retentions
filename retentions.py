@@ -278,9 +278,9 @@ def main() -> None:
 
         # Summary
         if arguments.verbose >= 2:
-            print(f"Total files found:  {len(existing_files):03d}")
-            print(f"Total files keep:   {len(to_keep):03d}")
-            print(f"Total files delete: {len(to_prune):03d}")
+            print(f"Total files found: {len(existing_files):03d}")
+            print(f"Total files keep:  {len(to_keep):03d}")
+            print(f"Total files prune: {len(to_prune):03d}")
 
         # Integrity checks
         if not len(existing_files) == len(to_keep) + len(to_prune):
