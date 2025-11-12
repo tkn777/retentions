@@ -267,10 +267,12 @@ def main() -> None:
             process_last_n(existing_files, to_keep, to_prune, arguments, prune_keep_decisions)
 
         # Verbose files to prune but not kept by any retention rule
-        if arguments.verbose >= 2:
-            for file in [f for f in existing_files if f not in to_keep | to_prune]:
-                prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
-                to_prune.add(file)
+        for file in [f for f in existing_files if f not in to_keep | to_prune]:
+            if arguments.verbose >= 2:
+                prune_keep_decisions[file] = (
+                    f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
+                )
+            to_prune.add(file)
 
         # Output prune / keep decisions
         if arguments.verbose >= 2:
@@ -285,9 +287,12 @@ def main() -> None:
 
         # Simple integrity checks
         if not len(existing_files) == len(to_keep) + len(to_prune):
-            raise IntegrityCheckFailedError("File count mismatch: some files are neither kept nor pruned!! [Security-check]")
+            raise IntegrityCheckFailedError(
+                "File count mismatch: some files are neither kept nor prune "
+                f"(all: {len(existing_files)}, keep: {len(to_keep)}, prune: {len(to_prune)}!! [Integrity-check]"
+            )
         if not len(to_prune) == sum(1 for f in existing_files if is_file_to_delete(to_keep, f)):
-            raise IntegrityCheckFailedError("File deletion count mismatch!! [Security-check]")
+            raise IntegrityCheckFailedError("File deletion count mismatch!! [Integrity-check]")
 
         # Delete files not to keep (or list them)
         for file in existing_files:

@@ -1,3 +1,6 @@
+### 0.5.2 - 12.11.2025
+- Fixed bug regarding files not to keep, not yet to prune (because not matching by any retention rule)
+
 ### 0.5.1 - 12.11.2025
 - Fixed bug regarding const of verbose argument
 - Fixed bug regarding verbose vs. list-only argument
