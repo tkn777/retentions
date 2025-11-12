@@ -1,3 +1,6 @@
+### 0.5.3 - 12.11.2025
+- Added a check to avoid globs accessing multi level directory structures
+
 ### 0.5.2 - 12.11.2025
 - Fixed bug regarding files not to keep, not yet to prune (because not matching by any retention rule)
 

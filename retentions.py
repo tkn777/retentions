@@ -140,6 +140,11 @@ def read_filelist(arguments: argparse.Namespace) -> list[Path]:
     if not matches:
         raise NoFilesFoundError(f"No files found in '{base}' using {'regex' if arguments.regex else 'glob'} pattern '{arguments.file_pattern}'")
 
+    # Check, if child of base directory
+    for file in matches:
+        if not Path(file).parent.resolve() == base.resolve():
+            raise ValueError(f"File '{file}' is not a child of base directory '{base}'")
+
     # sort by modification time (newest first), deterministic on ties
     matches = [p for p, _ in sorted(((p, p.stat().st_mtime) for p in matches), key=lambda t: (-t[1], t[0].name))]
 
@@ -269,9 +274,7 @@ def main() -> None:
         # Verbose files to prune but not kept by any retention rule
         for file in [f for f in existing_files if f not in to_keep | to_prune]:
             if arguments.verbose >= 2:
-                prune_keep_decisions[file] = (
-                    f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
-                )
+                prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(file.stat().st_mtime)})"
             to_prune.add(file)
 
         # Output prune / keep decisions
@@ -302,6 +305,9 @@ def main() -> None:
     except OSError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(2)
     except NoFilesFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(3)
