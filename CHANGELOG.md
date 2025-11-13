@@ -1,3 +1,6 @@
+### 0.6.0 - XX ###
+- Added a mtime cache
+
 ### 0.5.3 - 12.11.2025
 - Added a check to avoid globs accessing multi level directory structures
 

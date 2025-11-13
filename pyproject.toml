@@ -8,11 +8,11 @@ license = { text = "MIT" }
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
-dev = ["ruff>=0.14.0", "mypy>=1.11.0"]
+dev = ["ruff>=0.14.0", "mypy>=1.11.0", "pytest>=8.3.0"]
 
 [tool.ruff]
 line-length = 160
-lint.select = ["E", "W", "F", "I", "UP", "N", "RET", "ARG"]
+lint.select = ["E", "W", "F", "I", "UP", "N", "RET", "ARG", "ANN", "S"]
 lint.fixable = ["ALL"]
 
 [tool.ruff.format]
@@ -38,6 +38,14 @@ warn_redundant_casts = true
 warn_unreachable = true
 strict_optional = true
 no_implicit_optional = true
+exclude = ["^tests/"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-v --tb=short --maxfail=3"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
 
 [tool.black]
 line-length = 160
