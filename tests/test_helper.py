@@ -15,22 +15,11 @@ from retentions import positive_int_argument
 )
 def test_positive_int_argument_valid(value: str, expected: int):
     """Valid positive integer strings should return the correct int."""
-    result = positive_int_argument(value)
-    assert result == expected
+    assert positive_int_argument(value) == expected
 
 
-@pytest.mark.parametrize(
-    "value",
-    [
-        "0",
-        "-5",
-        "abc",
-        "4.2",
-        "",
-        " ",
-    ],
-)
+@pytest.mark.parametrize("value", ["0", "-5", "abc", "4.2", "", " "])
 def test_positive_int_argument_invalid(value: str):
     """Invalid values should raise argparse.ArgumentTypeError."""
-    with pytest.raises(argparse.ArgumentTypeError):
+    with pytest.raises(argparse.ArgumentTypeError, match=rf"Invalid value '{value}': must be an integer > 0"):
         positive_int_argument(value)

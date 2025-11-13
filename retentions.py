@@ -64,9 +64,9 @@ def parse_size_argument(size_str: str) -> int:
 def positive_int_argument(value: str) -> int:
     try:
         int_value = int(value)
-        if int_value <= 0:
-            raise ValueError
     except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid value '{value}': must be an integer > 0")
+    if int_value <= 0:
         raise argparse.ArgumentTypeError(f"Invalid value '{value}': must be an integer > 0")
     return int_value
 
