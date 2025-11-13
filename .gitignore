@@ -8,3 +8,4 @@ build/
 *.pyo
 *.egg-info/
 *.egg
+.coverage
