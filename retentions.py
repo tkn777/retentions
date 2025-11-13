@@ -17,7 +17,7 @@ from collections import defaultdict
 from datetime import datetime
 from os import stat_result
 from pathlib import Path
-from typing import NoReturn
+from typing import Any, NoReturn
 
 
 VERSION: str = "dev-0.6.0"
@@ -330,6 +330,10 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
                 file.unlink()
             except OSError as e:  # Catch deletion error, print it, and continue
                 print("Error while deleting file '{file.name}':", e, file=sys.stderr)
+
+
+def test(test: dict[str, Any]) -> None:
+    pass
 
 
 def main() -> None:
