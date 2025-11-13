@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install ruff mypy bandit
+          pip install ruff mypy bandit pytest
 
       - name: Run Ruff Lint
         run: ruff check .
