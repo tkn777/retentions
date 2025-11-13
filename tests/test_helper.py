@@ -23,7 +23,7 @@ def test_positive_int_argument_valid(value: str, expected: int):
     "value",
     [
         "0",
-        "-5"
+        "-5",
         "abc",
         "4.2",
         "",
