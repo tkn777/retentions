@@ -68,7 +68,7 @@ You can install **retentions** in several ways, depending on your system and pre
 Download the latest `.deb` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
 
 ```bash
-sudo dpkg -i retentions_x.y.z.deb
+sudo dpkg -i retentions_x.y.z_all.deb
 ```
 
 This installs:
@@ -87,11 +87,11 @@ This installs:
 - `/usr/bin/retentions`
 - documentation in `/usr/share/doc/retentions/`
 
-### 🗜️ Option 3 – Universal (tar.gz)
+### 🗜️ Option 3 – Universal (tar.gz / zip)
 
 For non-Debian-based or non-Redhat-based systems:
 
-Download the latest `.tar.gz` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually
+Download the latest `retentions-x.y.z.tar.gz` or `retentions-x.y.z.zip` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually
 
 The archive includes:
 - the common Python script: `retentions.py`
@@ -117,7 +117,7 @@ No dependencies beyond Python 3.
 python3 retentions.py [path] [file_pattern] <options>
 ```
 
-*If you installed via .deb or .rpm or a shebang'ed version from the tar.gz, you can simply run `retentions` instead of `python3 retentions.py`.*
+*If you installed via .deb or .rpm or a shebang'ed version from the tar.gz / zip, you can simply run `retentions` instead of `python3 retentions.py`.*
 
 ---
 

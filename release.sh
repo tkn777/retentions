@@ -46,12 +46,20 @@ cp retentions.py "${PKG_DIR}/${APP}.py"
 
 # Documentation
 echo "==> Copying docs..."
-cp README.md LICENSE CHANGELOG.md SECURITY.md "$PKG_DIR/docs/" 2>/dev/null || true
+cp README.md LICENSE CHANGELOG.md SECURITY.md ROADMAP.md "$PKG_DIR/docs/" 2>/dev/null || true
 
-# Create archive
+# Create tar.gz archive
 echo "==> Creating tar.gz package..."
 tar --owner=0 --group=0 -C "$BUILD_DIR" -czf "${BUILD_DIR}/${APP}-${VERSION}.tar.gz" "${APP}-${VERSION}"
 echo "    -> ${BUILD_DIR}/${APP}-${VERSION}.tar.gz"
+
+# Create ZIP archive
+echo "==> Creating zip package..."
+(
+    cd "$BUILD_DIR"
+    zip -r "${APP}-${VERSION}.zip" "${APP}-${VERSION}" >/dev/null
+)
+echo "    -> ${BUILD_DIR}/${APP}-${VERSION}.zip"
 
 # ---------------------------------------------------------------------------
 # DEB (Debian/Ubuntu)
