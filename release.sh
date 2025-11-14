@@ -82,7 +82,7 @@ Architecture: all
 Depends: python3 (>= 3.9)
 Maintainer: Thomas Kuhlmann <mail@thomas-kuhlmann.de>
 Description: Simple file retention cleanup tool (CLI)
- A minimal cross-platform retention utility for pruning old file sets.
+ A small cross-platform retention utility for pruning old file sets.
 EOF
 
 dpkg-deb --build --root-owner-group "$DEB_DIR" "${BUILD_DIR}/${APP}_${VERSION}_all.deb"
