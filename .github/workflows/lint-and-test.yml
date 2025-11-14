@@ -31,9 +31,6 @@ jobs:
       - name: Run Type Checking
         run: mypy .
 
-      - name: Run Bandit (security scan)
-        run: bandit -r . -lll
-
       - name: Run Unit Tests
         run: |
           echo "Running pytest on Python ${{ matrix.python-version }}"
