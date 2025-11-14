@@ -105,7 +105,7 @@ The archive includes:
 retentions --help
 ```
 
-All installation methods require **Python 3.9+**.
+All installation methods require **Python 3.9+** *(tested against Python 3.9-3.14)*.
 
 No dependencies beyond Python 3.
 
