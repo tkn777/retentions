@@ -71,7 +71,7 @@ echo "==> Creating Debian package..."
 } > "$DEB_DIR/usr/bin/${APP}"
 chmod 755 "$DEB_DIR/usr/bin/${APP}"
 
-cp README.md LICENSE CHANGELOG.md "$DEB_DIR/usr/share/doc/${APP}/" 2>/dev/null || true
+cp README.md LICENSE CHANGELOG.md SECURITY.md ROADMAP.md "$DEB_DIR/usr/share/doc/${APP}/" 2>/dev/null || true
 
 cat > "$DEB_DIR/DEBIAN/control" <<EOF
 Package: ${APP}
