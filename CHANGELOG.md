@@ -1,5 +1,8 @@
 ### 0.6.0 - XX ###
 - Added a mtime cache
+- Refactored main method
+- Added first test
+- Used verbose instead of print
 
 ### 0.5.3 - 12.11.2025
 - Added a check to avoid globs accessing multi level directory structures

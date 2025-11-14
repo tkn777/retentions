@@ -31,6 +31,11 @@ class NoFilesFoundError(Exception):
     pass
 
 
+def verbose(level: int, required_level: int, message: str, file: TextIO = sys.stderr) -> None:
+    if level >= required_level:
+        print(message, file=file)
+
+
 _file_stats_cache: dict[Path, stat_result] = {}
 
 
@@ -69,11 +74,6 @@ def positive_int_argument(value: str) -> int:
     if int_value <= 0:
         raise ValueError(f"Invalid value '{value}': must be an integer > 0")
     return int_value
-
-
-def verbose(level: int, required_level: int, message: str, file: TextIO = sys.stderr) -> None:
-    if level >= required_level:
-        print(message, file=file)
 
 
 class CleanArgumentParser(argparse.ArgumentParser):
