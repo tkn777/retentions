@@ -63,6 +63,10 @@ Use `--dry-run` first to verify behavior. The author assumes no liability for da
 
 You can install **retentions** in several ways, depending on your system and preference.
 
+*All installation methods require **Python 3.9+** *(tested against Python 3.9-3.14)*.\
+No dependencies beyond Python 3.*
+
+
 ### 🧩 Option 1 – Debian Package (.deb)
 
 Download the latest `.deb` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
@@ -104,10 +108,6 @@ The archive includes:
 ```bash
 retentions --help
 ```
-
-All installation methods require **Python 3.9+** *(tested against Python 3.9-3.14)*.
-
-No dependencies beyond Python 3.
 
 ---
 
