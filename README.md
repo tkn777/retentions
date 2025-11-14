@@ -1,5 +1,5 @@
 <p align="left">
-  <img src="resources/retentions-logo.png" alt="retentions logo" height=100>
+  <img src="resources/retentions-logo.png" alt="RETENTIONS" height=110>
 </p>
 
 A small, cross-platform CLI tool to apply backup-style retention rules to any file set. 
