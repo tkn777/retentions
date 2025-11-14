@@ -17,7 +17,7 @@ from collections import defaultdict
 from datetime import datetime
 from os import stat_result
 from pathlib import Path
-from typing import NoReturn
+from typing import NoReturn, TextIO
 
 
 VERSION: str = "dev-0.6.0"
@@ -65,10 +65,15 @@ def positive_int_argument(value: str) -> int:
     try:
         int_value = int(value)
     except ValueError:
-        raise argparse.ArgumentTypeError(f"Invalid value '{value}': must be an integer > 0")
+        raise ValueError(f"Invalid value '{value}': must be an integer > 0")
     if int_value <= 0:
-        raise argparse.ArgumentTypeError(f"Invalid value '{value}': must be an integer > 0")
+        raise ValueError(f"Invalid value '{value}': must be an integer > 0")
     return int_value
+
+
+def verbose(level: int, required_level: int, message: str, file: TextIO = sys.stderr) -> None:
+    if level >= required_level:
+        print(message, file=file)
 
 
 class CleanArgumentParser(argparse.ArgumentParser):
@@ -156,8 +161,7 @@ def parse_arguments() -> argparse.Namespace:
         except re.error:
             parser.error(f"Invalid regular expression: {args.file_pattern}")
 
-    if args.verbose >= 3:
-        print(f"Using arguments: {vars(args)}")
+    verbose(3, args.verbose, f"Parsed arguments: {args}")
 
     # --size not implemented yet
     if args.size:
@@ -190,13 +194,16 @@ def read_filelist(arguments: argparse.Namespace) -> list[Path]:
     # sort by modification time (newest first), deterministic on ties
     matches = [p for p, _ in sorted(((p, get_file_mtime(p)) for p in matches), key=lambda t: (-t[1], t[0].name))]
 
-    if arguments.verbose >= 2:
-        print(f"Found {len(matches)} files using {'regex' if arguments.regex else 'glob'} pattern '{arguments.file_pattern}': {[p.name for p in matches]}")
+    verbose(
+        2,
+        arguments.verbose,
+        f"Found {len(matches)} files using {'regex' if arguments.regex else 'glob'} pattern '{arguments.file_pattern}': {[p.name for p in matches]}",
+    )
 
     return matches
 
 
-def create_retention_buckets(existing_files: list[Path], mode: str, verbose: int) -> dict[str, list[Path]]:
+def create_retention_buckets(existing_files: list[Path], mode: str, verbose_lev: int) -> dict[str, list[Path]]:
     buckets: dict[str, list[Path]] = defaultdict(list)
     for file in existing_files:
         timestamp = datetime.fromtimestamp(get_file_mtime(file))
@@ -217,14 +224,14 @@ def create_retention_buckets(existing_files: list[Path], mode: str, verbose: int
         else:
             raise ValueError(f"invalid bucket mode: {mode}")
         buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from the timestamp of the file
-    if verbose >= 3:
+    if verbose_lev >= 3:
         for key, files in buckets.items():
-            print(f"Buckets: {key} - {', '.join(f'{p.name} ({datetime.fromtimestamp(get_file_mtime(p))})' for p in files)}")
+            verbose(3, verbose_lev, f"Buckets: {key} - {', '.join(f'{p.name} ({datetime.fromtimestamp(get_file_mtime(p))})' for p in files)}")
     return buckets
 
 
 def process_retention_buckets(
-    to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: dict[str, list[Path]], verbose: int, prune_keep_decisions: dict[Path, str]
+    to_keep: set[Path], to_prune: set[Path], mode: str, mode_count: int, buckets: dict[str, list[Path]], verbose_lev: int, prune_keep_decisions: dict[Path, str]
 ) -> None:
     sorted_keys = sorted(buckets.keys(), reverse=True)  # newest first
     effective_count = mode_count
@@ -234,19 +241,18 @@ def process_retention_buckets(
             break  # No more buckets
         first_bucket_file = buckets[sorted_keys[current_count]][0]
         if first_bucket_file in to_keep:  # Already kept by one previous mode
-            if verbose >= 3:
-                print(f"Skipping '{first_bucket_file.name}' for mode {mode} as already kept by one previous mode")
+            verbose(3, verbose_lev, f"Skipping '{first_bucket_file.name}' for mode {mode} as already kept by one previous mode")
             effective_count += 1
         else:
             # Keep first entry of bucket, prune the rest
-            if verbose >= 2:
+            if verbose_lev >= 2:
                 prune_keep_decisions[first_bucket_file] = (
                     f"Keeping '{first_bucket_file.name}': {mode} {(current_count - (effective_count - mode_count) + 1):02d}/{mode_count:02d} "
                     f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(get_file_mtime(first_bucket_file))})"
                 )
             to_keep.add(first_bucket_file)
             for file_to_prune in buckets[sorted_keys[current_count]][1:]:
-                if verbose >= 2:
+                if verbose_lev >= 2:
                     prune_keep_decisions[file_to_prune] = (
                         f"Pruning '{file_to_prune.name}': {mode} "
                         f"(key: {sorted_keys[current_count]}, mtime: {datetime.fromtimestamp(get_file_mtime(file_to_prune))})"
@@ -294,11 +300,6 @@ def run_retention_logic(arguments: argparse.Namespace) -> tuple[list[Path], set[
             prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(get_file_mtime(file))})"
         to_prune.add(file)
 
-    # Output prune / keep decisions
-    if arguments.verbose >= 2:
-        for file, message in prune_keep_decisions.items():
-            print(message)
-
     # Simple integrity checks
     if not len(existing_files) == len(to_keep) + len(to_prune):
         raise IntegrityCheckFailedError(
@@ -321,15 +322,13 @@ def delete_file(arguments: argparse.Namespace, file: Path) -> None:
         print(file.absolute(), end=arguments.list_only)  # List mode
     else:
         if arguments.dry_run:
-            if arguments.verbose >= 1:
-                print(f"DRY-RUN DELETE: {file.name} (mtime: {mtime})")  # Just simulate deletion
+            verbose(2, arguments.verbose, f"DRY-RUN DELETE: {file.name} (mtime: {mtime})")  # Just simulate deletion
         else:
-            if arguments.verbose >= 1:
-                print(f"DELETING: {file.name} (mtime: {mtime})")
+            verbose(1, arguments.verbose, (f"DELETING: {file.name} (mtime: {mtime})"))
             try:
                 file.unlink()
             except OSError as e:  # Catch deletion error, print it, and continue
-                print("Error while deleting file '{file.name}':", e, file=sys.stderr)
+                verbose(1, arguments.verbose, f"Error while deleting file '{file.name}': {e}", file=sys.stderr)
 
 
 def main() -> None:
@@ -338,13 +337,17 @@ def main() -> None:
         arguments = parse_arguments()
 
         # Run retention logic
-        existing_files, to_keep, to_prune, _prune_keep_decisions = run_retention_logic(arguments)
+        existing_files, to_keep, to_prune, prune_keep_decisions = run_retention_logic(arguments)
+
+        # Output prune / keep decisions
+        if arguments.verbose >= 2:
+            for file, message in prune_keep_decisions.items():
+                verbose(2, arguments.verbose, message)
 
         # Summary of keep / prune counts
-        if arguments.verbose >= 2:
-            print(f"Total files found: {len(existing_files):03d}")
-            print(f"Total files keep:  {len(to_keep):03d}")
-            print(f"Total files prune: {len(to_prune):03d}")
+        verbose(2, arguments.verbose, f"Total files found: {len(existing_files):03d}")
+        verbose(2, arguments.verbose, f"Total files keep:  {len(to_keep):03d}")
+        verbose(2, arguments.verbose, f"Total files prune: {len(to_prune):03d}")
 
         # Delete files not to keep (or list them)
         for file in existing_files:
@@ -352,19 +355,19 @@ def main() -> None:
                 delete_file(arguments, file)
 
     except OSError as e:
-        print(f"Error: {e}", file=sys.stderr)
+        verbose(0, 0, f"Error: {e}", file=sys.stderr)
         sys.exit(1)
     except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
+        verbose(0, 0, f"Error: {e}", file=sys.stderr)
         sys.exit(2)
     except NoFilesFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
+        verbose(0, 0, f"Error: {e}", file=sys.stderr)
         sys.exit(3)
     except IntegrityCheckFailedError as e:
-        print(f"Error: {e}", file=sys.stderr)
+        verbose(0, 0, f"Error: {e}", file=sys.stderr)
         sys.exit(7)
     except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
+        verbose(0, 0, f"Unexpected error: {e}", file=sys.stderr)
         sys.exit(9)
 
 
