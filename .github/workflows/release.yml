@@ -38,4 +38,3 @@ jobs:
             build/retentions-*.zip
             build/retentions_*.deb
             build/retentions-*.rpm
-            build/SHA256SUMS.txt
