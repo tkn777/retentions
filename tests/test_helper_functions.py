@@ -35,7 +35,7 @@ def test_positive_int_argument_invalid(value: str):
         ("  3t ", 3 * 1024**4),
     ],
 )
-def test_arse_positive_size_argument_valid(value: str, expected: float):
+def test_parse_positive_size_argument_valid(value: str, expected: int):
     """Valid positive strings should return the correct size in bytes."""
     assert parse_positive_size_argument(value) == expected
 

@@ -9,8 +9,7 @@ retentions \- apply backup-style retention rules to any file set
 
 .SH DESCRIPTION
 .B retentions
-is a small, cross-platform CLI tool to prune file sets using
-backup-style time-based retention rules.
+is a small CLI tool to prune file sets using backup-style time-based retention rules.
 
 It groups files into time buckets (hours, days, weeks, months,
 quarters, years) and keeps only one representative file per bucket,
@@ -91,6 +90,8 @@ Always keep the N most recent files regardless of age.
 .PP
 At least one retention option must be specified.
 
+Every retention option can be combined with any (or all) others
+
 Retention periods are cumulative. A file kept by one retention level is not considered for another.
 
 Exception:
@@ -170,6 +171,8 @@ retentions /data/backups *.tar.gz
 .TS
 tab(|);
 l l.
+Code | Meaning
+---|-------------------------
 0 | Success
 1 | I/O or filesystem error
 2 | Invalid or conflicting arguments

@@ -1,3 +1,7 @@
+### 0.5.7 - UNRELEASED
+- Added shell completion
+- Added some more test
+
 ### 0.5.6 - 15.11.2025
 - Fixed problem adding zip release
 

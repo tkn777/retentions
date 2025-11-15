@@ -12,7 +12,7 @@ echo "==> Building version ${VERSION}"
 echo "==> Cleaning old build artifacts..."
 rm -rf "$BUILD_DIR"
 mkdir -p "$PKG_DIR/macos" "$PKG_DIR/linux" "$PKG_DIR/docs"
-mkdir -p "$DEB_DIR/usr/bin" "$DEB_DIR/usr/share/doc/${APP}" "$DEB_DIR/usr/share/man/man1/" "$DEB_DIR/DEBIAN"
+mkdir -p "$DEB_DIR/usr/bin" "$DEB_DIR/usr/share/doc/${APP}" "$DEB_DIR/usr/share/man/man1/" "$DEB_DIR/DEBIAN" "$DEB_DIR/etc/bash_completion.d" "$DEB_DIR/usr/share/zsh/vendor-completions"
 
 # ---------------------------------------------------------------------------
 # Patch retentions.py VERSION (supports type hints)
@@ -72,7 +72,9 @@ echo "==> Creating Debian package..."
 chmod 755 "$DEB_DIR/usr/bin/${APP}"
 
 cp README.md LICENSE CHANGELOG.md SECURITY.md ROADMAP.md "$DEB_DIR/usr/share/doc/${APP}/" 2>/dev/null || true
-gzip -9 < docs/retentions.1 > "$DEB_DIR/usr/share/man/man1/${APP}.1.gz"
+gzip -9 < debian/retentions.1 > "$DEB_DIR/usr/share/man/man1/${APP}.1.gz"
+cp debian/bash-shell-completion "$DEB_DIR/etc/bash_completion.d/${APP}"
+cp debian/zsh-shell-completion "$DEB_DIR/usr/share/zsh/vendor-completions/_${APP}"
 
 cat > "$DEB_DIR/DEBIAN/control" <<EOF
 Package: ${APP}
