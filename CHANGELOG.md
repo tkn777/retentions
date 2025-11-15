@@ -1,8 +1,9 @@
-### 0.6.0 - XX ###
+### 0.5.4 - 15.11.2025
 - Added a mtime cache
 - Refactored main method
 - Added first test
 - Used verbose instead of print
+- Added man page for debian / redhat
 
 ### 0.5.3 - 12.11.2025
 - Added a check to avoid globs accessing multi level directory structures
