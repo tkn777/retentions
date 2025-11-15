@@ -102,17 +102,6 @@ echo "    -> ${BUILD_DIR}/${APP}_${VERSION}_all.deb"
 )
 
 # ---------------------------------------------------------------------------
-# SHA256 Checksums
-# ---------------------------------------------------------------------------
-echo "==> Generating SHA256 checksums..."
-(
-    cd "$BUILD_DIR"
-    find . -maxdepth 1 -type f ! -name "SHA256SUMS.txt" -printf "%f\n" \
-        | xargs sha256sum > SHA256SUMS.txt
-)
-echo "    -> ${BUILD_DIR}/SHA256SUMS.txt"
-
-# ---------------------------------------------------------------------------
 # Restore original retentions.py
 # ---------------------------------------------------------------------------
 echo "==> Restoring original retentions.py..."
