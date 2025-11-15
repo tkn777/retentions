@@ -64,7 +64,7 @@ def positive_int_argument(value: str) -> int:
     return int_value
 
 
-def parse_size_argument(size_str: str) -> int:
+def parse_positive_size_argument(size_str: str) -> int:
     size_str = size_str.strip().upper()
     re_match = re.match(r"^([0-9]+(?:\.[0-9]*)?)\s*([KMGTPE]?)$", size_str)
     if not re_match:
@@ -138,7 +138,7 @@ def parse_arguments() -> argparse.Namespace:
 
     # parse --size
     if args.size:
-        args.size_bytes = parse_size_argument(args.size)
+        args.size_bytes = parse_positive_size_argument(args.size)
 
     # normalize list_only separator, if null byte
     if args.list_only == "\\0":
