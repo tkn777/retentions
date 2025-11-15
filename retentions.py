@@ -47,40 +47,30 @@ def get_file_size(file: Path) -> float:
     return _file_stats_cache.setdefault(file, file.stat()).st_size
 
 
-def parse_size_argument(size_str: str) -> int:
-    size_str = size_str.strip().upper()
-    re_match = re.match(r"^([0-9]+(?:\.[0-9]*)?)\s*([KMGTPE]?)$", size_str)
-    if not re_match:
-        raise ValueError(f"Invalid size format: '{size_str}'")
-    number = float(re_match.group(1))
-    unit = re_match.group(2)
-    multipliers = {
-        "": 1,
-        "K": 1024,
-        "M": 1024**2,
-        "G": 1024**3,
-        "T": 1024**4,
-        "P": 1024**5,
-        "E": 1024**6,
-    }
-    return int(number * multipliers[unit])
+class CleanArgumentParser(argparse.ArgumentParser):
+    # Adds an empty line between usage and error message
+    def error(self, message: str) -> NoReturn:
+        self.print_usage(sys.stderr)
+        self.exit(2, f"\nError: {message}\n")
 
 
 def positive_int_argument(value: str) -> int:
     try:
         int_value = int(value)
     except ValueError:
-        raise ValueError(f"Invalid value '{value}': must be an integer > 0")
+        raise argparse.ArgumentTypeError(f"Invalid value '{value}': must be an integer > 0")
     if int_value <= 0:
-        raise ValueError(f"Invalid value '{value}': must be an integer > 0")
+        raise argparse.ArgumentTypeError(f"Invalid value '{value}': must be an integer > 0")
     return int_value
 
 
-class CleanArgumentParser(argparse.ArgumentParser):
-    # Adds an empty line between usage and error message
-    def error(self, message: str) -> NoReturn:
-        self.print_usage(sys.stderr)
-        self.exit(2, f"\nError: {message}\n")
+def parse_size_argument(size_str: str) -> int:
+    size_str = size_str.strip().upper()
+    re_match = re.match(r"^([0-9]+(?:\.[0-9]*)?)\s*([KMGTPE]?)$", size_str)
+    if not re_match:
+        raise argparse.ArgumentTypeError(f"Invalid size format: '{size_str}'")
+    multipliers = {"": 1, "K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4, "P": 1024**5, "E": 1024**6}
+    return int(float(re_match.group(1)) * multipliers[re_match.group(2)])
 
 
 def parse_arguments() -> argparse.Namespace:

@@ -1,3 +1,5 @@
+import argparse
+
 import pytest
 
 from retentions import positive_int_argument
@@ -12,5 +14,5 @@ def test_positive_int_argument_valid(value: str, expected: int):
 @pytest.mark.parametrize("value", ["0", "-5", "abc", "4.2", "", " "])
 def test_positive_int_argument_invalid(value: str):
     """Invalid values should raise argparse.ArgumentTypeError."""
-    with pytest.raises(ValueError, match=rf"Invalid value '{value}': must be an integer > 0"):
+    with pytest.raises(argparse.ArgumentTypeError, match=rf"Invalid value '{value}': must be an integer > 0"):
         positive_int_argument(value)
