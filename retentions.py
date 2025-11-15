@@ -31,8 +31,8 @@ class NoFilesFoundError(Exception):
     pass
 
 
-def verbose(level: int, required_level: int, message: str, file: TextIO = sys.stderr) -> None:
-    if level >= required_level:
+def verbose(level: int, maximum_level: int, message: str, file: TextIO = sys.stderr) -> None:
+    if level <= maximum_level:
         print(message, file=file)
 
 

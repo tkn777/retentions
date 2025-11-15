@@ -1,3 +1,6 @@
+### 0.5.5 - 15.11.2025
+- Fixed bug regarding verbose and log level
+
 ### 0.5.4 - 15.11.2025
 - Added a mtime cache
 - Refactored main method
