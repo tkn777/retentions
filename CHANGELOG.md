@@ -1,3 +1,6 @@
+### 0.5.6 - 15.11.2025
+- Fixed problem adding zip release
+
 ### 0.5.5 - 15.11.2025
 - Fixed bug regarding verbose and log level
 

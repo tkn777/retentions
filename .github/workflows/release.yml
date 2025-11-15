@@ -35,6 +35,7 @@ jobs:
             (See CHANGELOG.md in the repository for details.)
           files: |
             build/retentions-*.tar.gz
+            build/retentions-*.zip
             build/retentions_*.deb
             build/retentions-*.rpm
             build/SHA256SUMS.txt
