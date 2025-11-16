@@ -234,7 +234,7 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 
 ---
 
-☢️̶ Non-atomic behavior
+## ~~☢️~~ Non-atomic behavior
 
 retentions does not operate atomically. Since the underlying filesystem is not atomic, directory contents may change while retentions is scanning or evaluating files.
 This can lead to inconsistent or incorrect results if the target path is modified concurrently.
