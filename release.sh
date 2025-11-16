@@ -73,7 +73,7 @@ chmod 755 "$DEB_DIR/usr/bin/${APP}"
 
 cp README.md LICENSE CHANGELOG.md SECURITY.md ROADMAP.md "$DEB_DIR/usr/share/doc/${APP}/" 2>/dev/null || true
 gzip -9 < debian/retentions.1 > "$DEB_DIR/usr/share/man/man1/${APP}.1.gz"
-cp debian/bash-shell-completion "$DEB_DIR/usr/share/bash-completion/completions/retentions/${APP}"
+cp debian/bash-shell-completion "$DEB_DIR/usr/share/bash-completion/completions/${APP}"
 cp debian/zsh-shell-completion "$DEB_DIR/usr/share/zsh/vendor-completions/_${APP}"
 
 cat > "$DEB_DIR/DEBIAN/control" <<EOF
