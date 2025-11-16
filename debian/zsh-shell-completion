@@ -1,41 +1,19 @@
 #compdef retentions
 
-# Zsh completion for the "retentions" CLI tool
-
 _arguments -C \
-  '1:Path to directory:_files -/' \
-  '2:File pattern (quoted; no completion):->pattern' \
-  '--hours[-h[Keep file per hour for last N hours]]:hours: ' \
-  '-h[Keep file per hour for last N hours]:hours: ' \
-  '--days[-d[Keep file per day for last N days]]:days: ' \
-  '-d[Keep file per day for last N days]:days: ' \
-  '--weeks[-w[Keep file per week for last N weeks]]:weeks: ' \
-  '-w[Keep file per week for last N weeks]:weeks: ' \
-  '--months[-m[Keep file per month for last N months]]:months: ' \
-  '-m[Keep file per month for last N months]:months: ' \
-  '--quarters[-q[Keep file per quarter for last N quarters]]:quarters: ' \
-  '-q[Keep file per quarter for last N quarters]:quarters: ' \
-  '--years[-y[Keep file per year for last N years]]:years: ' \
-  '-y[Keep file per year for last N years]:years: ' \
-  '--last[-l[Always keep last N files]]:count: ' \
-  '-l[Always keep last N files]:count: ' \
-  '--regex[-r[Interpret pattern as regex]]' \
-  '-r[Interpret pattern as regex]' \
-  '--list-only[-L[List-only mode, optional separator]]:separator: ' \
-  '-L[List-only mode, optional separator]:separator: ' \
-  '--verbose[-V[Verbosity level (0–3)]]:verbosity:(0 1 2 3)' \
-  '-V[Verbosity level (0–3)]:verbosity:(0 1 2 3)' \
-  '--dry-run[-X[Simulate actions, no deletion]]' \
-  '-X[Simulate actions, no deletion]' \
-  '--help[-H[Show help]]' \
-  '-H[Show help]' \
-  '--version[-R[Show version]]' \
-  '-R[Show version]' \
-  '*::args:->rest'
-
-case $state in
-  pattern)
-    # Do NOT expand files – user must quote manually.
-    _message 'enter a quoted file pattern (e.g. '\''*.tar.gz'\'')'
-    ;;
-esac
+  '1:Directory:_directories' \
+  '2:File pattern:_nothing' \
+  '{--hours,-h}[Keep file per hour for last N hours]:hours: ' \
+  '{--days,-d}[Keep file per day for last N days]:days: ' \
+  '{--weeks,-w}[Keep file per week for last N weeks]:weeks: ' \
+  '{--months,-m}[Keep file per month for last N months]:months: ' \
+  '{--quarters,-q}[Keep file per quarter for last N quarters]:quarters: ' \
+  '--week13[Keep one file per 13-week block]:week13: ' \
+  '{--years,-y}[Keep file per year for last N years]:years: ' \
+  '{--last,-l}[Always keep last N files]:count: ' \
+  '{--regex,-r}[Interpret pattern as regex]' \
+  '{--list-only,-L}[List-only mode, optional separator]:separator: ' \
+  '{--verbose,-V}[Verbosity level (0–3)]:verbosity:(0 1 2 3)' \
+  '{--dry-run,-X}[Simulate actions, no deletion]' \
+  '{--help,-H}[Show help]' \
+  '{--version,-R}[Show version]'

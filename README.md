@@ -138,11 +138,12 @@ python3 retentions.py [path] [file_pattern] <options>
 | `-d, --days <int>` | Keep one file per day from the last N days |
 | `-w, --weeks <int>` | Keep one file per week from the last N weeks |
 | `-m, --months <int>` | Keep one file per month from the last N months |
-| `-q, --quarters <int>` | Keep one file per quarter from the last N quarters |
+| `-q, --quarters <int>` | Keep one file per quarter from the last N quarters (quarter by months) |
+| `--week13 <int>` | Keep one file per 13-week block from the last N 13-week blocks (quarter by weeks) |
 | `-y, --years <int>` | Keep one file per year from the last N years |
 | `-l, --last <int>` | Always keep the N most recently modified files |
 
-📝 Every retention option can be combined with any (or all) others
+📝 Every retention option can be combined with any (or all) others\
 
 🧠 Logic:
 - The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` cannot also be marked as keep with the retention `--week`.

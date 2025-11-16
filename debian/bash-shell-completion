@@ -13,6 +13,7 @@ _retentions_complete()
         -w --weeks
         -m --months
         -q --quarters
+        --week13
         -y --years
         -l --last
         -r --regex

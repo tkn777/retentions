@@ -1,9 +1,8 @@
 ## 1.0
 - Implement `--size-total / -s`
 - Implement `--within / -i`
-- Implement `--week13` (conflicts with `quarter`)
 - Implement `--protect / -p` with glob or regex (same as selected for `pattern`)
-- Implement `--regex-mode case / nocase` for `pattern` and `--protect`
+- Implement `--regex-mode case / ignorecase` for `pattern` and `--protect`
   - Rename `--regex` to `--regex-mode`
 - Implement `--files-total`
 - Implement `--folders-mode / -f`: `age-mode` (of folder, default), latest (by `age-mode`), oldest (`by age-mode`)
