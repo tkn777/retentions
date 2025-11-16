@@ -12,7 +12,7 @@ echo "==> Building version ${VERSION}"
 echo "==> Cleaning old build artifacts..."
 rm -rf "$BUILD_DIR"
 mkdir -p "$PKG_DIR/macos" "$PKG_DIR/linux" "$PKG_DIR/docs"
-mkdir -p "$DEB_DIR/usr/bin" "$DEB_DIR/usr/share/doc/${APP}" "$DEB_DIR/usr/share/man/man1/" "$DEB_DIR/DEBIAN" "$DEB_DIR/etc/bash_completion.d" "$DEB_DIR/usr/share/zsh/vendor-completions"
+mkdir -p "$DEB_DIR/usr/bin" "$DEB_DIR/usr/share/doc/${APP}" "$DEB_DIR/usr/share/man/man1/" "$DEB_DIR/DEBIAN" "$DEB_DIR/usr/share/bash-completion/completions/" "$DEB_DIR/usr/share/zsh/vendor-completions"
 
 # ---------------------------------------------------------------------------
 # Patch retentions.py VERSION (supports type hints)
