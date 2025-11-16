@@ -52,7 +52,7 @@ Use `--dry-run` first to verify behavior. The author assumes no liability for da
 1. **Collect all matching files** under the given path.  
 2. **Sort** them by modification time (newest first).  
 3. **Keep**:
-   - Newest file per retention period (cumulative): `hour` / `day` / `week` / `month` / `quarter` / `year`
+   - Newest file per retention period (cumulative): `hour` / `day` / `week` / `month` / `quarter` / `week13` / `year`
    - Last `N` files (`--last`) (regardless from other retention periods)
 4. **Delete** everything else.  
 5. If `--dry-run` is enabled, print the planned actions instead of executing them.
