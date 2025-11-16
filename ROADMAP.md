@@ -14,8 +14,6 @@
 - Add comprehensive test suite (coverage >= 80%)
 - Add coverage badge
 - Stabilize and test by others
-- Templates for issues
-- Add hint regarding atomic operations => filesystems are not atomic
 
 Logic
 1. Time-based retentions (--hours, --days, --weeks, --months, --years, --quarter, --week13)
