@@ -24,12 +24,21 @@ jobs:
       - name: Run release.sh
         run: bash release.sh "${GITHUB_REF_NAME#v}"
 
+      - name: Detect prerelease
+        id: pre
+        run: |
+          if [[ "${GITHUB_REF_NAME}" =~ -(alpha|beta|rc)[0-9]*$ ]]; then
+            echo "pre=true" >> $GITHUB_OUTPUT
+          else
+            echo "pre=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           name: "Retentions ${{ github.ref_name }}"
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.pre.outputs.pre }}
           body: |
             Automated release for **${{ github.ref_name }}**
             (See CHANGELOG.md in the repository for details.)
