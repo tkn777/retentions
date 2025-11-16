@@ -99,14 +99,15 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--week13", type=positive_int_argument, metavar="N", help="Keep one file per 13-week block from the last N 13-week blocks (quarter by weeks)")
     parser.add_argument("-y", "--years", type=positive_int_argument, metavar="N", help="Keep one file per year from the last N years")
     parser.add_argument("-l", "--last", type=positive_int_argument, metavar="N", help="Always keep the N most recently modified files")
-    parser.add_argument("-s", "--size", type=str, metavar="N", help=argparse.SUPPRESS)
-    # parser.add_argument("-s", "--size", type=str, metavar="N", help="Keep maximum total size N (e.g. 12, 10.5M, 500G, 3E))
 
+    # filter arguments
+    parser.add_argument("-s", "--size", type=str, metavar="N", help="Keep maximum total size N (e.g. 12, 10.5M, 500G, 3E)")
+
+    # behavior flags
     # fmt: off
-    # mode flags
     parser.add_argument(
-        "-L", "--list-only", nargs="?", const="\n", default=None, metavar="sp",
-        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')"
+        "-L", "--list-only", nargs="?", const="\n", default=None, metavar="sep",
+        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')"
     )
     parser.add_argument(
         "-V", "--verbose", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const=2, metavar="lev",
@@ -115,6 +116,7 @@ def parse_arguments() -> argparse.Namespace:
     # fmt: on
     parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
 
+    # common flags
     parser.add_argument("-R", "--version", action="version", version=f"%(prog)s {VERSION}")
     parser.add_argument("-H", "--help", action="help", help="Show this help message and exit")
 
@@ -205,7 +207,7 @@ def create_retention_buckets(existing_files: list[Path], mode: str, verbose_lev:
             key = timestamp.strftime("%Y-%m")
         elif mode == "quarters":
             key = f"{timestamp.year}-Q{(timestamp.month - 1) // 3 + 1}"
-        elif mode == "weeks13":
+        elif mode == "week13":
             year, week, _ = timestamp.isocalendar()
             key = f"{year}-week13-{(week - 1) // 13 + 1}"
         elif mode == "years":
@@ -264,7 +266,7 @@ def run_retention_logic(arguments: argparse.Namespace) -> tuple[list[Path], set[
     prune_keep_decisions: dict[Path, str] = {}  # For verbose output of decisions
 
     # Retention by time buckets
-    for mode in ["hours", "days", "weeks", "months", "quarters", "years"]:
+    for mode in ["hours", "days", "weeks", "months", "quarters", "week13", "years"]:
         mode_count = getattr(arguments, mode)
         if mode_count:
             buckets = create_retention_buckets(existing_files, mode, arguments.verbose)
