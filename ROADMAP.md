@@ -5,7 +5,7 @@
 - Implement `--regex-mode case / ignorecase` for `pattern` and `--protect`
   - Rename `--regex` to `--regex-mode`
 - Implement `--files-total`
-- Implement `--folders-mode / -f`: `age-mode` (of folder, default), latest (by `age-mode`), oldest (`by age-mode`)
+- Implement `--folders-mode / -f`: `age-type` (of folder, default), latest (by `age-type`), oldest (`by age-type`)
 - Implement `--age-type`: mtime (default), ctime, atime
 - Implement `--confirm-delete / -C`
 - Implement message (verbose) history per file (output for `--verbose 3` only)
