@@ -1,6 +1,8 @@
 ### 0.6.0-beta0 - NOT RELEASED
 - Added `--week13`
 - Fixed zsh shell completions
+- Added templates for issues, pr's
+- Activate dependabot
 
 ### 0.5.0-beta1 - 16.11.2025
 - Fixed bash shell completion path
