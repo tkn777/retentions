@@ -15,8 +15,6 @@
 - Add coverage badge
 - Stabilize and test by others
 - Templates for issues
-- Template for PR
-- Dependabot for python dev deps and github actions
 - Add hint regarding atomic operations => filesystems are not atomic
 
 Logic

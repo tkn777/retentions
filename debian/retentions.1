@@ -184,6 +184,19 @@ Code | Meaning
 9 | Unexpected error
 .TE
 
+.SH NON-ATOMIC BEHAVIOR
+retentions does not operate atomically. The underlying filesystem is not atomic either.
+Directory contents may change while retentions is scanning or evaluating files.
+
+Concurrent modifications to the target
+.I path
+such as file creation, deletion, or timestamp changes may lead to inconsistent
+or incorrect results.
+
+To ensure consistent behavior, make sure that the directory is not modified
+during the execution of
+.B retentions.
+
 .SH LICENSE
 MIT License, Copyright © 2025
 Thomas Kuhlmann.

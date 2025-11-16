@@ -2,7 +2,8 @@
 - Added `--week13`
 - Fixed zsh shell completions
 - Added templates for issues, pr's
-- Activate dependabot
+- Activated dependabot
+- Added hint regarding atomic operations
 
 ### 0.5.0-beta1 - 16.11.2025
 - Fixed bash shell completion path

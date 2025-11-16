@@ -198,7 +198,7 @@ python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose 2
 
 ---
 
-### ⚠️ Important – Quoting File Patterns
+### ⚠️ Quoting File Patterns
 
 Always **quote your file patterns** when calling `retentions`.
 
@@ -231,6 +231,14 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 | 3 | Pattern matched no files |
 | 7 | Integrity check failed |
 | 9 | Unexpected error |
+
+---
+
+☢️̶ Non-atomic behavior
+
+retentions does not operate atomically. Since the underlying filesystem is not atomic, directory contents may change while retentions is scanning or evaluating files.
+This can lead to inconsistent or incorrect results if the target path is modified concurrently.
+If you require a strictly consistent state, ensure that the directory is not modified during execution.
 
 ---
 
