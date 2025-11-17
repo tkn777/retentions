@@ -17,6 +17,7 @@ from collections import defaultdict
 from datetime import datetime
 from os import stat_result
 from pathlib import Path
+from types import SimpleNamespace
 from typing import NoReturn, TextIO
 
 
@@ -28,6 +29,10 @@ class IntegrityCheckFailedError(Exception):
 
 
 class NoFilesFoundError(Exception):
+    pass
+
+
+class ConfigNamespace(SimpleNamespace):
     pass
 
 
@@ -51,7 +56,7 @@ class CleanArgumentParser(argparse.ArgumentParser):
     # Adds an empty line between usage and error message
     def error(self, message: str) -> NoReturn:
         self.print_usage(sys.stderr)
-        self.exit(2, f"\nError: {message}\n")
+        self.exit(2, f"\033[91mError(s):\n{message}\n\033[0m" if sys.stdout.isatty() else f"\nError(s):\n{message}\n")
 
 
 def positive_int_argument(value: str) -> int:
@@ -71,6 +76,25 @@ def parse_positive_size_argument(size_str: str) -> int:
         raise argparse.ArgumentTypeError(f"Invalid size format: '{size_str}'")
     multipliers = {"": 1, "K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4, "P": 1024**5, "E": 1024**6}
     return int(float(re_match.group(1)) * multipliers[re_match.group(2)])
+
+
+def validate_arguments(parser: CleanArgumentParser, args: argparse.Namespace) -> None:
+    errors: list[str] = []
+
+    # incompatible flags
+    if args.list_only and args.verbose > 0:
+        errors.append("--list-only and --verbose cannot be used together")
+
+    # validate regex
+    if args.regex:
+        try:
+            args.regex_compiled = re.compile(args.file_pattern)
+        except re.error:
+            errors.append(f"Invalid regular expression: {args.file_pattern}")
+
+    if errors:
+        message = "\n".join(f"  • {msg}" for msg in errors)
+        parser.error(message)
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -105,14 +129,10 @@ def parse_arguments() -> argparse.Namespace:
 
     # behavior flags
     # fmt: off
-    parser.add_argument(
-        "-L", "--list-only", nargs="?", const="\n", default=None, metavar="sep",
-        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')"
-    )
-    parser.add_argument(
-        "-V", "--verbose", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const=2, metavar="lev",
-        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output, 3 = debug output (default: 2, if specified without value)"
-    )
+    parser.add_argument("-L", "--list-only", nargs="?", const="\n", default=None, metavar="sp",
+        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sp): e.g. '\\0')")
+    parser.add_argument("-V", "--verbose", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const=2, metavar="lev",
+        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output, 3 = debug output (default: 2, if specified without value)")
     # fmt: on
     parser.add_argument("-X", "--dry-run", action="store_true", help="Show planned actions but do not delete any files")
 
@@ -125,10 +145,6 @@ def parse_arguments() -> argparse.Namespace:
     # default verbosity
     if not args.verbose:
         args.verbose = 0
-
-    # incompatible flags
-    if args.list_only and args.verbose > 0:
-        parser.error("--list-only and --verbose cannot be used together")
 
     # dry-run implies verbose (unless list-only)
     if args.dry_run and not args.list_only and not args.verbose:
@@ -143,12 +159,7 @@ def parse_arguments() -> argparse.Namespace:
     if args.list_only == "\\0":
         args.list_only = "\0"
 
-    # validate regex
-    if args.regex:
-        try:
-            args.regex_compiled = re.compile(args.file_pattern)
-        except re.error:
-            parser.error(f"Invalid regular expression: {args.file_pattern}")
+    validate_arguments(parser, args)
 
     verbose(3, args.verbose, f"Parsed arguments: {args}")
 
@@ -156,6 +167,7 @@ def parse_arguments() -> argparse.Namespace:
     if args.size:
         parser.error("--size option is not implemented yet")
 
+    # sn = SimpleNamespace(**vars(args))
     return args
 
 
