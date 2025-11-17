@@ -135,10 +135,6 @@ def parse_arguments() -> argparse.Namespace:
         verbose(0, 0, "--dry-run specified without --verbose, setting verbosity to 2")
         args.verbose = 2
 
-    # raise error, if no retention options specified
-    if not any([args.hours, args.days, args.weeks, args.quarters, args.months, args.week13, args.years, args.last, args.size]):
-        parser.error("You need to specify at least one retention option: --hours, --days, --weeks, --months, --quarters, --weeks13, --years, --last or --size")
-
     # parse --size
     if args.size:
         args.size_bytes = parse_positive_size_argument(args.size)
@@ -266,14 +262,17 @@ def run_retention_logic(arguments: argparse.Namespace) -> tuple[list[Path], set[
     prune_keep_decisions: dict[Path, str] = {}  # For verbose output of decisions
 
     # Retention by time buckets
+    # retention_proceeded = False
     for mode in ["hours", "days", "weeks", "months", "quarters", "week13", "years"]:
         mode_count = getattr(arguments, mode)
         if mode_count:
+            # retention_proceeded = True
             buckets = create_retention_buckets(existing_files, mode, arguments.verbose)
             process_retention_buckets(to_keep, to_prune, mode, mode_count, buckets, arguments.verbose, prune_keep_decisions)
 
     # Keep last N files (additional to time-based retention)
     if arguments.last:
+        # retention_proceeded = True
         process_last_n(existing_files, to_keep, to_prune, arguments, prune_keep_decisions)
 
     # Verbose files to prune but not kept by any retention rule
@@ -281,6 +280,11 @@ def run_retention_logic(arguments: argparse.Namespace) -> tuple[list[Path], set[
         if arguments.verbose >= 2:
             prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule (mtime: {datetime.fromtimestamp(get_file_mtime(file))})"
         to_prune.add(file)
+
+    # If no retention rules specified, keep all files (before applying possible filtering)
+    # if not retention_proceeded:
+    #    verbose(3, arguments.verbose, "No retention rules specified, keeping all files")
+    #    to_keep.update(existing_files)
 
     # Simple integrity checks
     if not len(existing_files) == len(to_keep) + len(to_prune):
