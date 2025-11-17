@@ -148,8 +148,6 @@ python3 retentions.py [path] [file_pattern] <options>
 🧠 Logic:
 - The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` cannot also be marked as keep with the retention `--week`.
 - One exception here is `--last`. It always marks the last `N` files as keep, regardless of all other retentions.
-
-⚠️ At least one retention option has to be specified\
 &nbsp;
 
 | Behavior options | Description |
