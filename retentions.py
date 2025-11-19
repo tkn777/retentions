@@ -56,7 +56,7 @@ class CleanArgumentParser(argparse.ArgumentParser):
     # Adds an empty line between usage and error message
     def error(self, message: str) -> NoReturn:
         self.print_usage(sys.stderr)
-        self.exit(2, f"\033[91mError(s):\n{message}\n\033[0m" if sys.stdout.isatty() else f"\nError(s):\n{message}\n")
+        self.exit(2, f"Error(s):\n{message}\n")
 
 
 def positive_int_argument(value: str) -> int:
