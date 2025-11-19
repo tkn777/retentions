@@ -268,17 +268,17 @@ See [CHANGELOG.md](CHANGELOG.md) for recent updates.
 
 ---
 
-## ✝️ Dedication
-
-This project is dedicated to my friend and Saviour, Jesus Christ. Not as a religious label or institution, but as a living and personal foundation.
-His truth, grace, and faithfulness are the reason I can build, create, and stand up again - every time.
-
----
-
 ## 🪶 License
 
 MIT License  
 Copyright © 2025 Thomas Kuhlmann
+
+---
+
+## ✝️ Dedication
+
+This project is dedicated to my friend and Saviour, Jesus Christ. Not as a religious label or institution, but as a living and personal foundation.
+His truth, grace, and faithfulness are the reason I can build, create, and stand up again - every time.
 
 ---
 
