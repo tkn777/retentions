@@ -268,17 +268,6 @@ See [CHANGELOG.md](CHANGELOG.md) for recent updates.
 
 ---
 
-## 💖 Sponsoring
-
-If you find `retentions` useful, consider supporting its future development via PayPal: 
-
-[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/kuhlmannthomas)
-
-Your support helps maintain and improve open-source tools like this one.
-Thank you for your generosity!
-
----
-
 ## ✝️ Dedication
 
 This project is dedicated to my friend and Saviour, Jesus Christ. Not as a religious label or institution, but as a living and personal foundation.
