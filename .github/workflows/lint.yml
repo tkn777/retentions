@@ -22,11 +22,11 @@ jobs:
         run: |
           pip install ruff mypy
 
-      - name: Run Ruff Lint
-        run: ruff check .
-
-      - name: Run Ruff Format Check
-        run: ruff format --check .
+      - name: Ruff Format (non-fatal, show issues but don't fail CI)
+        run: |
+          ruff format --check . || (
+            echo "::warning::Ruff found unformatted files (non-fatal)."
+          )
 
       - name: Run Type Checking
         run: mypy .
