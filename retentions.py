@@ -551,15 +551,15 @@ def process_retention_logic(args: ConfigNamespace, file_stats_cache: FileStatsCa
 
     # Simple integrity checks
     if not len(matches) == len(keep) + len(prune):
-        raise IntegrityCheckFailedError(f"File count mismatch: some files are neither kept nor prune (all: {len(matches)}, keep: {len(keep)}, prune: {len(prune)}!! [Integrity-check]")
-    if not len(prune) == sum(1 for f in matches if is_file_to_delete(keep, f)):
-        raise IntegrityCheckFailedError("File deletion count mismatch!! [Integrity-check]")
+        raise IntegrityCheckFailedError(f"File count mismatch: some files are neither kept nor prune (all: {len(matches)}, keep: {len(keep)}, prune: {len(prune)}!!")
+    if not len(prune) == sum(1 for f in matches if is_file_to_delete(keep, prune, f)):
+        raise IntegrityCheckFailedError("File deletion count mismatch!!")
 
     return RetentionsResult(matches, keep, prune, prune_keep_decisions)
 
 
-def is_file_to_delete(keep: set[Path], file: Path) -> bool:
-    return file not in keep
+def is_file_to_delete(keep: set[Path], prune: set[Path], file: Path) -> bool:
+    return file not in keep and file in prune
 
 
 def delete_file(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
@@ -618,7 +618,7 @@ def main() -> None:
 
         # Delete files not to keep (or list them)
         for file in retentions_result.matches:
-            if is_file_to_delete(retentions_result.keep, file):
+            if is_file_to_delete(retentions_result.keep, retentions_result.prune, file):
                 delete_file(file, args, file_stats_cache)
 
     except OSError as e:
