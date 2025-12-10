@@ -381,9 +381,9 @@ def read_filelist(args: ConfigNamespace, file_stats_cache: FileStatsCache) -> li
     return matches
 
 
-def create_retention_buckets(existing_files: list[Path], retention_mode: str, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> dict[str, list[Path]]:
+def create_retention_buckets(matches: list[Path], retention_mode: str, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> dict[str, list[Path]]:
     buckets: dict[str, list[Path]] = defaultdict(list)
-    for file in existing_files:
+    for file in matches:
         timestamp = datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))
         if retention_mode == "hours":
             key = timestamp.strftime("%Y-%m-%d-%H")
@@ -411,8 +411,8 @@ def create_retention_buckets(existing_files: list[Path], retention_mode: str, ar
 
 
 def process_retention_buckets(
-    to_keep: set[Path],
-    to_prune: set[Path],
+    keep: set[Path],
+    prune: set[Path],
     retention_mode: str,
     retention_mode_count: int,
     buckets: dict[str, list[Path]],
@@ -427,7 +427,7 @@ def process_retention_buckets(
         if current_count >= len(sorted_keys):
             break  # No more buckets
         first_bucket_file = buckets[sorted_keys[current_count]][0]
-        if first_bucket_file in to_keep:  # Already kept by one previous mode
+        if first_bucket_file in keep:  # Already kept by one previous mode
             verbose(3, args.verbose, f"Skipping '{first_bucket_file.name}' for mode {retention_mode} as already kept by one previous mode")
             effective_count += 1
         else:
@@ -437,50 +437,48 @@ def process_retention_buckets(
                     f"Keeping '{first_bucket_file.name}': {retention_mode} {(current_count - (effective_count - retention_mode_count) + 1):02d}/{retention_mode_count:02d} "
                     f"(key: {sorted_keys[current_count]}, {get_file_attributes(first_bucket_file, args, file_stats_cache)})"
                 )
-            to_keep.add(first_bucket_file)
-            for file_to_prune in buckets[sorted_keys[current_count]][1:]:
+            keep.add(first_bucket_file)
+            for file_prune in buckets[sorted_keys[current_count]][1:]:
                 if args.verbose >= 2:
-                    prune_keep_decisions[file_to_prune] = (
-                        f"Pruning '{file_to_prune.name}': {retention_mode} (key: {sorted_keys[current_count]}, {get_file_attributes(file_to_prune, args, file_stats_cache)})"
-                    )
-                to_prune.add(file_to_prune)
+                    prune_keep_decisions[file_prune] = f"Pruning '{file_prune.name}': {retention_mode} (key: {sorted_keys[current_count]}, {get_file_attributes(file_prune, args, file_stats_cache)})"
+                prune.add(file_prune)
         current_count += 1
 
 
-def process_last_n(to_keep: set[Path], to_prune: set[Path], prune_keep_decisions: dict[Path, str], existing_files: list[Path], args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
-    last_files = existing_files[: args.last]  # Get the N most recently modified files regardless from any retention rule (newest first)
+def process_last_n(keep: set[Path], prune: set[Path], prune_keep_decisions: dict[Path, str], matches: list[Path], args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
+    last_files = matches[: args.last]  # Get the N most recently modified files regardless from any retention rule (newest first)
     if args.verbose >= 2:
         for index, file in enumerate(last_files, start=1):
-            if file not in to_keep:  # Retention rules may have already kept this file, their message takes precedence
+            if file not in keep:  # Retention rules may have already kept this file, their message takes precedence
                 prune_keep_decisions[file] = f"Keeping '{file.name}': last {index:02d}/{args.last:02d} {get_file_attributes(file, args, file_stats_cache)}"
-    to_keep.update(last_files)
-    to_prune.difference_update(last_files)  # ensure last N files are not pruned
+    keep.update(last_files)
+    prune.difference_update(last_files)  # ensure last N files are not pruned
 
 
-def filter_file(to_keep: set[Path], to_prune: set[Path], prune_keep_decisions: dict[Path, str], file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache, message: str) -> None:
-    to_keep.remove(file)
-    to_prune.add(file)
+def filter_file(keep: set[Path], prune: set[Path], prune_keep_decisions: dict[Path, str], file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache, message: str) -> None:
+    keep.remove(file)
+    prune.add(file)
     prune_keep_decisions[file] = message + f" ({get_file_attributes(file, args, file_stats_cache)})"
 
 
-def filter_files(to_keep: set[Path], to_prune: set[Path], prune_keep_decisions: dict[Path, str], args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
-    sorted_to_keep = sorted(to_keep, key=lambda p: file_stats_cache.get_file_seconds(p), reverse=True)  # Must be sorted by xtime before applying filters, because set is unfiltered
+def filter_files(keep: set[Path], prune: set[Path], prune_keep_decisions: dict[Path, str], args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
+    sorted_keep = sorted(keep, key=lambda p: file_stats_cache.get_file_seconds(p), reverse=True)  # Must be sorted by xtime before applying filters, because set is unfiltered
 
     # max-files
-    if args.max_files is not None and sorted_to_keep:
-        for idx, file in enumerate(sorted_to_keep[args.max_files :], start=args.max_files + 1):
-            filter_file(to_keep, to_prune, prune_keep_decisions, file, args, file_stats_cache, f"Filtering '{file.name}': max files exceeded: {idx:02d} > {args.max_files:02d}")
+    if args.max_files is not None and sorted_keep:
+        for idx, file in enumerate(sorted_keep[args.max_files :], start=args.max_files + 1):
+            filter_file(keep, prune, prune_keep_decisions, file, args, file_stats_cache, f"Filtering '{file.name}': max files exceeded: {idx:02d} > {args.max_files:02d}")
 
     # max-size
-    if args.max_size is not None and sorted_to_keep:
+    if args.max_size is not None and sorted_keep:
         bytes_sum: int = 0
-        for file in sorted_to_keep:
+        for file in sorted_keep:
             file_bytes = file_stats_cache.get_file_bytes(file) * 1024
             bytes_sum += file_bytes
             if bytes_sum > args.max_size_bytes:
                 filter_file(
-                    to_keep,
-                    to_prune,
+                    keep,
+                    prune,
                     prune_keep_decisions,
                     file,
                     args,
@@ -489,14 +487,14 @@ def filter_files(to_keep: set[Path], to_prune: set[Path], prune_keep_decisions: 
                 )
 
     # max-age
-    if args.max_age is not None and sorted_to_keep:
+    if args.max_age is not None and sorted_keep:
         threshold = SCRIPT_START - args.max_age_seconds
-        for file in sorted_to_keep:
+        for file in sorted_keep:
             file_time = file_stats_cache.get_file_seconds(file)
             if file_time < threshold:
                 filter_file(
-                    to_keep,
-                    to_prune,
+                    keep,
+                    prune,
                     prune_keep_decisions,
                     file,
                     args,
@@ -507,10 +505,10 @@ def filter_files(to_keep: set[Path], to_prune: set[Path], prune_keep_decisions: 
 
 def process_retention_logic(args: ConfigNamespace, file_stats_cache: FileStatsCache) -> tuple[list[Path], set[Path], set[Path], dict[Path, str]]:
     # Read file list
-    existing_files: list[Path] = read_filelist(args, file_stats_cache)
+    matches: list[Path] = read_filelist(args, file_stats_cache)
 
-    to_keep: set[Path] = set()  # Files marked to keep
-    to_prune: set[Path] = set()  # Files marked for deletion
+    keep: set[Path] = set()  # Files marked to keep
+    prune: set[Path] = set()  # Files marked for deletion
     prune_keep_decisions: dict[Path, str] = {}  # For verbose output of decisions
     # prune_keep_decisions2: DecisionLog = defaultdict(list)  # For verbose output of decisions
 
@@ -520,41 +518,41 @@ def process_retention_logic(args: ConfigNamespace, file_stats_cache: FileStatsCa
         retention_mode_count = getattr(args, retention_mode)
         if retention_mode_count:
             retention_rules_applied = True
-            buckets = create_retention_buckets(existing_files, retention_mode, args, file_stats_cache)
-            process_retention_buckets(to_keep, to_prune, retention_mode, retention_mode_count, buckets, prune_keep_decisions, args, file_stats_cache)
+            buckets = create_retention_buckets(matches, retention_mode, args, file_stats_cache)
+            process_retention_buckets(keep, prune, retention_mode, retention_mode_count, buckets, prune_keep_decisions, args, file_stats_cache)
 
     # Keep last N files (additional to time-based retention)
     if args.last:
         retention_rules_applied = True
-        process_last_n(to_keep, to_prune, prune_keep_decisions, existing_files, args, file_stats_cache)
+        process_last_n(keep, prune, prune_keep_decisions, matches, args, file_stats_cache)
 
     # If no retention rules specified, keep all files (before applying possible filtering)
     if retention_rules_applied:
         # Verbose files to prune but not kept by any retention rule
-        for file in [f for f in existing_files if f not in to_keep | to_prune]:
+        for file in [f for f in matches if f not in keep | prune]:
             if args.verbose >= 2:
                 prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule ({get_file_attributes(file, args, file_stats_cache)})"
-            to_prune.add(file)
+            prune.add(file)
     else:
         verbose(3, args.verbose, "No retention rules specified, keeping all files")
-        to_keep.update(existing_files)
-        for file in existing_files:
+        keep.update(matches)
+        for file in matches:
             prune_keep_decisions[file] = f"Keeping '{file.name}': no retention rules specified ({get_file_attributes(file, args, file_stats_cache)})"
 
-    # Filter to_keep's
-    filter_files(to_keep, to_prune, prune_keep_decisions, args, file_stats_cache)
+    # Filter keep's
+    filter_files(keep, prune, prune_keep_decisions, args, file_stats_cache)
 
     # Simple integrity checks
-    if not len(existing_files) == len(to_keep) + len(to_prune):
-        raise IntegrityCheckFailedError(f"File count mismatch: some files are neither kept nor prune (all: {len(existing_files)}, keep: {len(to_keep)}, prune: {len(to_prune)}!! [Integrity-check]")
-    if not len(to_prune) == sum(1 for f in existing_files if is_file_to_delete(to_keep, f)):
+    if not len(matches) == len(keep) + len(prune):
+        raise IntegrityCheckFailedError(f"File count mismatch: some files are neither kept nor prune (all: {len(matches)}, keep: {len(keep)}, prune: {len(prune)}!! [Integrity-check]")
+    if not len(prune) == sum(1 for f in matches if is_file_to_delete(keep, f)):
         raise IntegrityCheckFailedError("File deletion count mismatch!! [Integrity-check]")
 
-    return existing_files, to_keep, to_prune, prune_keep_decisions
+    return matches, keep, prune, prune_keep_decisions
 
 
-def is_file_to_delete(to_keep: set[Path], file: Path) -> bool:
-    return file not in to_keep
+def is_file_to_delete(keep: set[Path], file: Path) -> bool:
+    return file not in keep
 
 
 def delete_file(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
@@ -600,20 +598,20 @@ def main() -> None:
         file_stats_cache = FileStatsCache(args.age_type)
 
         # Run retention logic
-        existing_files, to_keep, to_prune, prune_keep_decisions = process_retention_logic(args, file_stats_cache)
+        matches, keep, prune, prune_keep_decisions = process_retention_logic(args, file_stats_cache)
 
         # Output prune / keep decisions
         for file, message in sorted(prune_keep_decisions.items(), key=lambda kv: file_stats_cache.get_file_seconds(kv[0]), reverse=True):
             verbose(2, args.verbose, message)
 
         # Summary of keep / prune counts
-        verbose(2, args.verbose, f"Total files found: {len(existing_files):03d}")
-        verbose(2, args.verbose, f"Total files keep:  {len(to_keep):03d}")
-        verbose(2, args.verbose, f"Total files prune: {len(to_prune):03d}")
+        verbose(2, args.verbose, f"Total files found: {len(matches):03d}")
+        verbose(2, args.verbose, f"Total files keep:  {len(keep):03d}")
+        verbose(2, args.verbose, f"Total files prune: {len(prune):03d}")
 
         # Delete files not to keep (or list them)
-        for file in existing_files:
-            if is_file_to_delete(to_keep, file):
+        for file in matches:
+            if is_file_to_delete(keep, file):
                 delete_file(file, args, file_stats_cache)
 
     except OSError as e:
