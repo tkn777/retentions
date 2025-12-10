@@ -243,7 +243,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
     # Main hook
     @no_type_check
-    def parse_known_args(self, args=None, namespace=None) -> tuple(argparse.Namespace, list[str]):  # noqa: ANN001
+    def parse_known_args(self, args=None, namespace=None) -> tuple[argparse.Namespace, list[str]]:  # noqa: ANN001
         self._errors = []
         raw_args = self._collect_raw_args(args)
         self._detect_duplicate_flags(raw_args)
@@ -509,7 +509,7 @@ def process_retention_logic(args: ConfigNamespace, file_stats_cache: FileStatsCa
     to_keep: set[Path] = set()  # Files marked to keep
     to_prune: set[Path] = set()  # Files marked for deletion
     prune_keep_decisions: dict[Path, str] = {}  # For verbose output of decisions
-    #prune_keep_decisions2: DecisionLog = defaultdict(list)  # For verbose output of decisions
+    # prune_keep_decisions2: DecisionLog = defaultdict(list)  # For verbose output of decisions
 
     # Retention by time buckets
     retention_rules_applied = False
