@@ -15,6 +15,7 @@ import re
 import sys
 import traceback
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime
 from fnmatch import fnmatch
 from os import stat_result
@@ -501,7 +502,15 @@ def filter_files(keep: set[Path], prune: set[Path], prune_keep_decisions: dict[P
                 )
 
 
-def process_retention_logic(args: ConfigNamespace, file_stats_cache: FileStatsCache) -> tuple[list[Path], set[Path], set[Path], dict[Path, str]]:
+@dataclass
+class RetentionsResult:
+    matches: list[Path]
+    keep: set[Path]
+    prune: set[Path]
+    prune_keep_decisions: dict[Path, str]
+
+
+def process_retention_logic(args: ConfigNamespace, file_stats_cache: FileStatsCache) -> RetentionsResult:
     # Read file list
     matches: list[Path] = read_filelist(args, file_stats_cache)
 
@@ -546,7 +555,7 @@ def process_retention_logic(args: ConfigNamespace, file_stats_cache: FileStatsCa
     if not len(prune) == sum(1 for f in matches if is_file_to_delete(keep, f)):
         raise IntegrityCheckFailedError("File deletion count mismatch!! [Integrity-check]")
 
-    return matches, keep, prune, prune_keep_decisions
+    return RetentionsResult(matches, keep, prune, prune_keep_decisions)
 
 
 def is_file_to_delete(keep: set[Path], file: Path) -> bool:
@@ -596,20 +605,20 @@ def main() -> None:
         file_stats_cache = FileStatsCache(args.age_type)
 
         # Run retention logic
-        matches, keep, prune, prune_keep_decisions = process_retention_logic(args, file_stats_cache)
+        retentions_result = process_retention_logic(args, file_stats_cache)
 
         # Output prune / keep decisions
-        for file, message in sorted(prune_keep_decisions.items(), key=lambda kv: file_stats_cache.get_file_seconds(kv[0]), reverse=True):
+        for file, message in sorted(retentions_result.prune_keep_decisions.items(), key=lambda kv: file_stats_cache.get_file_seconds(kv[0]), reverse=True):
             verbose(2, args.verbose, message)
 
         # Summary of keep / prune counts
-        verbose(2, args.verbose, f"Total files found: {len(matches):03d}")
-        verbose(2, args.verbose, f"Total files keep:  {len(keep):03d}")
-        verbose(2, args.verbose, f"Total files prune: {len(prune):03d}")
+        verbose(2, args.verbose, f"Total files found: {len(retentions_result.matches):03d}")
+        verbose(2, args.verbose, f"Total files keep:  {len(retentions_result.keep):03d}")
+        verbose(2, args.verbose, f"Total files prune: {len(retentions_result.prune):03d}")
 
         # Delete files not to keep (or list them)
-        for file in matches:
-            if is_file_to_delete(keep, file):
+        for file in retentions_result.matches:
+            if is_file_to_delete(retentions_result.keep, file):
                 delete_file(file, args, file_stats_cache)
 
     except OSError as e:
