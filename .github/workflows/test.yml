@@ -3,7 +3,7 @@ name: Test
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
-  lint-and-test:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
