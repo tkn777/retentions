@@ -32,7 +32,8 @@ VERBOSE_LEVEL: dict[int, str] = {0: "ERROR", 1: "WARNING", 2: "INFO", 3: "DEBUG"
 LOCK_FILE_NAME: str = ".retentions.lock"
 
 
-DecisionLog = dict[Path, list[str]]
+DecisionEntry = tuple[str, str]
+DecisionLog = dict[Path, list[DecisionEntry]]
 
 
 def verbose(level: int, maximum_level: int, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
