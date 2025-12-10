@@ -23,7 +23,7 @@ from types import SimpleNamespace
 from typing import NoReturn, Optional, TextIO, no_type_check
 
 
-VERSION: str = "dev-0.6.0"
+VERSION: str = "dev-1.0.0"
 
 SCRIPT_START = datetime.now().timestamp()
 
