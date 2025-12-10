@@ -31,6 +31,7 @@
 - Cleanup code ✓
   - Remove redundancies ✓
   - Unify function signatures ✓
+  - Use dataclass for retention results ✓
 - Fix Problem `-a 3 y` ✓
 - Update README.md
 - Review by ChatGPT
