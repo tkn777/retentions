@@ -104,11 +104,8 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         self.print_usage()
         print("\nError(s):")
-        messages = message.split("\n")
-        for message in messages:
-            print(f"  • {message}")
-        if len(messages) > 1:
-            print(f"{len(messages)} errors detected.")
+        for line in message.split("\n"):
+            print(f"  • {line}")
         print("\nHint: Try '--help' for more information (or 'man retentions').")
         sys.exit(2)
 
