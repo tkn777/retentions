@@ -69,6 +69,7 @@
 - Cache for `get_file_attributes()`
 
 ## LATER (may be)
+- Use colors
 - Show cases
 - Debian package = valid Debian package with positive linting
   - control
