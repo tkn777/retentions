@@ -2,7 +2,7 @@
   <img src="resources/retentions-logo.png" alt="RETENTIONS" height=110>
 </p>
 
-A small, cross-platform CLI tool to apply backup-style retention rules to any file set. 
+A small, feature-rich cross-platform CLI tool to apply backup-style retention rules to any file set. 
 
 It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
 
@@ -226,7 +226,8 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 | 0 | Execution successful |
 | 1 | I/O or filesystem error |
 | 2 | Invalid or conflicting arguments |
-| 3 | Pattern matched no files |
+| 3 | Pattern matched no file(s) |
+| 5 | Concurrency error |
 | 7 | Integrity check failed |
 | 9 | Unexpected error |
 
@@ -237,6 +238,8 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 retentions does not operate atomically. Since the underlying filesystem is not atomic, directory contents may change while retentions is scanning or evaluating files.
 This can lead to inconsistent or incorrect results if the target path is modified concurrently.
 If you require a strictly consistent state, ensure that the directory is not modified during execution.
+
+By default retentions writes a lock file .retentions.lock - This can be used by other tools.
 
 ---
 

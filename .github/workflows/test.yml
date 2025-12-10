@@ -1,4 +1,4 @@
-name: Lint and Test
+name: Test
 
 on: [push, pull_request]
 
@@ -20,16 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install ruff mypy pytest
-
-      - name: Run Ruff Lint
-        run: ruff check .
-
-      - name: Run Ruff Format Check
-        run: ruff format --check .
-
-      - name: Run Type Checking
-        run: mypy .
+          pip install pytest
 
       - name: Run Unit Tests
         run: |

@@ -1,29 +1,74 @@
 ## 1.0
-- Implement `--size-total / -s`
-- Implement `--within / -i`
-- Implement `--protect / -p` with glob or regex (same as selected for `pattern`)
-- Implement `--regex-mode case / ignorecase` for `pattern` and `--protect`
-  - Rename `--regex` to `--regex-mode`
-- Implement `--files-total`
-- Implement `--folders-mode / -f`: `age-type` (of folder, default), latest (by `age-type`), oldest (`by age-type`)
-- Implement `--age-type`: mtime (default), ctime, atime
-- Implement `--confirm-delete / -C`
-- Implement message (verbose) history per file (output for `--verbose 3` only)
-- ~~Refactor main method~~
-  - Use dict instead of argparse.Namespace
-- Add comprehensive test suite (coverage >= 80%)
+- Use StrictArgParser ✓
+  - avoid duplicated (like `-w 5` `--weeks 3`) ✓
+  - suggest in case of argument typos (very simple) ✓
+  - better error display ✓
+  - better usage display ✓
+- Add `--max-size / -s` ✓
+- Add `--max-age / -i` ✓
+- Add and implement `--regex-mode case / ignorecase` for `file_pattern` ✓
+  - Rename `--regex` to `--regex-mode` ✓
+- Add `--max-files / -f` ✓
+- Add `--age-type`: `mtime` (default), `ctime`, `atime` ✓
+- Refactor `main` method ✓
+  - Use `ConfigNamespace` instead of `argparse.Namespace` ✓
+- Use `age-type` (cached) ✓
+- Add `--protect / -p` with glob or regex (same as selected for `file_pattern`) ✓
+- Implement `protect` ✓
+- Implement filter ✓
+  - `max-size` ✓
+  - `max-file` ✓
+  - `max-age` ✓
+- Implement locking ✓
+- Fix max-age, relative to now ✓
+- Implement message (verbose) history per file
+  - Add skip message to that history (but after current message)
+  - Use type alias
+  - Rename to_(keep|prune) to keep|prune and keep_prune_decisions to log
+  - Use new method def insert_log(..., pos=0)
+- Cleanup code ✓
+  - Remove redundancies ✓
+  - Unify function signatures ✓
+- Fix Problem `-a 3 y` ✓
+- Update README.md
+- Review by ChatGPT
+- Split lint and test workflows ✓
+- Create shell-completions in build workflow
+- Create man page by ChatGPT (and edit manually later)
+- Add comprehensive test suite (coverage >= 80%), with support by ChatGPT
 - Add coverage badge
+- Add release text like step ca
+
+### Logic
+1. Scan all files
+2. Ignore all protected files (for the whole process)
+3. Added by time-based buckets (--hours, --days, --weeks, --months, --years, --quarter, --week13)
+4. Added by --last (latest N files)
+5. Filtered by 
+    1. --max-age (strict time cutoff)
+    2. --max-files (upper limit by file count)
+    3. --max-size (upper limit by total storage)
+6. Delete files or list files to delete
+
+---
+
+## 1.1
 - Stabilize and test by others
 
-Logic
-1. Time-based retentions (--hours, --days, --weeks, --months, --years, --quarter, --week13)
-2. Added by --last (latest N files within the allowed window)
-3. Filtered by --within (strict time cutoff)
-4. Filtered by --files-total (upper limit by count)
-5. Filtered by --size-total (upper limit by total storage)
-6. Protected by --protect (absolute priority; never deleted)
+---
 
-## Later
+## 1.2
+- Implement `--folder / -f`: `age-type` (of folder, default), latest (by `age-type`), oldest (`by age-type`)
+    - Implement `--file` (current default to co-existent with folder)
+- Implement `--confirm-delete / -c` (for tty's)
+- Implement `--delete-companions / -o`
+- Implement `--last-within / -i`
+- Implement `--fail-on-delete-error`
+
+## 1.3
+- Cache for `get_file_attributes()`
+
+## LATER (may be)
 - Show cases
 - Debian package = valid Debian package with positive linting
   - control
