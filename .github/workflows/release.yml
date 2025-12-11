@@ -14,7 +14,7 @@ jobs:
 
     steps:
       # -----------------------------------------------------------
-      # Checkout
+      # Checkout including tags
       # -----------------------------------------------------------
       - name: Checkout source
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
           echo "PYTHONPATH=$HOME/.local/lib/python${PYVER}/site-packages" >> $GITHUB_ENV
 
       # -----------------------------------------------------------
-      # Build artifacts via your release script
+      # Build artifacts via release script
       # -----------------------------------------------------------
       - name: Run release.sh
         run: bash release/release.sh "${GITHUB_REF_NAME#v}"
@@ -131,6 +131,8 @@ jobs:
               echo
               echo "- Initial release"
             fi
+            echo
+            echo "(see `CHANGELOG.md` for further information)"
           } > release_body.md
 
       # -----------------------------------------------------------
@@ -148,16 +150,22 @@ jobs:
             FLAGS+=(--prerelease)
           fi
 
-          # Debug: show build contents
           echo "==> Build directory:"
           ls -R build
 
+          ARTIFACTS=(
+            build/retentions_*.deb     # 1 → DEB
+            build/retentions-*.rpm     # 2 → RPM
+            build/retentions-*.tar.gz  # 3 → TAR.GZ
+            build/retentions-*.zip     # 4 → ZIP
+            build/retentions.py        # 5 → Script
+          )
+
+          echo "Upload-Order:"
+          printf ' - %s\n' "${ARTIFACTS[@]}"
+
           gh release create "$TAG" \
-            build/retentions-*.tar.gz \
-            build/retentions-*.zip \
-            build/retentions_*.deb \
-            build/retentions-*.rpm \
-            build/retentions.py \
+            "${ARTIFACTS[@]}" \
             --title "$TITLE" \
             --notes-file release_body.md \
             "${FLAGS[@]}"
