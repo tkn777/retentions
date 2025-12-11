@@ -58,8 +58,17 @@ jobs:
       - name: Get previous tag
         id: prev
         run: |
-          PREV=$(git describe --tags --abbrev=0 HEAD^ || echo "")
-          echo "tag=$PREV" >> $GITHUB_OUTPUT
+          CUR="${GITHUB_REF_NAME}"
+          PREV=""
+
+          while read -r tag; do
+            if [ "$tag" = "$CUR" ]; then
+              break
+            fi
+            PREV="$tag"
+          done < <(git tag --sort=creatordate)
+
+          echo "tag=$PREV" >> "$GITHUB_OUTPUT"
 
       # -----------------------------------------------------------
       # Generate release body (Official Artifacts + Changelog)
@@ -67,46 +76,55 @@ jobs:
       - name: Generate release body
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${GITHUB_REF_NAME}"
           PREV="${{ steps.prev.outputs.tag }}"
+          REPO="${GITHUB_REPOSITORY}"
 
           echo "Assembling release notes…"
 
-          LINUX=$(ls build/retentions_*_all.deb 2>/dev/null || true)
+          DEB=$(ls build/retentions_*_all.deb 2>/dev/null || true)
           RPM=$(ls build/retentions-*.rpm 2>/dev/null || true)
           TAR=$(ls build/retentions-*.tar.gz)
           ZIP=$(ls build/retentions-*.zip)
           SCRIPT=$(ls build/retentions.py 2>/dev/null || true)
 
+          add_link() {
+            local f="$1"
+            [ -z "$f" ] && return
+            local name url
+            name=$(basename "$f")
+            url="https://github.com/${REPO}/releases/download/${TAG}/${name}"
+            echo "    📦 [${name}](${url})"
+          }
+
           {
-            echo "Retentions ${VERSION}"
+            echo "## Official Release Artifacts"
             echo
-            echo "Official Release Artifacts"
+            echo "### Linux"
             echo
-            echo "Linux"
-            echo
-            for f in $LINUX $RPM; do
-              [ -n "$f" ] && echo "    📦 $(basename "$f")"
+            for f in $DEB $RPM; do
+              add_link "$f"
             done
             echo
-            echo "Common"
+            echo "### Common"
             echo
             for f in $TAR $ZIP; do
-              [ -n "$f" ] && echo "    📦 $(basename "$f")"
+              add_link "$f"
             done
             echo
-            echo "Just the script"
+            echo "### Just the script"
             echo
             if [ -n "$SCRIPT" ]; then
-              echo "    📦 $(basename "$SCRIPT")"
+              add_link "$SCRIPT"
             fi
-
             echo
-            if [[ -n "$PREV" ]]; then
-              echo "Changelog since ${PREV}"
+
+            if [ -n "$PREV" ]; then
+              echo "## Changelog since ${PREV}"
               echo
-              git log --pretty=format:'- %s' "$PREV"..HEAD
+              git log --pretty=format:'- %s' "${PREV}..${TAG}"
             else
-              echo "Changelog"
+              echo "## Changelog"
               echo
               echo "- Initial release"
             fi
