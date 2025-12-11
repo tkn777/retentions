@@ -132,7 +132,7 @@ jobs:
               echo "- Initial release"
             fi
             echo
-            echo "(see `CHANGELOG.md` for further information)"
+            echo "See [CHANGELOG.md](https://github.com/${REPO}/CHANGELOG.md) for further information."
           } > release_body.md
 
       # -----------------------------------------------------------
@@ -150,22 +150,16 @@ jobs:
             FLAGS+=(--prerelease)
           fi
 
+          # Debug: show build contents
           echo "==> Build directory:"
           ls -R build
 
-          ARTIFACTS=(
-            build/retentions_*.deb     # 1 → DEB
-            build/retentions-*.rpm     # 2 → RPM
-            build/retentions-*.tar.gz  # 3 → TAR.GZ
-            build/retentions-*.zip     # 4 → ZIP
-            build/retentions.py        # 5 → Script
-          )
-
-          echo "Upload-Order:"
-          printf ' - %s\n' "${ARTIFACTS[@]}"
-
           gh release create "$TAG" \
-            "${ARTIFACTS[@]}" \
+            build/retentions-*.tar.gz \
+            build/retentions-*.zip \
+            build/retentions_*.deb \
+            build/retentions-*.rpm \
+            build/retentions.py \
             --title "$TITLE" \
             --notes-file release_body.md \
             "${FLAGS[@]}"
