@@ -137,7 +137,7 @@ jobs:
             build/retentions-*.zip
             build/retentions_*.deb
             build/retentions-*.rpm
-            build/retentions-*.py
+            build/retentions.py
 
       # -----------------------------------------------------------
       # Step 3 — Update release body (after assets exist)
