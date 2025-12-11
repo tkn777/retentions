@@ -131,8 +131,6 @@ jobs:
               echo
               echo "- Initial release"
             fi
-            
-            echo "See [CHANGELOG.md](https://github.com/tkn777/${REPO}/blob/master/CHANGELOG.md) for further information."
           } > release_body.md
 
       # -----------------------------------------------------------
