@@ -22,7 +22,7 @@ jobs:
           sudo apt install -y alien dpkg-dev
 
       - name: Run release.sh
-        run: bash release.sh "${GITHUB_REF_NAME#v}"
+        run: bash release/release.sh "${GITHUB_REF_NAME#v}"
 
       - name: Detect prerelease
         id: pre
@@ -33,17 +33,56 @@ jobs:
             echo "pre=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Get previous tag
+        id: prev
+        run: |
+          PREV=$(git describe --tags --abbrev=0 HEAD^ || echo "")
+          echo "tag=$PREV" >> $GITHUB_OUTPUT
+
+      - name: Generate release body
+        id: body
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          echo "Assembling release notes…"
+
+          LINUX=$(ls build/retentions_*_all.deb 2>/dev/null || true)
+          RPM=$(ls build/retentions-*.rpm 2>/dev/null || true)
+          TAR=$(ls build/retentions-*.tar.gz)
+          ZIP=$(ls build/retentions-*.zip)
+          SCRIPT=$(ls build/retentions-*.py)
+
+          BODY="# Official Release Artifacts\n"
+
+          BODY+="\n## Linux\n"
+          for f in $LINUX $RPM; do BODY+="📦 $(basename "$f")\n"; done
+
+          BODY+="\n## Common\n"
+          for f in $TAR $ZIP; do BODY+="📦 $(basename "$f")\n"; done
+
+          BODY+="\n## Just the script\n"
+          BODY+="📦 $(basename "$SCRIPT")\n"
+
+          if [[ -n \"${{ steps.prev.outputs.tag }}\" ]]; then
+            CHANGELOG=$(git log --pretty=format:'- %s' "${{ steps.prev.outputs.tag }}"..HEAD)
+            BODY+="\n\n# Changelog since ${{ steps.prev.outputs.tag }}\n\n${CHANGELOG}\n"
+          else
+            BODY+="\n\n# Changelog\n\n- Initial release\n"
+          fi
+
+          echo -e "$BODY" > release_body.md
+          echo "markdown=$(cat release_body.md)" >> $GITHUB_OUTPUT
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           name: "Retentions ${{ github.ref_name }}"
           draft: false
           prerelease: ${{ steps.pre.outputs.pre }}
-          body: |
-            Automated release for **${{ github.ref_name }}**
-            (See CHANGELOG.md in the repository for details.)
+          body: ${{ steps.body.outputs.markdown }}
           files: |
-            build/retentions-*.tar.gz
-            build/retentions-*.zip
             build/retentions_*.deb
             build/retentions-*.rpm
+            build/retentions-*.tar.gz
+            build/retentions-*.zip
+            build/retentions.py

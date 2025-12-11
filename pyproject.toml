@@ -15,6 +15,7 @@ dev = [
     "pytest>=8.3.0",
     "pytest-cov>=5.0.0",
     "debugpy>=1.8.0",
+    "shtab >= 1.7.0, < 2.0.0",
 ]
 
 [tool.ruff]
@@ -49,6 +50,10 @@ warn_unreachable = true
 strict_optional = true
 no_implicit_optional = true
 exclude = ["^tests/"]
+
+[[tool.mypy.overrides]]
+module = "helper.*"
+ignore_errors = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"
