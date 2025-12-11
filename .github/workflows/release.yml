@@ -13,22 +13,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # -----------------------------------------------------------
+      # Checkout
+      # -----------------------------------------------------------
       - name: Checkout source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
+      # -----------------------------------------------------------
+      # Install system tools + Python deps
+      # -----------------------------------------------------------
       - name: Install build tools
         run: |
           sudo apt update
-          sudo apt install -y alien dpkg-dev
+          sudo apt install -y alien dpkg-dev python3-pip
 
-      - name: Install Python deps
+      - name: Install Python dependencies
         run: |
+          python3 -m pip install --user --upgrade pip
           python3 -m pip install --user shtab shlib
-          echo "PYTHONPATH=$HOME/.local/lib/python3.12/site-packages" >> $GITHUB_ENV
+          PYVER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+          echo "PYTHONPATH=$HOME/.local/lib/python${PYVER}/site-packages" >> $GITHUB_ENV
 
+      # -----------------------------------------------------------
+      # Build Release Files
+      # -----------------------------------------------------------
       - name: Run release.sh
         run: bash release/release.sh "${GITHUB_REF_NAME#v}"
 
+      # -----------------------------------------------------------
+      # Determine pre-release flag
+      # -----------------------------------------------------------
       - name: Detect prerelease
         id: pre
         run: |
@@ -38,16 +52,23 @@ jobs:
             echo "pre=false" >> $GITHUB_OUTPUT
           fi
 
+      # -----------------------------------------------------------
+      # Determine previous tag for changelog
+      # -----------------------------------------------------------
       - name: Get previous tag
         id: prev
         run: |
           PREV=$(git describe --tags --abbrev=0 HEAD^ || echo "")
           echo "tag=$PREV" >> $GITHUB_OUTPUT
 
+      # -----------------------------------------------------------
+      # Build multiline release body text
+      # -----------------------------------------------------------
       - name: Generate release body
         id: body
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          PREV="${{ steps.prev.outputs.tag }}"
 
           echo "Assembling release notes…"
 
@@ -57,41 +78,72 @@ jobs:
           ZIP=$(ls build/retentions-*.zip)
           SCRIPT=$(ls build/retentions.py)
 
-          BODY="# Official Release Artifacts\n"
+          BODY="# Retentions ${VERSION}\n"
+          BODY+="\n## Official Release Artifacts\n"
 
-          BODY+="\n## Linux\n"
-          for f in $LINUX $RPM; do BODY+="📦 $(basename "$f")\n"; done
+          BODY+="\n### Linux\n"
+          for f in $LINUX $RPM; do
+            BODY+="📦 $(basename "$f")\n"
+          done
 
-          BODY+="\n## Common\n"
-          for f in $TAR $ZIP; do BODY+="📦 $(basename "$f")\n"; done
+          BODY+="\n### Common\n"
+          for f in $TAR $ZIP; do
+            BODY+="📦 $(basename "$f")\n"
+          done
 
-          BODY+="\n## Just the script\n"
+          BODY+="\n### Just the script\n"
           BODY+="📦 $(basename "$SCRIPT")\n"
 
-          if [[ -n \"${{ steps.prev.outputs.tag }}\" ]]; then
-            CHANGELOG=$(git log --pretty=format:'- %s' "${{ steps.prev.outputs.tag }}"..HEAD)
-            BODY+="\n\n# Changelog since ${{ steps.prev.outputs.tag }}\n\n${CHANGELOG}\n"
+          # -------------------------
+          # Changelog
+          # -------------------------
+          if [[ -n "$PREV" ]]; then
+            CHANGELOG=$(git log --pretty=format:'- %s' "$PREV"..HEAD)
+            BODY+="\n## Changelog since ${PREV}\n\n${CHANGELOG}\n"
           else
-            BODY+="\n\n# Changelog\n\n- Initial release\n"
+            BODY+="\n## Changelog\n\n- Initial release\n"
           fi
 
-          # MULTILINE OUTPUT
+          # Write multi-line output safely
           {
             echo "markdown<<EOF"
             echo -e "$BODY"
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
-      - name: Create GitHub release
+      # -----------------------------------------------------------
+      # Step 1 — Create empty release (NO ASSETS YET!)
+      # -----------------------------------------------------------
+      - name: Create empty GitHub release
+        id: create_release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
           name: "Retentions ${{ github.ref_name }}"
           draft: false
           prerelease: ${{ steps.pre.outputs.pre }}
-          body: ${{ steps.body.outputs.markdown }}
+          body: ""
+          make_latest: true
+
+      # -----------------------------------------------------------
+      # Step 2 — Upload assets
+      # -----------------------------------------------------------
+      - name: Upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
           files: |
-            build/retentions_*.deb
-            build/retentions-*.rpm
             build/retentions-*.tar.gz
             build/retentions-*.zip
-            build/retentions.py
+            build/retentions_*.deb
+            build/retentions-*.rpm
+            build/retentions-*.py
+
+      # -----------------------------------------------------------
+      # Step 3 — Update release body (after assets exist)
+      # -----------------------------------------------------------
+      - name: Update release notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          body: ${{ steps.body.outputs.markdown }}
