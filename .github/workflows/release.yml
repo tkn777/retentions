@@ -109,7 +109,7 @@ jobs:
               add_link "$f"
             done
             echo
-            echo "### Common"
+            echo "### Common (cross-platform)"
             echo
             for f in $TAR $ZIP; do
               add_link "$f"
@@ -125,7 +125,7 @@ jobs:
             if [ -n "$PREV" ]; then
               echo "## Changelog since ${PREV}"
               echo
-              git log --pretty=format:'- %s' "${PREV}..${TAG}"
+              git log --pretty=format:'- [`%h`](https://github.com/'"${REPO}"'/commit/%h) %s' "${PREV}..${TAG}"
             else
               echo "## Changelog"
               echo
