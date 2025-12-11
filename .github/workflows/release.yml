@@ -20,12 +20,12 @@ jobs:
         uses: actions/checkout@v4
 
       # -----------------------------------------------------------
-      # Install system tools + Python deps
+      # Install system tools + Python deps + gh
       # -----------------------------------------------------------
       - name: Install build tools
         run: |
           sudo apt update
-          sudo apt install -y alien dpkg-dev python3-pip
+          sudo apt install -y alien dpkg-dev python3-pip gh
 
       - name: Install Python dependencies
         run: |
@@ -35,13 +35,13 @@ jobs:
           echo "PYTHONPATH=$HOME/.local/lib/python${PYVER}/site-packages" >> $GITHUB_ENV
 
       # -----------------------------------------------------------
-      # Build Release Files
+      # Build artifacts via your release script
       # -----------------------------------------------------------
       - name: Run release.sh
         run: bash release/release.sh "${GITHUB_REF_NAME#v}"
 
       # -----------------------------------------------------------
-      # Determine pre-release flag
+      # Detect prerelease
       # -----------------------------------------------------------
       - name: Detect prerelease
         id: pre
@@ -62,10 +62,9 @@ jobs:
           echo "tag=$PREV" >> $GITHUB_OUTPUT
 
       # -----------------------------------------------------------
-      # Build multiline release body text
+      # Generate release body (Official Artifacts + Changelog)
       # -----------------------------------------------------------
       - name: Generate release body
-        id: body
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           PREV="${{ steps.prev.outputs.tag }}"
@@ -76,74 +75,68 @@ jobs:
           RPM=$(ls build/retentions-*.rpm 2>/dev/null || true)
           TAR=$(ls build/retentions-*.tar.gz)
           ZIP=$(ls build/retentions-*.zip)
-          SCRIPT=$(ls build/retentions.py)
+          SCRIPT=$(ls build/retentions.py 2>/dev/null || true)
 
-          BODY="# Retentions ${VERSION}\n"
-          BODY+="\n## Official Release Artifacts\n"
+          {
+            echo "Retentions ${VERSION}"
+            echo
+            echo "Official Release Artifacts"
+            echo
+            echo "Linux"
+            echo
+            for f in $LINUX $RPM; do
+              [ -n "$f" ] && echo "    📦 $(basename "$f")"
+            done
+            echo
+            echo "Common"
+            echo
+            for f in $TAR $ZIP; do
+              [ -n "$f" ] && echo "    📦 $(basename "$f")"
+            done
+            echo
+            echo "Just the script"
+            echo
+            if [ -n "$SCRIPT" ]; then
+              echo "    📦 $(basename "$SCRIPT")"
+            fi
 
-          BODY+="\n### Linux\n"
-          for f in $LINUX $RPM; do
-            BODY+="📦 $(basename "$f")\n"
-          done
+            echo
+            if [[ -n "$PREV" ]]; then
+              echo "Changelog since ${PREV}"
+              echo
+              git log --pretty=format:'- %s' "$PREV"..HEAD
+            else
+              echo "Changelog"
+              echo
+              echo "- Initial release"
+            fi
+          } > release_body.md
 
-          BODY+="\n### Common\n"
-          for f in $TAR $ZIP; do
-            BODY+="📦 $(basename "$f")\n"
-          done
+      # -----------------------------------------------------------
+      # Create GitHub release via gh
+      # -----------------------------------------------------------
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          TITLE="Retentions ${GITHUB_REF_NAME}"
 
-          BODY+="\n### Just the script\n"
-          BODY+="📦 $(basename "$SCRIPT")\n"
-
-          # -------------------------
-          # Changelog
-          # -------------------------
-          if [[ -n "$PREV" ]]; then
-            CHANGELOG=$(git log --pretty=format:'- %s' "$PREV"..HEAD)
-            BODY+="\n## Changelog since ${PREV}\n\n${CHANGELOG}\n"
-          else
-            BODY+="\n## Changelog\n\n- Initial release\n"
+          FLAGS=()
+          if [[ "${{ steps.pre.outputs.pre }}" == "true" ]]; then
+            FLAGS+=(--prerelease)
           fi
 
-          # Write multi-line output safely
-          {
-            echo "markdown<<EOF"
-            echo -e "$BODY"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          # Debug: show build contents
+          echo "==> Build directory:"
+          ls -R build
 
-      # -----------------------------------------------------------
-      # Step 1 — Create empty release (NO ASSETS YET!)
-      # -----------------------------------------------------------
-      - name: Create empty GitHub release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: "Retentions ${{ github.ref_name }}"
-          draft: false
-          prerelease: ${{ steps.pre.outputs.pre }}
-          body: ""
-          make_latest: true
-
-      # -----------------------------------------------------------
-      # Step 2 — Upload assets
-      # -----------------------------------------------------------
-      - name: Upload assets
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          files: |
-            build/retentions-*.tar.gz
-            build/retentions-*.zip
-            build/retentions_*.deb
-            build/retentions-*.rpm
-            build/retentions.py
-
-      # -----------------------------------------------------------
-      # Step 3 — Update release body (after assets exist)
-      # -----------------------------------------------------------
-      - name: Update release notes
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          body: ${{ steps.body.outputs.markdown }}
+          gh release create "$TAG" \
+            build/retentions-*.tar.gz \
+            build/retentions-*.zip \
+            build/retentions_*.deb \
+            build/retentions-*.rpm \
+            build/retentions.py \
+            --title "$TITLE" \
+            --notes-file release_body.md \
+            "${FLAGS[@]}"
