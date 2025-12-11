@@ -20,8 +20,11 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y alien dpkg-dev
-          pip install --upgrade pip
-          pip install shlib
+
+      - name: Install Python deps
+        run: |
+          python3 -m pip install --user shtab shlib
+          echo "PYTHONPATH=$HOME/.local/lib/python3.12/site-packages" >> $GITHUB_ENV
 
       - name: Run release.sh
         run: bash release/release.sh "${GITHUB_REF_NAME#v}"
