@@ -1,5 +1,5 @@
 ## 1.0
-- Use StrictArgParser ✓
+- Use ModernStrictArgParser ✓
   - avoid duplicated (like `-w 5` `--weeks 3`) ✓
   - suggest in case of argument typos (very simple) ✓
   - better error display ✓
