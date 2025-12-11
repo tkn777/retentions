@@ -18,6 +18,9 @@ jobs:
       # -----------------------------------------------------------
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       # -----------------------------------------------------------
       # Install system tools + Python deps + gh
@@ -94,7 +97,7 @@ jobs:
             local name url
             name=$(basename "$f")
             url="https://github.com/${REPO}/releases/download/${TAG}/${name}"
-            echo "    📦 [${name}](${url})"
+            echo "- 📦 [${name}](${url})"
           }
 
           {
