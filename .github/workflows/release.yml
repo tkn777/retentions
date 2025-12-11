@@ -55,7 +55,7 @@ jobs:
           RPM=$(ls build/retentions-*.rpm 2>/dev/null || true)
           TAR=$(ls build/retentions-*.tar.gz)
           ZIP=$(ls build/retentions-*.zip)
-          SCRIPT=$(ls build/retentions-*.py)
+          SCRIPT=$(ls build/retentions.py)
 
           BODY="# Official Release Artifacts\n"
 
