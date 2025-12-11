@@ -125,7 +125,7 @@ jobs:
             if [ -n "$PREV" ]; then
               echo "## Changelog since ${PREV}"
               echo
-              git log --date=format:'%Y-%m-%d' --pretty=format:'- [`%h`](https://github.com/'"${REPO}"'/commit/%h) %s (%ad)' "${PREV}..${TAG}"
+              git log --pretty=format:'- [`%h`](https://github.com/'"${REPO}"'/commit/%h) %s' "${PREV}..${TAG}"
             else
               echo "## Changelog"
               echo
