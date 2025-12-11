@@ -36,11 +36,15 @@
 - Update README.md
 - Review by ChatGPT
 - Split lint and test workflows ✓
-- Create shell-completions in build workflow
+- Create shell-completions in build workflow ✓
+- Update release workflow ✓
+  - Add release artifacts to body ✓
+  - Add changelog to body ✓
+  - Add pure script ✓
 - Create man page by ChatGPT (and edit manually later)
 - Add comprehensive test suite (coverage >= 80%), with support by ChatGPT
 - Add coverage badge
-- Add release text like step ca
+
 
 ### Logic
 1. Scan all files
