@@ -30,5 +30,5 @@ All reports are handled confidentially until a public fix or advisory is release
 ## Disclosure Policy
 
 - Confirmed vulnerabilities will be assigned a CVE if applicable.
-- Fixes are published in a patch release and described in the CHANGELOG.
+- Fixes are published in a patch release and described in the changelog.
 - Credit will be given in the release notes if requested by the reporter.
