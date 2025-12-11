@@ -72,8 +72,12 @@
 - Implement `--last-within / -i`
 - Implement `--fail-on-delete-error`
 
+---
+
 ## 1.3
 - Cache for `get_file_attributes()`
+
+---
 
 ## LATER (may be)
 - Use colors
