@@ -274,7 +274,7 @@ See [CHANGELOG.md](CHANGELOG.md) for recent updates.
 ## 🪶 License
 
 MIT License  
-Copyright © 2025 Thomas Kuhlmann
+Copyright © 2025-2026 Thomas Kuhlmann
 
 ---
 
