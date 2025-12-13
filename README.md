@@ -278,10 +278,9 @@ Copyright © 2025 Thomas Kuhlmann
 
 ---
 
-## ✝️ Dedication
+## 😻 Dedication
 
-This project is dedicated to my friend and Saviour, Jesus Christ. Not as a religious label or institution, but as a living and personal foundation.
-His truth, grace, and faithfulness are the reason I can build, create, and stand up again - every time.
+This project is dedicated to 'Motzli' - my real-life companion and friend. To that quiet, resilient cat whose presence still lives within me and keeps me standing up, no matter how often life burns everything down to ashes. For the strength, the gentleness, and the stubborn hope that never leaves - and will never be forgotten.
 
 ---
 
