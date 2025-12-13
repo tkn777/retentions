@@ -3,7 +3,7 @@
 #
 # A small, feature-rich cross-platform CLI tool to apply backup-like retention rules to any file set.
 #
-# Copyright (c) 2025 Thomas Kuhlmann
+# Copyright (c) 2025-2026 Thomas Kuhlmann
 #
 # Licensed under the MIT License. See LICENSE file in the project root for license information.
 #
