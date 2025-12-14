@@ -570,7 +570,7 @@ def delete_file(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCa
         if args.dry_run:
             verbose(2, args.verbose, f"DRY-RUN DELETE: {file.name} ({file_stats_cache.age_type}: {time})")  # Just simulate deletion
         else:
-            verbose(1, args.verbose, (f"DELETING: {file.name} ({file_stats_cache.age_type}: {time})"))
+            verbose(2, args.verbose, (f"DELETING: {file.name} ({file_stats_cache.age_type}: {time})"))
             try:
                 file.unlink()
             except OSError as e:  # Catch deletion error, print it, and continue
