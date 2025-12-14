@@ -278,7 +278,7 @@ Copyright © 2025-2026 Thomas Kuhlmann
 
 ---
 
-## 😻 Dedication
+## 🐈‍⬛ Dedication
 
 This project is dedicated to 'Motzli' - my real-life companion and friend. To that quiet, resilient cat whose presence still lives within me and keeps me standing up, no matter how often life burns everything down to ashes. For the strength, the gentleness, and the stubborn hope that never leaves - and will never be forgotten.
 
