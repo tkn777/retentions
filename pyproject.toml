@@ -51,10 +51,6 @@ strict_optional = true
 no_implicit_optional = true
 exclude = ["^tests/"]
 
-[[tool.mypy.overrides]]
-module = "helper.*"
-ignore_errors = true
-
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-v --tb=short --maxfail=3"
