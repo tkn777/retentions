@@ -25,7 +25,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           echo "Running pytest on Python ${{ matrix.python-version }}"
-          PYTHONPATH=. pytest -v --tb=short --maxfail=3
+          pytest
 
       - name: Test CLI --help and --version
         run: |
