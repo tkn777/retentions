@@ -33,13 +33,8 @@ VERBOSE_LEVEL: dict[int, str] = {0: "ERROR", 1: "WARNING", 2: "INFO", 3: "DEBUG"
 LOCK_FILE_NAME: str = ".retentions.lock"
 
 
-DecisionEntry = tuple[str, str]
+DecisionEntry = tuple[str, Optional[str]]
 DecisionLog = dict[Path, list[DecisionEntry]]
-
-
-def verbose(level: int, maximum_level: int, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
-    if level <= maximum_level:
-        print(f"[{prefix or VERBOSE_LEVEL[level]}] {message}", file=file)
 
 
 class ConcurrencyError(Exception):
@@ -75,6 +70,16 @@ class FileStatsCache:
 
 def get_file_attributes(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> str:
     return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
+
+
+def log(level: int, file: Path, message: str, log: DecisionLog, args: ConfigNamespace, file_stats_cache: FileStatsCache, log_pos: int = 0) -> None:
+    if level <= args.verbose:
+        log[file].insert(log_pos, (message, f"({get_file_attributes(file, args, file_stats_cache)})" if args.verbose >= 3 else None))
+
+
+def verbose(level: int, maximum_level: int, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
+    if level <= maximum_level:
+        print(f"[{prefix or VERBOSE_LEVEL[level]}] {message}", file=file)
 
 
 class ModernHelpFormatter(argparse.HelpFormatter):
