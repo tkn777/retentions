@@ -63,10 +63,6 @@ python_files = ["test_*.py"]
 python_functions = ["test_*"]
 pythonpath = ["."]
 
-[tool.black]
-line-length = 200
-skip-string-normalization = true
-
 [build-system]
 requires = ["setuptools>=70", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
