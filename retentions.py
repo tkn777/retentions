@@ -17,6 +17,7 @@ import traceback
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
+from enum import IntEnum
 from fnmatch import fnmatch
 from os import stat_result
 from pathlib import Path
@@ -29,6 +30,7 @@ VERSION: str = "dev-1.0.0"
 SCRIPT_START = datetime.now().timestamp()
 
 LOG_LEVEL: dict[int, str] = {0: "ERROR", 1: "WARNING", 2: "INFO", 3: "DEBUG"}
+
 
 LOCK_FILE_NAME: str = ".retentions.lock"
 
@@ -68,6 +70,13 @@ class FileStatsCache:
 def get_file_attributes(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> str:
     return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
 
+# TODO: Use new LogLevel
+class LogLevel(IntEnum):
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
+    DEBUG = 3
+
 
 class Logger:
     _decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
@@ -81,15 +90,15 @@ class Logger:
     def _get_file_attributes(self, file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> str:
         return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
 
-    def has_log_level(self, level: int) -> bool:
+    def has_log_level(self, level: LogLevel) -> bool:
         return level <= int(self._args.verbose)
 
-    def verbose(self, level: int, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
+    def verbose(self, level: LogLevel, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
         if self.has_log_level(level):
-            print(f"[{prefix or LOG_LEVEL[level]}] {message}", file=file)
+            print(f"[{prefix or LogLevel(level).name}] {message}", file=file)
 
-    def add_decision(self, level: int, file: Path, message: str, debug: Optional[str] = None, pos: int = 0) -> None:
-        if level >= 3:  # Decision history and debug message and file details only with debug log level
+    def add_decision(self, level: LogLevel, file: Path, message: str, debug: Optional[str] = None, pos: int = 0) -> None:
+        if level >= LogLevel.DEBUG:  # Decision history and debug message and file details only with debug log level
             self._decisions[file].insert(pos, ((message, f"({(debug + ', ') if debug is not None else ''}, {self._get_file_attributes(file, self._args, self._file_stats_cache)})")))
         else:  # Without debug log level no decision history
             self._decisions[file][0] = (message, None)
@@ -101,7 +110,7 @@ class Logger:
         if stacktrace:
             traceback.print_exc()
         else:
-            self.verbose(0, f"{exception}", prefix=prefix, file=sys.stderr)
+            self.verbose(LogLevel.ERROR, f"{exception}", prefix=prefix, file=sys.stderr)
         sys.exit(exit_code)
 
 
