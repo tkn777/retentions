@@ -177,7 +177,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         try:
             return LogLevel.from_name_or_number(value)
         except ValueError:
-            raise argparse.ArgumentTypeError(f"Invalid verbose value '{value}' (use ERROR, WARN, INFO, DEBUG or 0-3)")
+            raise argparse.ArgumentTypeError(f"Invalid verbose value '{value}' (use ERROR, WARN, INFO, DEBUG or 0, 1, 2, 3)")
 
     def parse_positive_size_argument(self, size_str: str) -> float:
         size_str = size_str.strip().upper()
