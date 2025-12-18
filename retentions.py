@@ -87,6 +87,7 @@ class LogLevel(IntEnum):
             except ValueError:
                 raise ValueError("Invalid log level: " + prefix)
 
+
 class Logger:
     _decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
     _args: ConfigNamespace
