@@ -328,7 +328,7 @@ def create_parser() -> ModernStrictArgumentParser:
     # common flags
     g_common.add_argument("--version", "-R", action="version", version=f"%(prog)s {VERSION}")
     g_common.add_argument("--help", "-H", action="help", help="Show this help message and exit")
-    g_common.add_argument("--debug", action="store_true", help=argparse.SUPPRESS)
+    g_common.add_argument("--stacktrace", action="store_true", help=argparse.SUPPRESS)
 
     return parser
 
@@ -627,17 +627,17 @@ def main() -> None:
                 delete_file(file, args, file_stats_cache)
 
     except OSError as e:
-        handle_exception(e, 1, args.debug if args is not None else True)
+        handle_exception(e, 1, args.stacktrace if args is not None else True)
     except ValueError as e:
-        handle_exception(e, 2, args.debug if args is not None else True)
+        handle_exception(e, 2, args.stacktrace if args is not None else True)
     except NoFilesFoundError as e:
-        handle_exception(e, 3, args.debug if args is not None else True)
+        handle_exception(e, 3, args.stacktrace if args is not None else True)
     except ConcurrencyError as e:
-        handle_exception(e, 5, args.debug if args is not None else True)
+        handle_exception(e, 5, args.stacktrace if args is not None else True)
     except IntegrityCheckFailedError as e:
-        handle_exception(e, 7, args.debug if args is not None else True)
+        handle_exception(e, 7, args.stacktrace if args is not None else True)
     except Exception as e:
-        handle_exception(e, 9, args.debug if args is not None else True, prefix="UNEXPECTED ERROR")
+        handle_exception(e, 9, args.stacktrace if args is not None else True, prefix="UNEXPECTED ERROR")
     finally:
         if created_lock_file and lock_file is not None:
             lock_file.unlink(missing_ok=True)
