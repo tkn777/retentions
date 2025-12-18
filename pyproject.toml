@@ -49,11 +49,11 @@ warn_redundant_casts = true
 warn_unreachable = true
 strict_optional = true
 no_implicit_optional = true
-exclude = ["^tests/"]
+exclude = '(^tests/|^tests_.*|^test_.*)'
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "-v --tb=short --maxfail=3"
+addopts = "-v --tb=short --maxfail=3 --cache-clear"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
