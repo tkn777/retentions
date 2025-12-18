@@ -64,6 +64,7 @@ class FileStatsCache:
         return self._file_stats_cache.setdefault(file, file.stat()).st_size
 
 
+# TODO: Use Logger
 def get_file_attributes(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> str:
     return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
 
@@ -77,6 +78,9 @@ class Logger:
         self._args = args
         self._file_stats_cache = file_stats_cache
 
+    def _get_file_attributes(self, file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> str:
+        return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
+
     def has_log_level(self, level: int) -> bool:
         return level <= int(self._args.verbose)
 
@@ -84,16 +88,17 @@ class Logger:
         if self.has_log_level(level):
             print(f"[{prefix or LOG_LEVEL[level]}] {message}", file=file)
 
-    def add_decision(self, level: int, file: Path, message: str) -> None:
-        if level >= 3: # Decision history and file details only with debug log level
-            self._decisions[file].append((message, f"({get_file_attributes(file, self._args, self._file_stats_cache)})"))
-        else: # Without debug log level no decision history
+    def add_decision(self, level: int, file: Path, message: str, debug: Optional[str] = None, pos: int = 0) -> None:
+        if level >= 3:  # Decision history and debug message and file details only with debug log level
+            self._decisions[file].insert(pos, ((message, f"({(debug + ', ') if debug is not None else ''}, {self._get_file_attributes(file, self._args, self._file_stats_cache)})")))
+        else:  # Without debug log level no decision history
             self._decisions[file][0] = (message, None)
 
     def print_decisions(self) -> None:
         pass  # TODO: Implement
 
 
+# TODO: Use Logger
 def verbose(level: int, maximum_level: int, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
     if level <= maximum_level:
         print(f"[{prefix or LOG_LEVEL[level]}] {message}", file=file)
