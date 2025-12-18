@@ -29,10 +29,10 @@ VERSION: str = "dev-1.0.0"
 
 SCRIPT_START = datetime.now().timestamp()
 
-LOG_LEVEL: dict[int, str] = {0: "ERROR", 1: "WARNING", 2: "INFO", 3: "DEBUG"}
-
-
 LOCK_FILE_NAME: str = ".retentions.lock"
+
+# TODO: Use LogLevel
+LOG_LEVEL: dict[int, str] = {0: "ERROR", 1: "WARNING", 2: "INFO", 3: "DEBUG"}
 
 
 class ConcurrencyError(Exception):
@@ -70,13 +70,22 @@ class FileStatsCache:
 def get_file_attributes(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> str:
     return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
 
-# TODO: Use new LogLevel
+
 class LogLevel(IntEnum):
     ERROR = 0
-    WARNING = 1
+    WARN = 1
     INFO = 2
     DEBUG = 3
 
+    @classmethod
+    def from_name_or_number(cls, prefix: str) -> "LogLevel":
+        try:
+            return next(m for m in cls if m.name.startswith(prefix.upper()))
+        except StopIteration:
+            try:
+                return cls(int(prefix))
+            except ValueError:
+                raise ValueError("Invalid log level: " + prefix)
 
 class Logger:
     _decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
@@ -132,7 +141,7 @@ class ModernHelpFormatter(argparse.HelpFormatter):
     @no_type_check
     def format_help(self) -> str:
         print("retentions " + VERSION + "\n")
-        print("A small cross-platform CLI tool for file retention management\n")
+        print("A small feature-rich cross-platform CLI tool for file retention management\n")
         return super().format_help()
 
 
@@ -163,6 +172,12 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         except ValueError:
             raise argparse.ArgumentTypeError(f"Invalid value '{value}': must be an integer > 0")
         return int_value
+
+    def verbose_argument(self, value: str) -> LogLevel:
+        try:
+            return LogLevel.from_name_or_number(value)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"Invalid verbose value '{value}' (use ERROR, WARN, INFO, DEBUG or 0-3)")
 
     def parse_positive_size_argument(self, size_str: str) -> float:
         size_str = size_str.strip().upper()
@@ -250,19 +265,19 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
     def _validate_arguments(self, ns) -> None:  # noqa: ANN001
         # Default verbosity, if none given
         if ns.verbose is None:
-            ns.verbose = 2
+            ns.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
 
         # dry-run implies verbose
         if ns.dry_run and not ns.list_only and not ns.verbose:
-            ns.verbose = 2
+            ns.verbose = LogLevel.INFO
 
         # normalize 0-byte separator
         if ns.list_only == "\\0":
             ns.list_only = "\0"
 
         # incompatible options (list-only and verbose)
-        if ns.list_only and ns.verbose > 0:
-            self.add_error("--list-only and --verbose cannot be used together")
+        if ns.list_only and ns.verbose > LogLevel.ERROR:
+            self.add_error("--list-only and --verbose (> ERROR) cannot be used together")
 
         # regex validation (and compilation) also for protect
         if ns.regex_mode is not None:
@@ -357,8 +372,8 @@ def create_parser() -> ModernStrictArgumentParser:
     # fmt: off
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep",
         help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
-    g_behavior.add_argument("--verbose", "-V", "-v", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const=2, metavar="lev",
-        help="Verbosity level: 0 = error, 1 = warnings, 2 = info, 3 = debug (default: 2, if specified without value; 0 otherwise)")
+    g_behavior.add_argument("--verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
+        help="Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)")
     # fmt: on
     g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files")
     g_behavior.add_argument("--no-lock-file", action="store_false", dest="use_lock_file", default=True, help="Omit lock file (default: enabled)")
