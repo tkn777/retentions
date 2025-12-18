@@ -97,6 +97,13 @@ class Logger:
     def print_decisions(self) -> None:
         pass  # TODO: Implement
 
+    def handle_exception(self, exception: Exception, exit_code: int, stacktrace: bool = True, prefix: str = "") -> None:
+        if stacktrace:
+            traceback.print_exc()
+        else:
+            self.verbose(0, f"{exception}", prefix=prefix, file=sys.stderr)
+        sys.exit(exit_code)
+
 
 # TODO: Use Logger
 def verbose(level: int, maximum_level: int, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
@@ -341,7 +348,7 @@ def create_parser() -> ModernStrictArgumentParser:
     # fmt: off
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep",
         help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
-    g_behavior.add_argument("--verbose", "-V", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const=2, metavar="lev",
+    g_behavior.add_argument("--verbose", "-V", "-v", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const=2, metavar="lev",
         help="Verbosity level: 0 = error, 1 = warnings, 2 = info, 3 = debug (default: 2, if specified without value; 0 otherwise)")
     # fmt: on
     g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files")
@@ -604,6 +611,7 @@ def delete_file(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCa
                 verbose(1, args.verbose, f"Error while deleting file '{file.name}': {e}", file=sys.stderr)
 
 
+# TODO: Use Logger
 def handle_exception(exception: Exception, exit_code: int, debug: bool, prefix: str = "") -> None:
     if debug:
         traceback.print_exc()
