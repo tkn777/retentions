@@ -217,7 +217,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             ("w", 7 * 24 * 60 * 60),
             ("d", 24 * 60 * 60),
             ("h", 60 * 60),
-            ("", 1),  # seconds (no suffix)
+            ("", 1),
         ]
         value, suffix = float(seconds), ""
         for s, v in units:
@@ -469,14 +469,7 @@ def create_retention_buckets(matches: list[Path], retention_mode: str, args: Con
 
 
 def process_retention_buckets(
-    keep: set[Path],
-    prune: set[Path],
-    retention_mode: str,
-    retention_mode_count: int,
-    buckets: dict[str, list[Path]],
-    prune_keep_decisions: dict[Path, str],
-    args: ConfigNamespace,
-    file_stats_cache: FileStatsCache,
+    keep: set[Path], prune: set[Path], retention_mode: str, retention_mode_count: int, buckets: dict[str, list[Path]], prune_keep_decisions: dict[Path, str], args: ConfigNamespace, file_stats_cache: FileStatsCache
 ) -> None:
     sorted_keys = sorted(buckets.keys(), reverse=True)  # newest first
     effective_count = retention_mode_count
@@ -534,32 +527,14 @@ def filter_files(keep: set[Path], prune: set[Path], prune_keep_decisions: dict[P
             file_bytes = file_stats_cache.get_file_bytes(file) * 1024
             bytes_sum += file_bytes
             if bytes_sum > args.max_size_bytes:
-                filter_file(
-                    keep,
-                    prune,
-                    prune_keep_decisions,
-                    file,
-                    args,
-                    file_stats_cache,
-                    f"Filtering '{file.name}': max size exceeded: {ModernStrictArgumentParser.format_size(bytes_sum)} > {args.max_size}",
-                )
-
+                filter_file( keep, prune, prune_keep_decisions, file, args, file_stats_cache, f"Filtering '{file.name}': max size exceeded: {ModernStrictArgumentParser.format_size(bytes_sum)} > {args.max_size}", )
     # max-age
     if args.max_age is not None and sorted_keep:
         threshold = SCRIPT_START - args.max_age_seconds
         for file in sorted_keep:
             file_time = file_stats_cache.get_file_seconds(file)
             if file_time < threshold:
-                filter_file(
-                    keep,
-                    prune,
-                    prune_keep_decisions,
-                    file,
-                    args,
-                    file_stats_cache,
-                    f"Filtering '{file.name}': max age exceeded: {ModernStrictArgumentParser.format_time(int(SCRIPT_START - file_time))} > {args.max_age}",
-                )
-
+                filter_file( keep, prune, prune_keep_decisions, file, args, file_stats_cache, f"Filtering '{file.name}': max age exceeded: {ModernStrictArgumentParser.format_time(int(SCRIPT_START - file_time))} > {args.max_age}", )
 
 @dataclass
 class RetentionsResult:
