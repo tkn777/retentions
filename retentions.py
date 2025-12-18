@@ -28,13 +28,9 @@ VERSION: str = "dev-1.0.0"
 
 SCRIPT_START = datetime.now().timestamp()
 
-VERBOSE_LEVEL: dict[int, str] = {0: "ERROR", 1: "WARNING", 2: "INFO", 3: "DEBUG"}
+LOG_LEVEL: dict[int, str] = {0: "ERROR", 1: "WARNING", 2: "INFO", 3: "DEBUG"}
 
 LOCK_FILE_NAME: str = ".retentions.lock"
-
-
-DecisionEntry = tuple[str, Optional[str]]
-DecisionLog = dict[Path, list[DecisionEntry]]
 
 
 class ConcurrencyError(Exception):
@@ -72,14 +68,35 @@ def get_file_attributes(file: Path, args: ConfigNamespace, file_stats_cache: Fil
     return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
 
 
-def log(level: int, file: Path, message: str, log: DecisionLog, args: ConfigNamespace, file_stats_cache: FileStatsCache, log_pos: int = 0) -> None:
-    if level <= args.verbose:
-        log[file].insert(log_pos, (message, f"({get_file_attributes(file, args, file_stats_cache)})" if args.verbose >= 3 else None))
+class Logger:
+    _decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
+    _args: ConfigNamespace
+    _file_stats_cache: FileStatsCache
+
+    def __init__(self, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
+        self._args = args
+        self._file_stats_cache = file_stats_cache
+
+    def has_log_level(self, level: int) -> bool:
+        return level <= int(self._args.verbose)
+
+    def verbose(self, level: int, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
+        if self.has_log_level(level):
+            print(f"[{prefix or LOG_LEVEL[level]}] {message}", file=file)
+
+    def add_decision(self, level: int, file: Path, message: str) -> None:
+        if level >= 3: # Decision history and file details only with debug log level
+            self._decisions[file].append((message, f"({get_file_attributes(file, self._args, self._file_stats_cache)})"))
+        else: # Without debug log level no decision history
+            self._decisions[file][0] = (message, None)
+
+    def print_decisions(self) -> None:
+        pass  # TODO: Implement
 
 
 def verbose(level: int, maximum_level: int, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
     if level <= maximum_level:
-        print(f"[{prefix or VERBOSE_LEVEL[level]}] {message}", file=file)
+        print(f"[{prefix or LOG_LEVEL[level]}] {message}", file=file)
 
 
 class ModernHelpFormatter(argparse.HelpFormatter):
@@ -319,8 +336,8 @@ def create_parser() -> ModernStrictArgumentParser:
     # fmt: off
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep",
         help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
-    g_behavior.add_argument("--verbose", "-V", type=int, nargs="?", choices=[1, 2, 3], default=None, const=2, metavar="lev",
-        help="Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output, 3 = debug output (default: 2, if specified without value)")
+    g_behavior.add_argument("--verbose", "-V", type=int, nargs="?", choices=[0, 1, 2, 3], default=None, const=2, metavar="lev",
+        help="Verbosity level: 0 = error, 1 = warnings, 2 = info, 3 = debug (default: 2, if specified without value; 0 otherwise)")
     # fmt: on
     g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files")
     g_behavior.add_argument("--no-lock-file", action="store_false", dest="use_lock_file", default=True, help="Omit lock file (default: enabled)")
@@ -594,6 +611,7 @@ def main() -> None:
     args: Optional[ConfigNamespace] = None
     lock_file: Optional[Path] = None
     created_lock_file = False
+
     try:
         # Parse arguments
         args = parse_arguments()
