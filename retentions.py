@@ -629,12 +629,10 @@ def run_deletion(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsC
                 verbose(1, args.verbose, f"Error while deleting file '{file.name}': {e}", file=sys.stderr)
 
 
-# TODO: Use Logger
-def handle_exception(exception: Exception, exit_code: int, debug: bool, prefix: str = "") -> None:
-    if debug:
+def handle_exception(exception: Exception, exit_code: int, stacktrace: bool, prefix: str = "") -> None:
+    if stacktrace:
         traceback.print_exc()
-    else:
-        verbose(0, 0, f"{exception}", prefix=prefix, file=sys.stderr)
+    print(f"[{prefix or LogLevel(0)}] {exception}", file=sys.stderr)
     sys.exit(exit_code)
 
 
@@ -673,7 +671,7 @@ def main() -> None:
         # Delete files not to keep (or list them)
         for file in retentions_result.matches:
             if is_file_to_delete(retentions_result.keep, retentions_result.prune, file):
-                delete_file(file, args, file_stats_cache)
+                run_deletion(file, args, file_stats_cache)
 
     except OSError as e:
         handle_exception(e, 1, args.stacktrace if args is not None else True)
