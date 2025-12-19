@@ -614,7 +614,7 @@ def is_file_to_delete(keep: set[Path], prune: set[Path], file: Path) -> bool:
     return file not in keep and file in prune
 
 
-def delete_file(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
+def run_deletion(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
     time = datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))
     if args.list_only:
         print(file.absolute(), end=args.list_only)  # List mode
