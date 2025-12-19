@@ -262,6 +262,13 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 self.add_error(f"Duplicate flag: {key}")
             seen.add(key)
 
+    def _compile_regex(self, regex: str, regex_mode: str) -> Optional[re.Pattern[str]]:
+        try:
+            return re.compile(regex, re.UNICODE | (re.IGNORECASE if regex_mode == "ignorecase" else 0))
+        except re.error:
+            self.add_error(f"Invalid regular expression : {regex}")
+            return None
+
     @no_type_check
     def _validate_arguments(self, ns) -> None:  # noqa: ANN001
         # Default verbosity, if none given
@@ -276,21 +283,15 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         if ns.list_only == "\\0":
             ns.list_only = "\0"
 
-        # incompatible options (list-only and verbose)
+        # incompatible options (list-only and verbose > ERROR)
         if ns.list_only and ns.verbose > LogLevel.ERROR:
             self.add_error("--list-only and --verbose (> ERROR) cannot be used together")
 
-        # regex validation (and compilation) also for protect
+        # regex validation (and compilation), also for protect
         if ns.regex_mode is not None:
-            try:
-                ns.regex_compiled = re.compile(ns.file_pattern, re.UNICODE | (re.IGNORECASE if ns.regex_mode == "ignorecase" else 0))
-            except re.error:
-                self.add_error(f"Invalid regular expression for file-pattern: {ns.file_pattern}")
+            ns.regex_compiled = self._compile_regex(ns.file_pattern, ns.regex_mode)
             if ns.protect is not None:
-                try:
-                    ns.protect_compiled = re.compile(ns.protect, re.UNICODE | (re.IGNORECASE if ns.regex_mode == "ignorecase" else 0))
-                except re.error:
-                    self.add_error(f"Invalid regular expression for protection: {ns.protect}")
+                ns.protect_compiled = self._compile_regex(ns.protect, ns.regex_mode)
 
         # max-size parsing
         if ns.max_size is not None:
@@ -527,14 +528,31 @@ def filter_files(keep: set[Path], prune: set[Path], prune_keep_decisions: dict[P
             file_bytes = file_stats_cache.get_file_bytes(file) * 1024
             bytes_sum += file_bytes
             if bytes_sum > args.max_size_bytes:
-                filter_file( keep, prune, prune_keep_decisions, file, args, file_stats_cache, f"Filtering '{file.name}': max size exceeded: {ModernStrictArgumentParser.format_size(bytes_sum)} > {args.max_size}", )
+                filter_file(
+                    keep,
+                    prune,
+                    prune_keep_decisions,
+                    file,
+                    args,
+                    file_stats_cache,
+                    f"Filtering '{file.name}': max size exceeded: {ModernStrictArgumentParser.format_size(bytes_sum)} > {args.max_size}",
+                )
     # max-age
     if args.max_age is not None and sorted_keep:
         threshold = SCRIPT_START - args.max_age_seconds
         for file in sorted_keep:
             file_time = file_stats_cache.get_file_seconds(file)
             if file_time < threshold:
-                filter_file( keep, prune, prune_keep_decisions, file, args, file_stats_cache, f"Filtering '{file.name}': max age exceeded: {ModernStrictArgumentParser.format_time(int(SCRIPT_START - file_time))} > {args.max_age}", )
+                filter_file(
+                    keep,
+                    prune,
+                    prune_keep_decisions,
+                    file,
+                    args,
+                    file_stats_cache,
+                    f"Filtering '{file.name}': max age exceeded: {ModernStrictArgumentParser.format_time(int(SCRIPT_START - file_time))} > {args.max_age}",
+                )
+
 
 @dataclass
 class RetentionsResult:
