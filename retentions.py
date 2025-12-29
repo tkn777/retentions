@@ -587,7 +587,7 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, file_stats_c
         if args.dry_run:
             logger.verbose(LogLevel.INFO, f"DRY-RUN DELETE: {file.name} ({file_stats_cache.age_type}: {time})")  # Just simulate deletion
         else:
-            logger.verbose(LogLevel.INFO, "DELETING: {file.name} ({file_stats_cache.age_type}: {time})")
+            logger.verbose(LogLevel.INFO, f"DELETING: {file.name} ({file_stats_cache.age_type}: {time})")
             try:
                 file.unlink()
             except OSError as e:  # Catch deletion error, print it, and continue
