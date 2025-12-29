@@ -516,15 +516,15 @@ class RetentionLogic:
         self._logger.add_decision(LogLevel.INFO, file, message)
 
     def _filter_files(self) -> None:
-        sorted_keep = sort_files(self._keep, self._file_stats_cache)  # Must be sorted by xtime before applying filters, because set is unfiltered
-
         # max-files
-        if self._args.max_files is not None and sorted_keep:
+        if self._args.max_files is not None and self._keep:
+            sorted_keep = sort_files(self._keep, self._file_stats_cache)  # Must be sorted by xtime before applying filters, because set is unfiltered
             for idx, file in enumerate(sorted_keep[self._args.max_files :], start=self._args.max_files + 1):
                 self._filter_file(file, f"Filtering: max total files exceeded: {idx:02d} > {self._args.max_files:02d}")
 
         # max-size
-        if self._args.max_size is not None and sorted_keep:
+        if self._args.max_size is not None and self._keep:
+            sorted_keep = sort_files(self._keep, self._file_stats_cache)  # Must be sorted by xtime before applying filters, because set is unfiltered
             bytes_sum: int = 0
             for file in sorted_keep:
                 bytes_sum += self._file_stats_cache.get_file_bytes(file)
@@ -532,7 +532,8 @@ class RetentionLogic:
                     self._filter_file(file, f"Filtering: max total size exceeded: {ModernStrictArgumentParser.format_size(bytes_sum)} > {self._args.max_size}")
 
         # max-age
-        if self._args.max_age is not None and sorted_keep:
+        if self._args.max_age is not None and self._keep:
+            sorted_keep = sort_files(self._keep, self._file_stats_cache)  # Must be sorted by xtime before applying filters, because set is unfiltered
             threshold = SCRIPT_START - self._args.max_age_seconds
             for file in sorted_keep:
                 file_time = self._file_stats_cache.get_file_seconds(file)
