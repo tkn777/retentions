@@ -143,6 +143,10 @@ class ModernHelpFormatter(argparse.HelpFormatter):
     def start_section(self, heading) -> None:  # noqa: ANN001
         super().start_section(heading.capitalize())
 
+    @no_type_check
+    def format_help(self) -> str:
+        return f"retentions {VERSION}\n\n" + "A small feature-rich cross-platform CLI tool for file retention management\n\n" + super().format_help()
+
 
 class ModernStrictArgumentParser(argparse.ArgumentParser):
     @no_type_check
@@ -320,7 +324,6 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
 def create_parser() -> ModernStrictArgumentParser:
     parser: ModernStrictArgumentParser = ModernStrictArgumentParser(
-        description=f"retentions {VERSION}\n\nA small feature-rich cross-platform CLI tool for file retention management",
         usage=("retentions path file_pattern [options]\n\nExample:\n  retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6 -a 12m"),
         epilog="Use with caution!! This tool deletes files unless --dry-run or --list-only is set.",
         formatter_class=ModernHelpFormatter,
