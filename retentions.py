@@ -98,7 +98,7 @@ class Logger:
         return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
 
     def has_log_level(self, level: LogLevel) -> bool:
-        return level <= int(self._args.self._logger.verbose)
+        return level <= int(self._args._logger.verbose)
 
     def _raw_verbose(self, level: LogLevel, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
         print(f"[{prefix or LogLevel(level).name}] {message}", file=file)
@@ -177,7 +177,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         try:
             return LogLevel.from_name_or_number(value)
         except ValueError:
-            raise argparse.ArgumentTypeError(f"Invalid self._logger.verbose value '{value}' (use ERROR, WARN, INFO, DEBUG or 0, 1, 2, 3)")
+            raise argparse.ArgumentTypeError(f"Invalid verbose value '{value}' (use ERROR, WARN, INFO, DEBUG or 0, 1, 2, 3)")
 
     def parse_positive_size_argument(self, size_str: str) -> float:
         size_str = size_str.strip().upper()
@@ -263,20 +263,20 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
     @no_type_check
     def _validate_arguments(self, ns) -> None:  # noqa: ANN001
         # Default verbosity, if none given
-        if ns.self._logger.verbose is None:
-            ns.self._logger.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
+        if ns.verbose is None:
+            ns.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
 
-        # dry-run implies self._logger.verbose
-        if ns.dry_run and not ns.list_only and not ns.self._logger.verbose:
-            ns.self._logger.verbose = LogLevel.INFO
+        # dry-run implies verbose
+        if ns.dry_run and not ns.list_only and not ns.verbose:
+            ns.verbose = LogLevel.INFO
 
         # normalize 0-byte separator
         if ns.list_only == "\\0":
             ns.list_only = "\0"
 
-        # incompatible options (list-only and self._logger.verbose > ERROR)
-        if ns.list_only and ns.self._logger.verbose > LogLevel.ERROR:
-            self.add_error("--list-only and --self._logger.verbose (> ERROR) cannot be used together")
+        # incompatible options (list-only and verbose > ERROR)
+        if ns.list_only and ns.verbose > LogLevel.ERROR:
+            self.add_error("--list-only and --verbose (> ERROR) cannot be used together")
 
         # regex validation (and compilation), also for protect
         if ns.regex_mode is not None:
@@ -364,8 +364,8 @@ def create_parser() -> ModernStrictArgumentParser:
     # behavior flags
     # fmt: off
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep",
-        help="Output only file paths that would be deleted (incompatible with --self._logger.verbose) (optional separator (sep): e.g. '\\0')")
-    g_behavior.add_argument("--self._logger.verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
+        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
+    g_behavior.add_argument("--verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
         help="Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)")
     # fmt: on
     g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files")
@@ -553,7 +553,7 @@ class RetentionLogic:
 
         # If no retention rules specified, keep all files (before applying possible filtering)
         if retention_rules_applied:
-            # self._logger.verbose files to prune but not kept by any retention rule
+            # verbose files to prune but not kept by any retention rule
             for file in [f for f in self._matches if f not in self._keep | self._prune]:
                 self._logger.add_decision(LogLevel.INFO, file, "Pruning: not matched by any retention rule")
                 self._prune.add(file)
