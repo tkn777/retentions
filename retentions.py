@@ -112,8 +112,8 @@ class Logger:
             if level >= LogLevel.DEBUG:  # Decision history and debug message and file details only with debug log level
                 self._decisions[file].insert(pos, ((message, f"({(debug + ', ') if debug is not None else ''}, {self._get_file_attributes(file, self._args, self._file_stats_cache)})")))
             else:  # Without debug log level no decision history
-                if self._decisions[file]:
-                    self._decisions[file][0] = (message, None)
+                if len(self._decisions[file]) == 0:
+                    self._decisions[file].append((message, None))
                 else:
                     self._decisions[file].insert(0, (message, None))
 
