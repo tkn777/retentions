@@ -125,6 +125,8 @@ class Logger:
         longest_file_name_length = max(len(p.name) for p in self._decisions)
         for file in sort_files(self._decisions, self._file_stats_cache):
             decisions = self._decisions[file]
+            if not decisions:
+                continue
             self._raw_verbose(LogLevel.INFO, f"{file.name:<{longest_file_name_length}}: {self._format_decision(decisions[0])}")
             if not self.has_log_level(LogLevel.DEBUG):
                 continue
