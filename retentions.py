@@ -15,6 +15,7 @@ import re
 import sys
 import traceback
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum
@@ -30,9 +31,6 @@ VERSION: str = "dev-1.0.0"
 SCRIPT_START = datetime.now().timestamp()
 
 LOCK_FILE_NAME: str = ".retentions.lock"
-
-# TODO: Use LogLevel
-LOG_LEVEL: dict[int, str] = {0: "ERROR", 1: "WARNING", 2: "INFO", 3: "DEBUG"}
 
 
 class ConcurrencyError(Exception):
@@ -66,9 +64,8 @@ class FileStatsCache:
         return self._file_stats_cache.setdefault(file, file.stat()).st_size
 
 
-# TODO: Use Logger
-def get_file_attributes(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> str:
-    return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
+def sort_files(files: Iterable[Path], file_stats_cache: FileStatsCache) -> list[Path]:
+    return sorted(files, key=file_stats_cache.get_file_seconds, reverse=True)
 
 
 class LogLevel(IntEnum):
@@ -101,33 +98,35 @@ class Logger:
         return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
 
     def has_log_level(self, level: LogLevel) -> bool:
-        return level <= int(self._args.verbose)
+        return level <= int(self._args.self._logger.verbose)
+
+    def _raw_verbose(self, level: LogLevel, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
+        print(f"[{prefix or LogLevel(level).name}] {message}", file=file)
 
     def verbose(self, level: LogLevel, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
         if self.has_log_level(level):
-            print(f"[{prefix or LogLevel(level).name}] {message}", file=file)
+            self._raw_verbose(level, message, file, prefix)
 
     def add_decision(self, level: LogLevel, file: Path, message: str, debug: Optional[str] = None, pos: int = 0) -> None:
-        if level >= LogLevel.DEBUG:  # Decision history and debug message and file details only with debug log level
-            self._decisions[file].insert(pos, ((message, f"({(debug + ', ') if debug is not None else ''}, {self._get_file_attributes(file, self._args, self._file_stats_cache)})")))
-        else:  # Without debug log level no decision history
-            self._decisions[file][0] = (message, None)
+        if self.has_log_level(level):
+            if level >= LogLevel.DEBUG:  # Decision history and debug message and file details only with debug log level
+                self._decisions[file].insert(pos, ((message, f"({(debug + ', ') if debug is not None else ''}, {self._get_file_attributes(file, self._args, self._file_stats_cache)})")))
+            else:  # Without debug log level no decision history
+                self._decisions[file][0] = (message, None)
+
+    def _format_decision(self, decision: tuple[str, Optional[str]]) -> str:
+        message, debug = decision
+        return message + (f" ({debug})" if debug is not None else "")
 
     def print_decisions(self) -> None:
-        pass  # TODO: Implement
-
-    def handle_exception(self, exception: Exception, exit_code: int, stacktrace: bool = True, prefix: str = "") -> None:
-        if stacktrace:
-            traceback.print_exc()
-        else:
-            self.verbose(LogLevel.ERROR, f"{exception}", prefix=prefix, file=sys.stderr)
-        sys.exit(exit_code)
-
-
-# TODO: Use Logger
-def verbose(level: int, maximum_level: int, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
-    if level <= maximum_level:
-        print(f"[{prefix or LOG_LEVEL[level]}] {message}", file=file)
+        longest_file_name_length = max(len(p.name) for p in self._decisions)
+        for file in sort_files(self._decisions, self._file_stats_cache):
+            decisions = self._decisions[file]
+            self._raw_verbose(LogLevel.INFO, f"{file.name:<{longest_file_name_length}}: {self._format_decision(decisions[0])}")
+            if not self.has_log_level(LogLevel.DEBUG):
+                continue
+            for idx, decision in enumerate(decisions[1:]):
+                self._raw_verbose(LogLevel.DEBUG, f"{' ' * ((longest_file_name_length + 2) + idx * 4)}└── {self._format_decision(decision)}")
 
 
 class ModernHelpFormatter(argparse.HelpFormatter):
@@ -178,7 +177,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         try:
             return LogLevel.from_name_or_number(value)
         except ValueError:
-            raise argparse.ArgumentTypeError(f"Invalid verbose value '{value}' (use ERROR, WARN, INFO, DEBUG or 0, 1, 2, 3)")
+            raise argparse.ArgumentTypeError(f"Invalid self._logger.verbose value '{value}' (use ERROR, WARN, INFO, DEBUG or 0, 1, 2, 3)")
 
     def parse_positive_size_argument(self, size_str: str) -> float:
         size_str = size_str.strip().upper()
@@ -210,15 +209,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
     @staticmethod
     def format_time(seconds: int) -> str:
-        units = [
-            ("y", 365 * 24 * 60 * 60),
-            ("q", 90 * 24 * 60 * 60),
-            ("m", 30 * 24 * 60 * 60),
-            ("w", 7 * 24 * 60 * 60),
-            ("d", 24 * 60 * 60),
-            ("h", 60 * 60),
-            ("", 1),
-        ]
+        units = [("y", 365 * 24 * 60 * 60), ("q", 90 * 24 * 60 * 60), ("m", 30 * 24 * 60 * 60), ("w", 7 * 24 * 60 * 60), ("d", 24 * 60 * 60), ("h", 60 * 60), ("", 1)]
         value, suffix = float(seconds), ""
         for s, v in units:
             if seconds >= v:
@@ -272,20 +263,20 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
     @no_type_check
     def _validate_arguments(self, ns) -> None:  # noqa: ANN001
         # Default verbosity, if none given
-        if ns.verbose is None:
-            ns.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
+        if ns.self._logger.verbose is None:
+            ns.self._logger.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
 
-        # dry-run implies verbose
-        if ns.dry_run and not ns.list_only and not ns.verbose:
-            ns.verbose = LogLevel.INFO
+        # dry-run implies self._logger.verbose
+        if ns.dry_run and not ns.list_only and not ns.self._logger.verbose:
+            ns.self._logger.verbose = LogLevel.INFO
 
         # normalize 0-byte separator
         if ns.list_only == "\\0":
             ns.list_only = "\0"
 
-        # incompatible options (list-only and verbose > ERROR)
-        if ns.list_only and ns.verbose > LogLevel.ERROR:
-            self.add_error("--list-only and --verbose (> ERROR) cannot be used together")
+        # incompatible options (list-only and self._logger.verbose > ERROR)
+        if ns.list_only and ns.self._logger.verbose > LogLevel.ERROR:
+            self.add_error("--list-only and --self._logger.verbose (> ERROR) cannot be used together")
 
         # regex validation (and compilation), also for protect
         if ns.regex_mode is not None:
@@ -373,8 +364,8 @@ def create_parser() -> ModernStrictArgumentParser:
     # behavior flags
     # fmt: off
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep",
-        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
-    g_behavior.add_argument("--verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
+        help="Output only file paths that would be deleted (incompatible with --self._logger.verbose) (optional separator (sep): e.g. '\\0')")
+    g_behavior.add_argument("--self._logger.verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
         help="Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)")
     # fmt: on
     g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files")
@@ -391,11 +382,10 @@ def create_parser() -> ModernStrictArgumentParser:
 def parse_arguments() -> ConfigNamespace:
     parser = create_parser()
     args = parser.parse_args()
-    verbose(3, args.verbose, f"Parsed arguments: {args}")
     return ConfigNamespace(**vars(args))
 
 
-def read_filelist(args: ConfigNamespace, file_stats_cache: FileStatsCache) -> list[Path]:
+def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileStatsCache) -> list[Path]:
     base: Path = Path(args.path)
     if not base.exists():
         raise FileNotFoundError(f"Path not found: {base}")
@@ -404,9 +394,9 @@ def read_filelist(args: ConfigNamespace, file_stats_cache: FileStatsCache) -> li
 
     matches: list[Path] = []
     if args.regex_mode:
-        matches = [f for f in base.iterdir() if f.is_file() and (args.regex_compiled.match(f.name))]
+        matches = [file for file in base.iterdir() if file.is_file() and (args.regex_compiled.match(file.name))]
     else:
-        matches = [f for f in base.glob(args.file_pattern) if f.is_file()]
+        matches = [file for file in base.glob(args.file_pattern) if file.is_file()]
 
     if not matches:
         raise NoFilesFoundError(f"No files found in '{base}' using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
@@ -421,212 +411,187 @@ def read_filelist(args: ConfigNamespace, file_stats_cache: FileStatsCache) -> li
         protected: list[Path] = []
         for file in matches:
             if args.regex_mode and args.protect_compiled.match(file.name):
-                verbose(2, args.verbose, f"File '{file}' is protected by regex '{args.protect}'")
+                logger.add_decision(LogLevel.INFO, file, f"Protected by regex: '{args.protect}'")
                 protected.append(file)
             elif fnmatch(file.name, args.protect):
-                verbose(2, args.verbose, f"File '{file}' is protected by glob '{args.protect}'")
+                logger.add_decision(LogLevel.INFO, file, f"Protected by glob: '{args.protect}'")
                 protected.append(file)
-        matches = [f for f in matches if f not in protected]
+        matches = [file for file in matches if file not in protected]
 
     # Ignore lock file (in any case, even if it is is disabled by user)
     matches = [m for m in matches if m.name != LOCK_FILE_NAME]
 
-    # sort by time (youngest first), deterministic on ties
-    matches = sorted(matches, key=lambda p: file_stats_cache.get_file_seconds(p), reverse=True)
-
-    verbose(2, args.verbose, f"Found {len(matches)} files using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
-    verbose(3, args.verbose, "Files found: " + ", ".join(f'"{p.name}"' for p in matches))
-
-    return matches
-
-
-def create_retention_buckets(matches: list[Path], retention_mode: str, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> dict[str, list[Path]]:
-    buckets: dict[str, list[Path]] = defaultdict(list)
-    for file in matches:
-        timestamp = datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))
-        if retention_mode == "hours":
-            key = timestamp.strftime("%Y-%m-%d-%H")
-        elif retention_mode == "days":
-            key = timestamp.strftime("%Y-%m-%d")
-        elif retention_mode == "weeks":
-            year, week, _ = timestamp.isocalendar()
-            key = f"{year}-W{week:02d}"
-        elif retention_mode == "months":
-            key = timestamp.strftime("%Y-%m")
-        elif retention_mode == "quarters":
-            key = f"{timestamp.year}-Q{((timestamp.month - 1) // 3) + 1}"
-        elif retention_mode == "week13":
-            year, week, _ = timestamp.isocalendar()
-            key = f"{year}-week13-{(week - 1) // 13 + 1}"
-        elif retention_mode == "years":
-            key = str(timestamp.year)
-        else:
-            raise ValueError(f"invalid bucket mode: {retention_mode}")
-        buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from the timestamp of the file
-    if args.verbose >= 3:
-        for key, files in buckets.items():
-            verbose(3, args.verbose, f"Buckets: {key} - {', '.join(f'{p.name} ({datetime.fromtimestamp(file_stats_cache.get_file_seconds(p))})' for p in files)}")
-    return buckets
-
-
-def process_retention_buckets(
-    keep: set[Path], prune: set[Path], retention_mode: str, retention_mode_count: int, buckets: dict[str, list[Path]], prune_keep_decisions: dict[Path, str], args: ConfigNamespace, file_stats_cache: FileStatsCache
-) -> None:
-    sorted_keys = sorted(buckets.keys(), reverse=True)  # newest first
-    effective_count = retention_mode_count
-    current_count = 0
-    while current_count < effective_count:
-        if current_count >= len(sorted_keys):
-            break  # No more buckets
-        first_bucket_file = buckets[sorted_keys[current_count]][0]
-        if first_bucket_file in keep:  # Already kept by one previous mode
-            verbose(3, args.verbose, f"Skipping '{first_bucket_file.name}' for mode {retention_mode} as already kept by one previous mode")
-            effective_count += 1
-        else:
-            # Keep first entry of bucket, prune the rest
-            if args.verbose >= 2:
-                prune_keep_decisions[first_bucket_file] = (
-                    f"Keeping '{first_bucket_file.name}': {retention_mode} {(current_count - (effective_count - retention_mode_count) + 1):02d}/{retention_mode_count:02d} "
-                    f"(key: {sorted_keys[current_count]}, {get_file_attributes(first_bucket_file, args, file_stats_cache)})"
-                )
-            keep.add(first_bucket_file)
-            for file_prune in buckets[sorted_keys[current_count]][1:]:
-                if args.verbose >= 2:
-                    prune_keep_decisions[file_prune] = f"Pruning '{file_prune.name}': {retention_mode} (key: {sorted_keys[current_count]}, {get_file_attributes(file_prune, args, file_stats_cache)})"
-                prune.add(file_prune)
-        current_count += 1
-
-
-def process_last_n(keep: set[Path], prune: set[Path], prune_keep_decisions: dict[Path, str], matches: list[Path], args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
-    last_files = matches[: args.last]  # Get the N most recently modified files regardless from any retention rule (newest first)
-    if args.verbose >= 2:
-        for index, file in enumerate(last_files, start=1):
-            if file not in keep:  # Retention rules may have already kept this file, their message takes precedence
-                prune_keep_decisions[file] = f"Keeping '{file.name}': last {index:02d}/{args.last:02d} {get_file_attributes(file, args, file_stats_cache)}"
-    keep.update(last_files)
-    prune.difference_update(last_files)  # ensure last N files are not pruned
-
-
-def filter_file(keep: set[Path], prune: set[Path], prune_keep_decisions: dict[Path, str], file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache, message: str) -> None:
-    keep.remove(file)
-    prune.add(file)
-    prune_keep_decisions[file] = message + f" ({get_file_attributes(file, args, file_stats_cache)})"
-
-
-def filter_files(keep: set[Path], prune: set[Path], prune_keep_decisions: dict[Path, str], args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
-    sorted_keep = sorted(keep, key=lambda p: file_stats_cache.get_file_seconds(p), reverse=True)  # Must be sorted by xtime before applying filters, because set is unfiltered
-
-    # max-files
-    if args.max_files is not None and sorted_keep:
-        for idx, file in enumerate(sorted_keep[args.max_files :], start=args.max_files + 1):
-            filter_file(keep, prune, prune_keep_decisions, file, args, file_stats_cache, f"Filtering '{file.name}': max files exceeded: {idx:02d} > {args.max_files:02d}")
-
-    # max-size
-    if args.max_size is not None and sorted_keep:
-        bytes_sum: int = 0
-        for file in sorted_keep:
-            file_bytes = file_stats_cache.get_file_bytes(file) * 1024
-            bytes_sum += file_bytes
-            if bytes_sum > args.max_size_bytes:
-                filter_file(
-                    keep,
-                    prune,
-                    prune_keep_decisions,
-                    file,
-                    args,
-                    file_stats_cache,
-                    f"Filtering '{file.name}': max size exceeded: {ModernStrictArgumentParser.format_size(bytes_sum)} > {args.max_size}",
-                )
-    # max-age
-    if args.max_age is not None and sorted_keep:
-        threshold = SCRIPT_START - args.max_age_seconds
-        for file in sorted_keep:
-            file_time = file_stats_cache.get_file_seconds(file)
-            if file_time < threshold:
-                filter_file(
-                    keep,
-                    prune,
-                    prune_keep_decisions,
-                    file,
-                    args,
-                    file_stats_cache,
-                    f"Filtering '{file.name}': max age exceeded: {ModernStrictArgumentParser.format_time(int(SCRIPT_START - file_time))} > {args.max_age}",
-                )
+    # sort by time (youngest first)
+    return sort_files(matches, file_stats_cache)
 
 
 @dataclass
 class RetentionsResult:
-    matches: list[Path]
     keep: set[Path]
     prune: set[Path]
-    prune_keep_decisions: dict[Path, str]
+    decisions_log: Logger
 
 
-def process_retention_logic(args: ConfigNamespace, file_stats_cache: FileStatsCache) -> RetentionsResult:
-    # Read file list
-    matches: list[Path] = read_filelist(args, file_stats_cache)
+class RetentionLogic:
+    _matches: list[Path]
+    _keep: set[Path]
+    _prune: set[Path]
+    _args: ConfigNamespace
+    _logger: Logger
+    _file_stats_cache: FileStatsCache
 
-    keep: set[Path] = set()  # Files marked to keep
-    prune: set[Path] = set()  # Files marked for deletion
-    prune_keep_decisions: dict[Path, str] = {}  # For verbose output of decisions
-    # prune_keep_decisions2: DecisionLog = defaultdict(list)  # For verbose output of decisions
+    def __init__(self, matches: list[Path], args: ConfigNamespace, logger: Logger, file_stats_cache: FileStatsCache) -> None:
+        self._matches = matches
+        self._keep = set()
+        self._prune = set()
+        self._args = args
+        self._logger = logger
+        self._file_stats_cache = file_stats_cache
 
-    # Retention by time buckets
-    retention_rules_applied = False
-    for retention_mode in ["hours", "days", "weeks", "months", "quarters", "week13", "years"]:
-        retention_mode_count = getattr(args, retention_mode)
-        if retention_mode_count:
+    def _create_retention_buckets(self, retention_mode: str) -> dict[str, list[Path]]:
+        buckets: dict[str, list[Path]] = defaultdict(list)
+        for file in self._matches:
+            timestamp = datetime.fromtimestamp(self._file_stats_cache.get_file_seconds(file))
+            if retention_mode == "hours":
+                key = timestamp.strftime("%Y-%m-%d-%H")
+            elif retention_mode == "days":
+                key = timestamp.strftime("%Y-%m-%d")
+            elif retention_mode == "weeks":
+                year, week, _ = timestamp.isocalendar()
+                key = f"{year}-W{week:02d}"
+            elif retention_mode == "months":
+                key = timestamp.strftime("%Y-%m")
+            elif retention_mode == "quarters":
+                key = f"{timestamp.year}-Q{((timestamp.month - 1) // 3) + 1}"
+            elif retention_mode == "week13":
+                year, week, _ = timestamp.isocalendar()
+                key = f"{year}-week13-{(week - 1) // 13 + 1}"
+            elif retention_mode == "years":
+                key = str(timestamp.year)
+            else:
+                raise ValueError(f"invalid bucket mode: {retention_mode}")
+            buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from the timestamp of the file
+        if self._logger.has_log_level(LogLevel.DEBUG):
+            for key, files in buckets.items():
+                self._logger.verbose(LogLevel.DEBUG, f"Retention buckets: {key} - {', '.join(f'{file.name} ({datetime.fromtimestamp(self._file_stats_cache.get_file_seconds(file))})' for file in files)}")
+        return buckets
+
+    def _process_retention_buckets(self, retention_mode: str, retention_mode_count: int, buckets: dict[str, list[Path]]) -> None:
+        sorted_keys = sorted(buckets.keys(), reverse=True)  # newest bucket-key first => e.g. "2025-01" before "2023-11" for 'months' retention mode
+        effective_count = retention_mode_count
+        current_count = 0
+        while current_count < effective_count:
+            if current_count >= len(sorted_keys):
+                break  # No more buckets
+            first_bucket_file = buckets[sorted_keys[current_count]][0]
+            if first_bucket_file in self._keep:  # Already kept by one previous retention mode
+                self._logger.add_decision(LogLevel.DEBUG, first_bucket_file, f"Skipping for mode '{retention_mode}' as already kept by one previous retention mode", pos=1)
+                effective_count += 1
+            else:
+                # Keep first entry (file) of bucket, prune the rest
+                self._logger.add_decision(
+                    LogLevel.INFO, first_bucket_file, f"Keeping for mode '{retention_mode}' {(current_count - (effective_count - retention_mode_count) + 1):02d}/{retention_mode_count:02d}", debug=f"key: {sorted_keys[current_count]}"
+                )
+                self._keep.add(first_bucket_file)
+                for file_prune in buckets[sorted_keys[current_count]][1:]:
+                    self._logger.add_decision(LogLevel.INFO, file_prune, f"Pruning for mode '{retention_mode}'", debug=f"key: {sorted_keys[current_count]}")
+                    self._prune.add(file_prune)
+            current_count += 1
+
+    def _process_last_n(self) -> None:
+        last_files = self._matches[: self._args.last]  # Get the N most recently modified files regardless from any retention rule (newest first)
+        if self._logger.has_log_level(LogLevel.INFO):
+            for index, file in enumerate(last_files, start=1):
+                if file not in self._keep:  # Retention rules may have already kept this file, their message takes precedence
+                    self._logger.add_decision(LogLevel.INFO, file, f"Keeping last {index:02d}/{self._args.last:02d}")
+        self._keep.update(last_files)
+        self._prune.difference_update(last_files)  # ensure last N files are not pruned
+
+    def _filter_file(self, file: Path, message: str) -> None:
+        self._keep.remove(file)
+        self._prune.add(file)
+        self._logger.add_decision(LogLevel.INFO, file, message)
+
+    def _filter_files(self) -> None:
+        sorted_keep = sort_files(self._keep, self._file_stats_cache)  # Must be sorted by xtime before applying filters, because set is unfiltered
+
+        # max-files
+        if self._args.max_files is not None and sorted_keep:
+            for idx, file in enumerate(sorted_keep[self._args.max_files :], start=self._args.max_files + 1):
+                self._filter_file(file, f"Filtering: max total files exceeded: {idx:02d} > {self._args.max_files:02d}")
+
+        # max-size
+        if self._args.max_size is not None and sorted_keep:
+            bytes_sum: int = 0
+            for file in sorted_keep:
+                bytes_sum += self._file_stats_cache.get_file_bytes(file) * 1024
+                if bytes_sum > self._args.max_size_bytes:
+                    self._filter_file(file, f"Filtering: max total size exceeded: {ModernStrictArgumentParser.format_size(bytes_sum)} > {self._args.max_size}")
+
+        # max-age
+        if self._args.max_age is not None and sorted_keep:
+            threshold = SCRIPT_START - self._args.max_age_seconds
+            for file in sorted_keep:
+                file_time = self._file_stats_cache.get_file_seconds(file)
+                if file_time < threshold:
+                    self._filter_file(file, f"Filtering: max total age exceeded: {ModernStrictArgumentParser.format_time(int(SCRIPT_START - file_time))} > {self._args.max_age}")
+
+    def process_retention_logic(self) -> RetentionsResult:
+        # Retention by time buckets; generation and processing must be done per retention mode sequently in one single loop
+        retention_rules_applied = False
+        for retention_mode in ["hours", "days", "weeks", "months", "quarters", "week13", "years"]:
+            retention_mode_count = getattr(self._args, retention_mode)
+            if retention_mode_count:
+                retention_rules_applied = True
+                buckets = self._create_retention_buckets(retention_mode)
+                self._process_retention_buckets(retention_mode, retention_mode_count, buckets)
+
+        # Keep last N files (additional to time-based retention)
+        if self._args.last:
             retention_rules_applied = True
-            buckets = create_retention_buckets(matches, retention_mode, args, file_stats_cache)
-            process_retention_buckets(keep, prune, retention_mode, retention_mode_count, buckets, prune_keep_decisions, args, file_stats_cache)
+            self._process_last_n()
 
-    # Keep last N files (additional to time-based retention)
-    if args.last:
-        retention_rules_applied = True
-        process_last_n(keep, prune, prune_keep_decisions, matches, args, file_stats_cache)
+        # If no retention rules specified, keep all files (before applying possible filtering)
+        if retention_rules_applied:
+            # self._logger.verbose files to prune but not kept by any retention rule
+            for file in [f for f in self._matches if f not in self._keep | self._prune]:
+                self._logger.add_decision(LogLevel.INFO, file, "Pruning: not matched by any retention rule")
+                self._prune.add(file)
+        else:
+            self._logger.verbose(LogLevel.DEBUG, "No retention rules specified, keeping all files")
+            self._keep.update(self._matches)
+            for file in self._matches:
+                self._logger.add_decision(LogLevel.INFO, file, "Keeping: no retention rules specified")
 
-    # If no retention rules specified, keep all files (before applying possible filtering)
-    if retention_rules_applied:
-        # Verbose files to prune but not kept by any retention rule
-        for file in [f for f in matches if f not in keep | prune]:
-            if args.verbose >= 2:
-                prune_keep_decisions[file] = f"Pruning '{file.name}': not matched by any retention rule ({get_file_attributes(file, args, file_stats_cache)})"
-            prune.add(file)
-    else:
-        verbose(3, args.verbose, "No retention rules specified, keeping all files")
-        keep.update(matches)
-        for file in matches:
-            prune_keep_decisions[file] = f"Keeping '{file.name}': no retention rules specified ({get_file_attributes(file, args, file_stats_cache)})"
+        # Filter keep's
+        self._filter_files()
 
-    # Filter keep's
-    filter_files(keep, prune, prune_keep_decisions, args, file_stats_cache)
+        # Simple integrity checks
+        if not len(self._matches) == len(self._keep) + len(self._prune):
+            raise IntegrityCheckFailedError(f"File count mismatch: some files are neither kept nor prune (all: {len(self._matches)}, keep: {len(self._keep)}, prune: {len(self._prune)}!!")
+        if not len(self._prune) == sum(1 for file in self._matches if is_file_to_delete(self._keep, self._prune, file)):
+            raise IntegrityCheckFailedError("File deletion count mismatch!!")
 
-    # Simple integrity checks
-    if not len(matches) == len(keep) + len(prune):
-        raise IntegrityCheckFailedError(f"File count mismatch: some files are neither kept nor prune (all: {len(matches)}, keep: {len(keep)}, prune: {len(prune)}!!")
-    if not len(prune) == sum(1 for f in matches if is_file_to_delete(keep, prune, f)):
-        raise IntegrityCheckFailedError("File deletion count mismatch!!")
-
-    return RetentionsResult(matches, keep, prune, prune_keep_decisions)
+        return RetentionsResult(self._keep, self._prune, self._logger)
 
 
 def is_file_to_delete(keep: set[Path], prune: set[Path], file: Path) -> bool:
     return file not in keep and file in prune
 
 
-def run_deletion(file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
+def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, file_stats_cache: FileStatsCache) -> None:
     time = datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))
     if args.list_only:
         print(file.absolute(), end=args.list_only)  # List mode
     else:
         if args.dry_run:
-            verbose(2, args.verbose, f"DRY-RUN DELETE: {file.name} ({file_stats_cache.age_type}: {time})")  # Just simulate deletion
+            logger.verbose(LogLevel.INFO, f"DRY-RUN DELETE: {file.name} ({file_stats_cache.age_type}: {time})")  # Just simulate deletion
         else:
-            verbose(2, args.verbose, (f"DELETING: {file.name} ({file_stats_cache.age_type}: {time})"))
+            logger.verbose(LogLevel.INFO, "DELETING: {file.name} ({file_stats_cache.age_type}: {time})")
             try:
                 file.unlink()
             except OSError as e:  # Catch deletion error, print it, and continue
-                verbose(1, args.verbose, f"Error while deleting file '{file.name}': {e}", file=sys.stderr)
+                logger.verbose(LogLevel.WARN, f"Error while deleting file '{file.name}': {e}", file=sys.stderr)
 
 
 def handle_exception(exception: Exception, exit_code: int, stacktrace: bool, prefix: str = "") -> None:
@@ -642,10 +607,13 @@ def main() -> None:
     created_lock_file = False
 
     try:
-        # Parse arguments
         args = parse_arguments()
 
-        # Create lockfile (if needed)
+        file_stats_cache = FileStatsCache(args.age_type)
+        logger = Logger(args, file_stats_cache)
+
+        logger.verbose(LogLevel.DEBUG, f"Parsed arguments: {args}")
+
         if args.use_lock_file:
             lock_file = Path(args.path + f"/{LOCK_FILE_NAME}")
             if lock_file.exists():
@@ -653,25 +621,21 @@ def main() -> None:
             lock_file.touch()
             created_lock_file = True
 
-        # Create file stats cache
-        file_stats_cache = FileStatsCache(args.age_type)
+        matches = read_filelist(args, logger, file_stats_cache)
+        logger.verbose(LogLevel.INFO, f"Found {len(matches)} files using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
+        logger.verbose(LogLevel.DEBUG, "Files found: " + ", ".join(f'"{p.name}"' for p in matches))
 
-        # Run retention logic
-        retentions_result = process_retention_logic(args, file_stats_cache)
+        retentions_result = RetentionLogic(matches, args, logger, file_stats_cache).process_retention_logic()
 
-        # Output prune / keep decisions
-        for file, message in sorted(retentions_result.prune_keep_decisions.items(), key=lambda kv: file_stats_cache.get_file_seconds(kv[0]), reverse=True):
-            verbose(2, args.verbose, message)
+        logger.print_decisions()
 
-        # Summary of keep / prune counts
-        verbose(2, args.verbose, f"Total files found: {len(retentions_result.matches):03d}")
-        verbose(2, args.verbose, f"Total files keep:  {len(retentions_result.keep):03d}")
-        verbose(2, args.verbose, f"Total files prune: {len(retentions_result.prune):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files found: {len(matches):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files keep:  {len(retentions_result.keep):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files prune: {len(retentions_result.prune):03d}")
 
-        # Delete files not to keep (or list them)
-        for file in retentions_result.matches:
+        for file in matches:
             if is_file_to_delete(retentions_result.keep, retentions_result.prune, file):
-                run_deletion(file, args, file_stats_cache)
+                run_deletion(file, args, logger, file_stats_cache)
 
     except OSError as e:
         handle_exception(e, 1, args.stacktrace if args is not None else True)

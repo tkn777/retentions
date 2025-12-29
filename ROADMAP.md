@@ -27,11 +27,15 @@
   - Use type alias
   - Rename to_(keep|prune) to keep|prune and keep_prune_decisions to log
   - Use new method def insert_log(..., pos=0)
-  - verbose only first list element for INFO, anything else for debug "└── "
+  - verbose only first list element for INFO, anything else for debug "└── "
 - Cleanup code ✓
   - Remove redundancies ✓
   - Unify function signatures ✓
   - Use dataclass for retention results ✓
+- Refactored code. - Used classes for ✓
+  - FileStatsCache ✓
+  - Logger ✓
+  - Retention Logic ✓
 - Fix Problem `-a 3 y` ✓
 - Update README.md
 - Review by ChatGPT
