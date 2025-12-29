@@ -408,7 +408,7 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileS
 
     # Check for protection
     if args.protect:
-        protected: list[Path] = []
+        protected: set[Path] = set()
         for file in matches:
             if args.regex_mode and args.protect_compiled.match(file.name):
                 logger.add_decision(LogLevel.INFO, file, f"Protected by regex: '{args.protect}'")
