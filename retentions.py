@@ -415,10 +415,10 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileS
         for file in matches:
             if args.regex_mode and args.protect_compiled.match(file.name):
                 logger.add_decision(LogLevel.INFO, file, f"Protected by regex: '{args.protect}'")
-                protected.append(file)
+                protected.add(file)
             elif fnmatch(file.name, args.protect):
                 logger.add_decision(LogLevel.INFO, file, f"Protected by glob: '{args.protect}'")
-                protected.append(file)
+                protected.add(file)
         matches = [file for file in matches if file not in protected]
 
     # Ignore lock file (in any case, even if it is is disabled by user)
