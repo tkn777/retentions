@@ -20,12 +20,16 @@ retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 week
 
 `retentions` is a single-file Python script that applies retention logic to a directory of files. 
 
-It groups files into time **buckets** (hours, days, weeks, months, quarters, years) and keeps only one representative file per bucket, typically the most recent one.  
+It groups files into time **buckets** (hours, days, weeks, months, quarters, years) and retains only one representative file per bucket, typically the most recent one. Additionally it retains the **last N files** regardless of age.
 
-Everything outside your defined retention scope is deleted (unless `--dry-run` or `--list-only` is used).
+And filters can be used to reduce the retention scope to a subset of files.
+
+Everything outside your defined retention scope is deleted / not kept (unless `--dry-run` or `--list-only` is used).
 
 ⚠️ **Warning:** This tool permanently deletes files outside the defined retention scope.  
 Use `--dry-run` first to verify behavior. The author assumes no liability for data loss.
+
+It is intended for administrators who understand retention concepts and want deterministic, scriptable behavior.
 
 ---
 
@@ -33,8 +37,10 @@ Use `--dry-run` first to verify behavior. The author assumes no liability for da
 
 - Pure **Python 3**, no external dependencies.  
 - Runs on **Linux, macOS, and Windows** (and anywhere else Python 3 runs).  
-- Supports **hourly, daily, weekly, monthly, quarterly and yearly** retention buckets.  
+- Supports **hourly, daily, weekly, monthly, quarterly, yearly** retention buckets.  
 - Supports **keeping the last N files** (`--last`) regardless of age.  
+- Supports **filtering (max-age, max-size, max-files)** to reduce the retention scope to a subset of files.
+- Supports **protecting file**s against deletion.
 - Supports **regex or glob** pattern matching.  
 - Safe modes:  
   - `--dry-run` → simulate actions  
@@ -49,13 +55,29 @@ Use `--dry-run` first to verify behavior. The author assumes no liability for da
 
 ## 🧠 Logic Summary
 
-1. **Collect all matching files** under the given path.  
-2. **Sort** them by modification time (newest first).  
-3. **Keep**:
-   - Newest file per retention period (cumulative): `hour` / `day` / `week` / `month` / `quarter` / `week13` / `year`
-   - Last `N` files (`--last`) (regardless from other retention periods)
-4. **Delete** everything else.  
-5. If `--dry-run` is enabled, print the planned actions instead of executing them.
+### Logic
+1. Scan all files
+2. Ignore all protected files (for the whole process)
+3. Retain (or not) by time-based buckets (--hours, --days, --weeks, --months, --years, --quarter, --week13)
+4. Retain by --last (latest N files)
+5. Filtered (everything retained before) by 
+    1. --max-age (strict time cutoff)
+    2. --max-files (upper limit by file count)
+    3. --max-size (upper limit by total storage)
+6. Delete files or list files to delete
+7. If `--dry-run` is enabled, print the planned actions instead of executing them.
+
+In this document, "retain" refers to the selection process, while "keep" refers to the resulting decision on individual files.
+
+---
+
+## 🧱 Non-goals
+
+`retentions` is intentionally **not** designed to:
+- perform recursive directory traversal
+- act as a full backup solution
+- manage retention across multiple directories
+- provide interactive safety prompts
 
 ---
 
@@ -78,6 +100,7 @@ sudo dpkg -i retentions_x.y.z_all.deb
 This installs:
 - `/usr/bin/retentions`
 - documentation in `/usr/share/doc/retentions/`
+- shell completion for `bash` and `zsh`
 
 ### 📦 Option 2 – Redhat Package (.rpm)
 
@@ -90,6 +113,7 @@ sudo dnf install retentions-x.y.z-n.noarch.rpm # or with yum
 This installs:
 - `/usr/bin/retentions`
 - documentation in `/usr/share/doc/retentions/`
+- shell completion for `bash` and `zsh`
 
 ### 🗜️ Option 3 – Universal (tar.gz / zip)
 
@@ -102,6 +126,7 @@ The archive includes:
 - a common linux variant with shebang: `linux/retentions`
 - a macOS variant with shebang: `macos/retentions`
 - and all the docs: `docs`
+- and the shell completions for `bash` and `zsh`
 
 ### 🔍 To verify installation:
 
@@ -127,39 +152,61 @@ python3 retentions.py [path] [file_pattern] <options>
 |--------|--------------|
 | `path` | base directory to scan |
 | `file_pattern` | glob pattern for matching files (use quotes to prevent shell expansion) |
-| `-r, --regex` | file_pattern is a regex (default: glob pattern) |
 
-⚠️ `path` and `file_pattern` are mandatory\
+⚠️ `path` and `file_pattern` are mandatory
 &nbsp;
+
+## 🔧 Argument flags
+| Flag | Description |
+|--------|--------------|
+| `-r, --regex <mode>` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
+| `--age-type <time>` | Used time attribute for file age - time: ctime, mtime (default), atime |
+| `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
 
 | Retention options | Description |
 |--------|--------------|
-| `-h, --hours <int>` | Keep one file per hour from the last N hours |
-| `-d, --days <int>` | Keep one file per day from the last N days |
-| `-w, --weeks <int>` | Keep one file per week from the last N weeks |
-| `-m, --months <int>` | Keep one file per month from the last N months |
-| `-q, --quarters <int>` | Keep one file per quarter from the last N quarters (quarter by months) |
-| `--week13 <int>` | Keep one file per 13-week block from the last N 13-week blocks (quarter by weeks) |
-| `-y, --years <int>` | Keep one file per year from the last N years |
-| `-l, --last <int>` | Always keep the N most recently modified files |
+| `-h, --hours <int>` | Retain one file per hour from the last N hours |
+| `-d, --days <int>` | Retain one file per day from the last N days |
+| `-w, --weeks <int>` | Retain one file per week from the last N weeks |
+| `-m, --months <int>` | Retain one file per month from the last N months |
+| `-q, --quarters <int>` | Retain one file per quarter from the last N quarters (quarter by months) |
+| `--week13 <int>` | Retain one file per 13-week block from the last N 13-week blocks (quarter by weeks) |
+| `-y, --years <int>` | Retain one file per year from the last N years |
+| `-l, --last <int>` | Always retains the N most recently modified files |
 
-📝 Every retention option can be combined with any (or all) others\
+📝 Every retention option can be combined with any (or all) others
+&nbsp;
 
 🧠 Logic:
 - The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` cannot also be marked as keep with the retention `--week`.
-- One exception here is `--last`. It always marks the last `N` files as keep, regardless of all other retentions.
+- One exception here is `--last`. It always marks the last `N` files as retained, regardless of all other retentions.
+- If no retention period are specified all files are retained (and may be filtered)
+&nbsp;
+
+| Filter options | Description |
+|--------|--------------|
+| `-s, --max-size <str>` | Keep maximum within total size (e.g. 12, 10.5M, 500G, 3E) |
+| `-f, --max-files <int>` | Keep maximum total files |
+| `-a, --max-age <str>` | Keep maximum within time span N from script start (e.g. 3600, 1h, 1d, 1w, 1m, 1q, 1y) |
+
+📝 Every filter option can be combined with any (or all) others
+&nbsp;
+
+🧠 Logic:
+- Filters apply after retention and may remove files previously marked to keep. (Use `--verbose debug` and `--dry-run` to see decision history.)
 &nbsp;
 
 | Behavior options | Description |
 |--------|--------------|
 | `-L, --list-only <separator>` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
-| `-V, --verbose <int>` | Verbosity level: 0 = silent, 1 = deletions only, 2 = detailed output, 3 debug output (default: 2, if specified without value) |
+| `-V, v, --verbose <int>` | Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names) |
 | `-X, --dry-run` | Show planned actions but do not delete any files |
+| `--no-lock-file` | Omit lock file (default: enabled) |
 
 💡 Using `--dry-run` is a good option to start with `retentions` 😏\
 &nbsp;
 
-| Common options | Description |
+| Common arguments | Description |
 |--------|--------------|
 | `-H, --help` | Show the help / usage of `retentions` |
 | `-R, --version` | Show the version of `retentions` |
@@ -170,9 +217,23 @@ python3 retentions.py [path] [file_pattern] <options>
 
 ### 🧾 Examples
 
+#### Retentions & Filters
+
 ```bash
 # Keep last 7 days, 4 weeks, 6 months
 python3 retentions.py /data/backups '*.tar.gz' -d 7 -w 4 -m 6
+```
+
+```bash
+# Retain daily/weekly/monthly backups, but keep at most 10 files in total.
+# Older retained files are removed if the limit is exceeded.
+retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6 --max-files 10 --dry-run
+```
+
+```bash
+# Retain up to 12 monthly backups, but limit total retained size to 50 GB.
+# Older retained files are removed once the size limit is exceeded.
+retentions /data/backups '*.tar.gz' -m 12 --max-size 50G --dry-run
 ```
 
 #### Dry run (no deletion)
@@ -186,12 +247,13 @@ python3 retentions.py /data/backups '*.tar.gz' -d 10 -w 3 -m 6 --dry-run
 ```bash
 python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\0' | xargs -0 rm
 ```
+⚠️ This bypasses retentions' own deletion **safety mechanisms**. Use with care!
 
 #### Verbose output
 
 ```bash
 # Detailed logging
-python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose 2
+python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
 ```
 
 ---
@@ -262,6 +324,25 @@ python3 retentions.py /data/logs '*.log' -d 3 -w 2 --list-only | while read f; d
     echo "Would delete $f"
 done
 ```
+
+---
+
+## 🧭 Known Issues & Trade-offs
+
+The following behaviors are known, intentional trade-offs rather than bugs.
+
+- Retention option `months`, `quarters` and `years` are truly months, quarters and years, but filter options are 
+  - `xm` => x * 30 days
+  - `xq` => x * 90 days
+  - `xy` => x * 360 days
+
+---
+
+## 🛠️ Troubleshooting
+
+- No files are deleted: Check retention options and filters, and use `--verbose debug --dry-run`.
+- Unexpected deletions: Review the decision log output (`--verbose debug`).
+- Script aborts early: Check exit codes and error messages.
 
 ---
 

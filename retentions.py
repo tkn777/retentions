@@ -332,9 +332,9 @@ def create_parser() -> ModernStrictArgumentParser:
 
     g_main = parser.add_argument_group("Main arguments")
     g_flags = parser.add_argument_group("Flags")
-    g_ret = parser.add_argument_group("Retention arguments")
-    g_filter = parser.add_argument_group("Filter arguments")
-    g_behavior = parser.add_argument_group("Behavior arguments")
+    g_ret = parser.add_argument_group("Retention options")
+    g_filter = parser.add_argument_group("Filter options")
+    g_behavior = parser.add_argument_group("Behavior options")
     g_common = parser.add_argument_group("Common arguments")
 
     # positional arguments
@@ -344,20 +344,20 @@ def create_parser() -> ModernStrictArgumentParser:
     # argument flags
     # fmt: off
     g_flags.add_argument("--regex-mode", "-r", type=str, choices=["casesensitive", "ignorecase"], metavar="mode", const="casesensitive", nargs="?", default=None,
-        help="file_pattern / protect is a regex (default: glob pattern) - mode: casesensitive, ignorecase, default: casesensitive")
+        help="file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive, ignorecase, default: casesensitive")
     g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime"], metavar="time", default="mtime", help="Used time attribute for file age (default: mtime)")
     g_flags.add_argument("--protect", "-p", type=str, default=None, help="Protect files from deletion (using regex or glob, like file_pattern)")
     # fmt: on
 
     # optional retention arguments (validated, no defaults)
-    g_ret.add_argument("--hours", "-h", type=parser.positive_int_argument, metavar="N", help="Keep one file per hour from the last N hours")
-    g_ret.add_argument("--days", "-d", type=parser.positive_int_argument, metavar="N", help="Keep one file per day from the last N days")
-    g_ret.add_argument("--weeks", "-w", type=parser.positive_int_argument, metavar="N", help="Keep one file per week from the last N weeks")
-    g_ret.add_argument("--months", "-m", type=parser.positive_int_argument, metavar="N", help="Keep one file per month from the last N months")
-    g_ret.add_argument("--quarters", "-q", type=parser.positive_int_argument, metavar="N", help="Keep one file per quarter from the last N quarters (quarter by months)")
-    g_ret.add_argument("--week13", type=parser.positive_int_argument, metavar="N", help="Keep one file per 13-week block from the last N 13-week blocks (quarter by weeks)")
-    g_ret.add_argument("--years", "-y", type=parser.positive_int_argument, metavar="N", help="Keep one file per year from the last N years")
-    g_ret.add_argument("--last", "-l", type=parser.positive_int_argument, metavar="N", help="Always keep the N most recently modified files")
+    g_ret.add_argument("--hours", "-h", type=parser.positive_int_argument, metavar="N", help="Retain one file per hour from the last N hours")
+    g_ret.add_argument("--days", "-d", type=parser.positive_int_argument, metavar="N", help="Retain one file per day from the last N days")
+    g_ret.add_argument("--weeks", "-w", type=parser.positive_int_argument, metavar="N", help="Retain one file per week from the last N weeks")
+    g_ret.add_argument("--months", "-m", type=parser.positive_int_argument, metavar="N", help="Retain one file per month from the last N months")
+    g_ret.add_argument("--quarters", "-q", type=parser.positive_int_argument, metavar="N", help="Retain one file per quarter from the last N quarters (quarter by months)")
+    g_ret.add_argument("--week13", type=parser.positive_int_argument, metavar="N", help="Retain one file per 13-week block from the last N 13-week blocks (quarter by weeks)")
+    g_ret.add_argument("--years", "-y", type=parser.positive_int_argument, metavar="N", help="Retain one file per year from the last N years")
+    g_ret.add_argument("--last", "-l", type=parser.positive_int_argument, metavar="N", help="Always retain the N most recently modified files")
 
     # filter arguments
     g_filter.add_argument("--max-size", "-s", type=str, nargs="+", metavar="N", help="Keep maximum within total size N (e.g. 12, 10.5M, 500G, 3E)")

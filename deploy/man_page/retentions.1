@@ -1,0 +1,339 @@
+.TH RETENTIONS 1 "2025-12-29" "retentions VERSION" "User Commands"
+
+.SH NAME
+retentions \- apply backup-style retention rules to any file set
+
+.SH SYNOPSIS
+retentions path file_pattern <options>
+
+.SH DESCRIPTION
+retentions is a small, feature-rich cross-platform CLI tool to apply backup-style retention rules to any file set.
+
+It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
+
+retentions is deterministic and non-recursive.
+It deletes files unless \-\-dry-run or \-\-list-only is specified.
+
+.SH OVERVIEW
+retentions is a single-file Python script that applies retention logic to a directory of files.
+
+It groups files into time buckets (hours, days, weeks, months, quarters, years) and retains only one representative file per bucket, typically the most recent one.
+Additionally it retains the last N files regardless of age.
+
+Filters can be used to reduce the retention scope to a subset of files.
+Everything outside your defined retention scope is deleted / not kept (unless \-\-dry-run or \-\-list-only is used).
+
+.SH WARNING
+This tool permanently deletes files outside the defined retention scope.
+Use \-\-dry-run first to verify behavior.
+The author assumes no liability for data loss.
+
+.SH FEATURES
+.IP \(bu 2
+Pure Python 3, no external dependencies.
+.IP \(bu 2
+Runs on Linux, macOS, and Windows (and anywhere else Python 3 runs).
+.IP \(bu 2
+Supports hourly, daily, weekly, monthly, quarterly, yearly retention buckets.
+.IP \(bu 2
+Supports keeping the last N files (\-\-last) regardless of age.
+.IP \(bu 2
+Supports filtering (max-age, max-size, max-files) to reduce the retention scope to a subset of files.
+.IP \(bu 2
+Supports protecting files against deletion.
+.IP \(bu 2
+Supports regex or glob pattern matching.
+.IP \(bu 2
+Safe modes: \-\-dry-run (simulate) and \-\-list-only (output only files that would be deleted).
+.IP \(bu 2
+Clean, deterministic output (ASCII only, no colors, no locales).
+
+.SH LOGIC SUMMARY
+.SS Logic
+.IP "1." 3
+Scan all files
+.IP "2." 3
+Ignore all protected files (for the whole process)
+.IP "3." 3
+Retain (or not) by time-based buckets (\-\-hours, \-\-days, \-\-weeks, \-\-months, \-\-years, \-\-quarters, \-\-week13)
+.IP "4." 3
+Retain by \-\-last (latest N files)
+.IP "5." 3
+Filtered (everything retained before) by:
+.RS 3
+.IP "1." 3
+\-\-max-age (strict time cutoff)
+.IP "2." 3
+\-\-max-files (upper limit by file count)
+.IP "3." 3
+\-\-max-size (upper limit by total storage)
+.RE
+.IP "6." 3
+Delete files or list files to delete
+.IP "7." 3
+If \-\-dry-run is enabled, print the planned actions instead of executing them.
+
+.PP
+In this document, "retain" refers to the selection process, while "keep" refers to the resulting decision on individual files.
+
+.SH NON-GOALS
+retentions is intentionally not designed to:
+.IP \(bu 2
+perform recursive directory traversal
+.IP \(bu 2
+act as a full backup solution
+.IP \(bu 2
+manage retention across multiple directories
+.IP \(bu 2
+provide interactive safety prompts
+
+.SH USAGE
+
+.nf
+retentions [path] [file_pattern] <options>
+.fi
+
+.SH ARGUMENTS
+.TP
+path
+Base directory to scan.
+.TP
+file_pattern
+Glob pattern for matching files (use quotes to prevent shell expansion).
+
+.PP
+path and file_pattern are mandatory.
+
+.SH ARGUMENT FLAGS
+.SS Flag
+.TP
+-r, --regex <mode>
+file_pattern / protect is a regex (otherwise: glob pattern) \- mode: casesensitive (default), ignorecase
+.TP
+--age-type <time>
+Used time attribute for file age \- time: ctime, mtime (default), atime
+.TP
+--protect <pattern>
+Protect files from deletion (using regex or glob, like file_pattern)
+
+.SS Retention options
+.TP
+-h, --hours <int>
+Retain one file per hour from the last N hours
+.TP
+-d, --days <int>
+Retain one file per day from the last N days
+.TP
+-w, --weeks <int>
+Retain one file per week from the last N weeks
+.TP
+-m, --months <int>
+Retain one file per month from the last N months
+.TP
+-q, --quarters <int>
+Retain one file per quarter from the last N quarters (quarter by months)
+.TP
+--week13 <int>
+Retain one file per 13-week block from the last N 13-week blocks (quarter by weeks)
+.TP
+-y, --years <int>
+Retain one file per year from the last N years
+.TP
+-l, --last <int>
+Always retains the N most recently modified files
+
+.PP
+Hint:
+Every retention option can be combined with any (or all) others.
+
+.PP
+Logic:
+.IP \(bu 2
+The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention --days cannot also be marked as keep with the retention --weeks.
+.IP \(bu 2
+One exception here is --last. It always marks the last N files as retained, regardless of all other retentions.
+.IP \(bu 2
+If no retention period is specified, all files are retained (and may be filtered).
+
+.SS Filter options
+.TP
+-s, --max-size <str>
+Keep maximum within total size (e.g. 12, 10.5M, 500G, 3E)
+.TP
+-f, --max-files <int>
+Keep maximum total files
+.TP
+-a, --max-age <str>
+Keep maximum within time span N from script start (e.g. 3600, 1h, 1d, 1w, 1m, 1q, 1y)
+
+.PP
+Hint:
+Every filter option can be combined with any (or all) others.
+
+.PP
+Logic:
+Filters apply after retention and may remove files previously marked to keep.
+Use --verbose debug and --dry-run to see decision history.
+
+.SS Behavior options
+.TP
+-L, --list-only <separator>
+Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\\n')
+.TP
+-V, v, --verbose <int>
+Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)
+.TP
+-X, --dry-run
+Show planned actions but do not delete any files
+.TP
+--no-lock-file
+Omit lock file (default: enabled)
+
+.PP
+Using --dry-run is a good option to start with retentions.
+
+.SS Common arguments
+.TP
+-H, --help
+Show the help / usage of retentions
+.TP
+-R, --version
+Show the version of retentions
+
+.PP
+Common options can be used without any other arguments.
+
+.SH EXAMPLES
+
+.SS Retentions & Filters
+
+.nf
+# Keep last 7 days, 4 weeks, 6 months
+$> retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6
+.fi
+
+.nf
+# Retain daily/weekly/monthly backups, but keep at most 10 files in total.
+# Older retained files are removed if the limit is exceeded.
+$> retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6 --max-files 10 --dry-run
+.fi
+
+.nf
+# Retain up to 12 monthly backups, but limit total retained size to 50 GB.
+# Older retained files are removed once the size limit is exceeded.
+$> retentions /data/backups '*.tar.gz' -m 12 --max-size 50G --dry-run
+.fi
+
+.SS Dry run (no deletion)
+.nf
+$> retentions /data/backups '*.tar.gz' -d 10 -w 3 -m 6 --dry-run
+.fi
+
+.SS List-only mode (for piping into other tools)
+.nf
+$> retentions /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\\0' | xargs -0 rm
+.fi
+(This bypasses retentions' own deletion safety mechanisms. Use with care.)
+
+.SS Verbose output
+.nf
+# Detailed logging
+$> retentions /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
+.fi
+
+.SH QUOTING FILE PATTERNS
+Always quote your file patterns when calling retentions.
+
+If you omit the quotes, your shell (e.g. Bash, Zsh, PowerShell) will expand the pattern before it reaches the program, resulting in unexpected arguments or errors.
+
+.SS Correct
+.nf
+retentions /data/backups '*.tar.gz'
+retentions /data/logs 'log-*.txt'
+retentions /data/temp '.*\\.bak'
+.fi
+
+.SS Incorrect
+.nf
+retentions /data/backups *.tar.gz
+.fi
+
+.PP
+retentions itself handles pattern matching internally using glob or regex, so quoting ensures the pattern is passed as intended.
+
+.SH EXIT CODES
+.TP
+0
+Execution successful
+.TP
+1
+I/O or filesystem error
+.TP
+2
+Invalid or conflicting arguments
+.TP
+3
+Pattern matched no file(s)
+.TP
+5
+Concurrency error
+.TP
+7
+Integrity check failed
+.TP
+9
+Unexpected error
+
+.SH NON-ATOMIC BEHAVIOR
+retentions does not operate atomically. Since the underlying filesystem is not atomic, directory contents may change while retentions is scanning or evaluating files. This can lead to inconsistent or incorrect results if the target path is modified concurrently. If you require a strictly consistent state, ensure that the directory is not modified during execution.
+
+By default retentions writes a lock file .retentions.lock \- this can be used by other tools.
+
+.SH DESIGN PRINCIPLES
+.IP \(bu 2
+KISS \- no configuration files, no hidden behavior.
+.IP \(bu 2
+Deterministic \- same input, same output.
+.IP \(bu 2
+Safe by design \- dry-run and list-only modes available.
+.IP \(bu 2
+Cross-platform \- runs anywhere Python 3 does.
+.IP \(bu 2
+Plain ASCII \- no colors, no locale dependencies.
+
+.SH TIP
+Use --list-only to integrate with external scripts or pipelines:
+
+.nf
+retentions /data/logs '*.log' -d 3 -w 2 --list-only | while read f; do
+    echo "Would delete $f"
+done
+.fi
+
+.SH KNOWN ISSUES & TRADE-OFFS
+The following behaviors are known, intentional trade-offs rather than bugs.
+
+Retention option months, quarters and years are truly months, quarters and years, but filter options are:
+.IP \(bu 2
+xm => x * 30 days
+.IP \(bu 2
+xq => x * 90 days
+.IP \(bu 2
+xy => x * 360 days
+
+.SH TROUBLESHOOTING
+.IP \(bu 2
+No files are deleted: Check retention options and filters, and use --verbose debug --dry-run.
+.IP \(bu 2
+Unexpected deletions: Review the decision log output (--verbose debug).
+.IP \(bu 2
+Script aborts early: Check exit codes and error messages.
+
+.SH LICENSE
+MIT License. - Copyright (c) 2025-2026 Thomas Kuhlmann.
+
+.SH DEDICATION
+This project is dedicated to 'Motzli' \- my real-life companion and friend. To that quiet, resilient cat whose presence still lives within me and keeps me standing up, no matter how often life burns everything down to ashes. For the strength, the gentleness, and the stubborn hope that never leaves \- and will never be forgotten.
+
+.SH AUTHOR
+Thomas Kuhlmann.
