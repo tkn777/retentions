@@ -588,6 +588,8 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, file_stats_c
     if args.list_only:
         print(file.absolute(), end=args.list_only)  # List mode
     else:
+        if file.parent.resolve() != Path(args.path).resolve():
+            raise IntegrityCheckFailedError(f"File '{file}' is not a child of parent directory '{file.parent}'")
         if args.dry_run:
             logger.verbose(LogLevel.INFO, f"DRY-RUN DELETE: {file.name} ({file_stats_cache.age_type}: {time})")  # Just simulate deletion
         else:
