@@ -597,7 +597,7 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, file_stats_c
 def handle_exception(exception: Exception, exit_code: int, stacktrace: bool, prefix: str = "") -> None:
     if stacktrace:
         traceback.print_exc()
-    print(f"[{prefix or LogLevel(0)}] {exception}", file=sys.stderr)
+    print(f"[{prefix or LogLevel.ERROR.name}] {exception}", file=sys.stderr)
     sys.exit(exit_code)
 
 
