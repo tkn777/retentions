@@ -524,7 +524,7 @@ class RetentionLogic:
         if self._args.max_size is not None and sorted_keep:
             bytes_sum: int = 0
             for file in sorted_keep:
-                bytes_sum += self._file_stats_cache.get_file_bytes(file) * 1024
+                bytes_sum += self._file_stats_cache.get_file_bytes(file)
                 if bytes_sum > self._args.max_size_bytes:
                     self._filter_file(file, f"Filtering: max total size exceeded: {ModernStrictArgumentParser.format_size(bytes_sum)} > {self._args.max_size}")
 
