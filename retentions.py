@@ -344,7 +344,7 @@ def create_parser() -> ModernStrictArgumentParser:
     # argument flags
     # fmt: off
     g_flags.add_argument("--regex-mode", "-r", type=str, choices=["casesensitive", "ignorecase"], metavar="mode", const="casesensitive", nargs="?", default=None,
-        help="file_pattern is a regex (default: glob pattern) - mode: casesensitive, ignorecase, default: casesensitive")
+        help="file_pattern / protect is a regex (default: glob pattern) - mode: casesensitive, ignorecase, default: casesensitive")
     g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime"], metavar="time", default="mtime", help="Used time attribute for file age (default: mtime)")
     g_flags.add_argument("--protect", "-p", type=str, default=None, help="Protect files from deletion (using regex or glob, like file_pattern)")
     # fmt: on
