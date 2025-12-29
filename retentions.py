@@ -639,8 +639,12 @@ def main() -> None:
         logger.verbose(LogLevel.INFO, f"Total files keep:  {len(retentions_result.keep):03d}")
         logger.verbose(LogLevel.INFO, f"Total files prune: {len(retentions_result.prune):03d}")
 
+        deletion_started = False
         for file in matches:
             if is_file_to_delete(retentions_result.keep, retentions_result.prune, file):
+                if not deletion_started:
+                    logger.verbose(LogLevel.INFO, "Deletion phase started")
+                    deletion_started = True
                 run_deletion(file, args, logger, file_stats_cache)
 
     except OSError as e:
