@@ -108,21 +108,20 @@ class Logger:
             self._raw_verbose(level, message, file, prefix)
 
     def add_decision(self, level: LogLevel, file: Path, message: str, debug: Optional[str] = None, pos: int = 0) -> None:
-        if self.has_log_level(level):
-            if level >= LogLevel.DEBUG:  # Decision history and debug message and file details only with debug log level
-                self._decisions[file].insert(pos, ((message, f"({(debug + ', ') if debug is not None else ''}, {self._get_file_attributes(file, self._args, self._file_stats_cache)})")))
-            else:  # Without debug log level no decision history
-                if len(self._decisions[file]) == 0:
-                    self._decisions[file].append((message, None))
-                else:
-                    self._decisions[file].insert(0, (message, None))
+        if self.has_log_level(LogLevel.DEBUG):  # Decision history and debug message and file details only with debug log level
+            self._decisions[file].insert(pos, (message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats_cache)}"))
+        elif self.has_log_level(level):  # Without debug log level no decision history
+            if len(self._decisions[file]) == 0:
+                self._decisions[file].append((message, None))
+            else:
+                self._decisions[file].insert(0, (message, None))
 
     def _format_decision(self, decision: tuple[str, Optional[str]]) -> str:
         message, debug = decision
         return message + (f" ({debug})" if debug is not None else "")
 
     def print_decisions(self) -> None:
-        longest_file_name_length = max(len(p.name) for p in self._decisions)
+        longest_file_name_length = max(len(p.name) for p in self._decisions) + 1
         for file in sort_files(self._decisions, self._file_stats_cache):
             decisions = self._decisions[file]
             if not decisions:
