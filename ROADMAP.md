@@ -21,13 +21,12 @@
   - `max-age` ✓
 - Implement locking ✓
 - Fix max-age, relative to now ✓
-- Implement message history per file
-  - Add skip message to that history (but after current message)
-  - Add everything else file-related to this history
-  - Use type alias
-  - Rename to_(keep|prune) to keep|prune and keep_prune_decisions to log
-  - Use new method def insert_log(..., pos=0)
-  - verbose only first list element for INFO, anything else for debug "└── "
+- Implement message history per file ✓
+  - Add skip message to that history (but after current message) ✓
+  - Add everything else file-related to this history ✓
+  - Rename to_(keep|prune) to keep|prune and keep_prune_decisions to log ✓
+  - Use new method def insert_log(..., pos=0) ✓
+  - verbose only first list element for INFO, anything else for debug "└── " ✓
 - Cleanup code ✓
   - Remove redundancies ✓
   - Unify function signatures ✓
@@ -37,15 +36,15 @@
   - Logger ✓
   - Retention Logic ✓
 - Fix Problem `-a 3 y` ✓
-- Update README.md
-- Review by ChatGPT
+- Update README.md ✓
+- Review by ChatGPT ✓
 - Split lint and test workflows ✓
 - Create shell-completions in build workflow ✓
 - Update release workflow ✓
   - Add release artifacts to body ✓
   - Add changelog to body ✓
   - Add pure script ✓
-- Create man page by ChatGPT (and edit manually later)
+- Create man page by ChatGPT (and edit manually later) ✓
 - Add comprehensive test suite (coverage >= 80%), with support by ChatGPT
 - Add coverage badge
 
