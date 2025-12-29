@@ -227,13 +227,13 @@ python3 retentions.py /data/backups '*.tar.gz' -d 7 -w 4 -m 6
 ```bash
 # Retain daily/weekly/monthly backups, but keep at most 10 files in total.
 # Older retained files are removed if the limit is exceeded.
-retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6 --max-files 10 --dry-run
+python3 retentions.py /data/backups '*.tar.gz' -d 7 -w 4 -m 6 --max-files 10 --dry-run
 ```
 
 ```bash
 # Retain up to 12 monthly backups, but limit total retained size to 50 GB.
 # Older retained files are removed once the size limit is exceeded.
-retentions /data/backups '*.tar.gz' -m 12 --max-size 50G --dry-run
+python3 retentions.py /data/backups '*.tar.gz' -m 12 --max-size 50G --dry-run
 ```
 
 #### Dry run (no deletion)
