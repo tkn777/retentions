@@ -334,7 +334,7 @@ The following behaviors are known, intentional trade-offs rather than bugs.
 - Retention option `months`, `quarters` and `years` are truly months, quarters and years, but filter options are 
   - `xm` => x * 30 days
   - `xq` => x * 90 days
-  - `xy` => x * 360 days
+  - `xy` => x * 365 days
 
 ---
 
