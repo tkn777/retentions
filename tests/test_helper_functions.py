@@ -4,7 +4,7 @@ import argparse
 
 import pytest
 
-from retentions import ModernStrictArgumentParser
+from retentions import LogLevel, ModernStrictArgumentParser
 
 
 @pytest.mark.parametrize("value, expected", [("1", 1), ("42", 42), ("9999", 9999)])
@@ -18,6 +18,42 @@ def test_positive_int_argument_invalid(value: str):
     """Invalid values should raise argparse.ArgumentTypeError."""
     with pytest.raises(argparse.ArgumentTypeError, match=rf"Invalid value '{value}': must be an integer > 0"):
         ModernStrictArgumentParser().positive_int_argument(value)
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("ERROR", LogLevel.ERROR),
+        ("wArn", LogLevel.WARN),
+        ("info", LogLevel.INFO),
+        ("Debug", LogLevel.DEBUG),
+        ("0", LogLevel.ERROR),
+        ("1", LogLevel.WARN),
+        ("2", LogLevel.INFO),
+        ("3", LogLevel.DEBUG),
+    ],
+)
+def test_verbose_argument_valid(value, expected):
+    parser = ModernStrictArgumentParser()
+    assert parser.verbose_argument(value) is expected
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "",
+        "NOPE",
+        "VERBOSE",
+        "4",
+        "-1",
+        "infoo",
+    ],
+)
+def test_verbose_argument_invalid(value):
+    parser = ModernStrictArgumentParser()
+    with pytest.raises(argparse.ArgumentTypeError) as exc:
+        parser.verbose_argument(value)
+    assert "Invalid verbose value" in str(exc.value)
 
 
 @pytest.mark.parametrize(
