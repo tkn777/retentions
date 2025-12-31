@@ -87,6 +87,7 @@ class LogLevel(IntEnum):
                 raise ValueError("Invalid log level: " + prefix)
         return result
 
+
 class Logger:
     _decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
     _args: ConfigNamespace
@@ -163,9 +164,9 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
     def error(self, message: str) -> NoReturn:
         self.print_usage()
-        print("\nError(s):")
+        print("\nError(s):", file=sys.stderr)
         for line in message.split("\n"):
-            print(f"  • {line}")
+            print(f"  • {line}", file=sys.stderr)
         print("\nHint: Try '--help' for more information (or 'man retentions').")
         sys.exit(2)
 
