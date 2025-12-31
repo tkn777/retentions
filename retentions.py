@@ -98,12 +98,14 @@ class Logger:
         return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
 
     def has_log_level(self, level: LogLevel) -> bool:
-        return level <= int(self._args.verbose)
+        return int(level) <= int(self._args.verbose)
 
-    def _raw_verbose(self, level: LogLevel, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
+    def _raw_verbose(self, level: LogLevel, message: str, file: Optional[TextIO] = None, prefix: str = "") -> None:
+        if file is None:
+            file = sys.stdout
         print(f"[{prefix or LogLevel(level).name}] {message}", file=file)
 
-    def verbose(self, level: LogLevel, message: str, file: TextIO = sys.stderr, prefix: str = "") -> None:
+    def verbose(self, level: LogLevel, message: str, file: Optional[TextIO] = None, prefix: str = "") -> None:
         if self.has_log_level(level):
             self._raw_verbose(level, message, file, prefix)
 
