@@ -47,6 +47,7 @@ def test_verbose_argument_valid(value, expected):
         "4",
         "-1",
         "infoo",
+        "inf",
     ],
 )
 def test_verbose_argument_invalid(value):
