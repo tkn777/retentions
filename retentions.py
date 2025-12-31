@@ -76,14 +76,16 @@ class LogLevel(IntEnum):
 
     @classmethod
     def from_name_or_number(cls, prefix: str) -> "LogLevel":
-        try:
-            return next(m for m in cls if m.name.startswith(prefix.upper()))
-        except StopIteration:
+        result = None
+        match = next((m for m in cls if m.name == prefix.upper()), None)
+        if match is not None:
+            result = match
+        else:
             try:
-                return cls(int(prefix))
+                result = cls(int(prefix))
             except ValueError:
                 raise ValueError("Invalid log level: " + prefix)
-
+        return result
 
 class Logger:
     _decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
