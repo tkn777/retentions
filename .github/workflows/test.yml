@@ -20,12 +20,22 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytest
+          pip install pytest pytest pytest-cov
 
-      - name: Run Unit Tests
+      - name: Run Unit Tests with Coverage
         run: |
           echo "Running pytest on Python ${{ matrix.python-version }}"
-          pytest
+          pytest \
+            --cov=retentions \
+            --cov-report=xml \
+            --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.14'
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          fail_ci_if_error: true
 
       - name: Test CLI --help and --version
         run: |
