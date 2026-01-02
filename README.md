@@ -1,10 +1,13 @@
+<h1 style="display:none">retentions</h1>
 <p align="left">
-  <img src="resources/retentions-logo.png" alt="RETENTIONS" height=110>
+  <img src="resources/retentions-logo.png" alt="retentions – deterministic file retention CLI tool" height=110>
 </p>
 
 A small, feature-rich cross-platform CLI tool to apply backup-style retention rules to any file set. 
 
 It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
+
+It is a safe alternative to ad-hoc cleanup scripts and traditional log rotation for backups, archives, and artifacts.
 
 ```bash
 retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 weeks and 6 months
