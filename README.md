@@ -1,4 +1,4 @@
-<h1><span style="display:none">retentions</span></h1>
+<h1><!-- retentions --></h1>
 <p align="left">
   <img src="resources/retentions-logo.png" alt="retentions – deterministic file retention CLI tool" height=110>
 </p>
