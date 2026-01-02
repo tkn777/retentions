@@ -126,16 +126,17 @@ class Logger:
         return message + (f" ({debug})" if debug is not None else "")
 
     def print_decisions(self) -> None:
-        longest_file_name_length = max(len(p.name) for p in self._decisions) + 1
-        for file in sort_files(self._decisions, self._file_stats_cache):
-            decisions = self._decisions[file]
-            if not decisions:
-                continue
-            self._raw_verbose(LogLevel.INFO, f"{file.name:<{longest_file_name_length}}: {self._format_decision(decisions[0])}")
-            if not self.has_log_level(LogLevel.DEBUG):
-                continue
-            for idx, decision in enumerate(decisions[1:]):
-                self._raw_verbose(LogLevel.DEBUG, f"{' ' * ((longest_file_name_length + 2) + idx * 4)}└── {self._format_decision(decision)}")
+        if len(self._decisions) > 0:
+            longest_file_name_length = max(len(p.name) for p in self._decisions) + 1
+            for file in sort_files(self._decisions, self._file_stats_cache):
+                decisions = self._decisions[file]
+                if not decisions:
+                    continue
+                self._raw_verbose(LogLevel.INFO, f"{file.name:<{longest_file_name_length}}: {self._format_decision(decisions[0])}")
+                if not self.has_log_level(LogLevel.DEBUG):
+                    continue
+                for idx, decision in enumerate(decisions[1:]):
+                    self._raw_verbose(LogLevel.DEBUG, f"{' ' * ((longest_file_name_length + 2) + idx * 4)}└── {self._format_decision(decision)}")
 
 
 class ModernHelpFormatter(argparse.HelpFormatter):
