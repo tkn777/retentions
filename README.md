@@ -13,6 +13,7 @@ retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 week
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/tkn777/retentions)](https://github.com/tkn777/retentions/releases)
 [![Platform](https://img.shields.io/badge/platform-linux%20|%20macos%20|%20windows-lightgrey)]()
+[![coverage](https://codecov.io/gh/tkn777/retentions/branch/master/graph/badge.svg)](https://codecov.io/gh/tkn777/retentions)
 
 ---
 
