@@ -33,7 +33,7 @@ unnecessary work.
 3.  Install dependencies via `pyproject.toml`:
 
     ``` bash
-    pip install .
+    pip install [dev]
     ```
 
 4.  Run the CLI:
