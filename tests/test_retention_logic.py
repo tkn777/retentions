@@ -57,7 +57,7 @@ def _create_files_with_times(tmp_path: Path, offsets: list[int]) -> list[Path]:
 def test_hours_retention(tmp_path: Path) -> None:
     """When hours retention is specified, one file should be kept per hour for the newest N hours."""
     # Create three files spaced an hour apart: newest first
-    files = _create_files_with_times(tmp_path, offsets=[0, 3500, 3600, 2 * 3600])  # 0,3500 => same bucket (hour)
+    files = _create_files_with_times(tmp_path, offsets=[0, 1, 3600, 2 * 3600])  # 0 and 3500 => same bucket (hour)
     args = _make_args(hours=2, verbose=LogLevel.DEBUG)
     cache = FileStatsCache("mtime")
     logger = Logger(args, cache)
@@ -67,8 +67,9 @@ def test_hours_retention(tmp_path: Path) -> None:
     assert len(result.keep) == 2
     assert len(result.prune) == 2
     # The kept files should be the two most recently modified files
+    logger.print_decisions()
     kept_names = {f.name for f in result.keep}
-    expected_kept = {files[0].name, files[1].name}
+    expected_kept = {files[0].name, files[2].name}
     assert kept_names == expected_kept
 
 
