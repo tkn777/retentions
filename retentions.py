@@ -82,7 +82,7 @@ class LogLevel(IntEnum):
             result = match
         else:
             try:
-                result = cls(int(prefix))
+                result = cls(int(prefix.upper()))
             except ValueError:
                 raise ValueError("Invalid log level: " + prefix)
         return result
@@ -638,7 +638,7 @@ def main() -> None:
 
         matches = read_filelist(args, logger, file_stats_cache)
         logger.verbose(LogLevel.INFO, f"Found {len(matches)} files using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
-        logger.verbose(LogLevel.DEBUG, "Files found: " + ", ".join(f'"{p.name}"' for p in matches))
+        logger.verbose(LogLevel.DEBUG, "    : " + ", ".join(f'"{p.name}"' for p in matches))
 
         retentions_result = RetentionLogic(matches, args, logger, file_stats_cache).process_retention_logic()
 
