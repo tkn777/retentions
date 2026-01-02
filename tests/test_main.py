@@ -38,6 +38,7 @@ def test_create_lockfile(tmp_path, monkeypatch, capsys):
 
     assert not lock.exists()
 
+
 def test_create_no_lockfile(tmp_path, monkeypatch, capsys):
     """Test that no lock file is created."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "--no-lock-file"])
@@ -74,6 +75,7 @@ def test_fail_on_existing_lock_file(tmp_path, monkeypatch, capsys):
 
 
 def test_output_help(tmp_path, monkeypatch, capsys):
+    """Test that output is printed."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "-V", "debug"])
     monkeypatch.setattr(retentions, "RetentionLogic", DummyRetentionLogic)
     monkeypatch.setattr(retentions, "read_filelist", lambda args, logger, cache: [])
