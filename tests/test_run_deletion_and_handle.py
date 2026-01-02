@@ -1,7 +1,6 @@
 """Tests for run_deletion and handle_exception functions."""
 
 import os
-from pathlib import Path
 
 import pytest
 
@@ -99,7 +98,7 @@ def test_warning_for_file_not_deleted(tmp_path, capsys, monkeypatch):
     original_unlink = os.unlink
 
     def unlink_with_permission_error(path, *args, **kwargs):
-        if Path(path).resolve() == protected.resolve():
+        if os.fspath(path) == os.fspath(protected):
             raise OSError("simulated permission error")
         return original_unlink(path, *args, **kwargs)
 
@@ -121,4 +120,3 @@ def test_warning_for_file_not_deleted(tmp_path, capsys, monkeypatch):
     # normal file is deleted
     run_deletion(normal, args, logger, cache)
     assert not normal.exists()
-
