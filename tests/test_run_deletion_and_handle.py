@@ -4,6 +4,7 @@ import os
 
 import pytest
 
+import retentions
 from retentions import (
     ConfigNamespace,
     FileStatsCache,
@@ -95,14 +96,14 @@ def test_warning_for_file_not_deleted(tmp_path, capsys, monkeypatch):
     protected.write_text("do not delete")
     normal.write_text("delete me")
 
-    original_unlink = os.unlink
+    original_unlink = retentions.Path.unlink  # <<< WICHTIG
 
-    def unlink_with_permission_error(path, *args, **kwargs):
-        if os.fspath(path) == os.fspath(protected):
+    def unlink_with_permission_error(self, *args, **kwargs):
+        if self == protected:
             raise OSError("simulated permission error")
-        return original_unlink(path, *args, **kwargs)
+        return original_unlink(self, *args, **kwargs)
 
-    monkeypatch.setattr(os, "unlink", unlink_with_permission_error)
+    monkeypatch.setattr(retentions.Path, "unlink", unlink_with_permission_error)
 
     cache = FileStatsCache("mtime")
     args = _make_args(path=str(tmp_path), dry_run=False)
