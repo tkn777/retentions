@@ -207,6 +207,8 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
     @staticmethod
     def format_size(bytes: int) -> str:
+        if bytes < 0:
+            raise ValueError("bytes must be >= 0")
         units = ["", "K", "M", "G", "T", "E", "P"]
         idx, value = 0, float(bytes)
         while value >= 1024 and idx < len(units) - 1:
@@ -216,6 +218,8 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
     @staticmethod
     def format_time(seconds: int) -> str:
+        if seconds < 0:
+            raise ValueError("seconds must be >= 0")
         units = [("y", 365 * 24 * 60 * 60), ("q", 90 * 24 * 60 * 60), ("m", 30 * 24 * 60 * 60), ("w", 7 * 24 * 60 * 60), ("d", 24 * 60 * 60), ("h", 60 * 60), ("", 1)]
         value, suffix = float(seconds), ""
         for s, v in units:
