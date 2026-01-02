@@ -1,6 +1,5 @@
+# mypy: ignore-errors
 """Tests for run_deletion and handle_exception functions."""
-
-import os
 
 import pytest
 
