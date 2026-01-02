@@ -102,3 +102,17 @@ def test_parse_verbose_list_failed(monkeypatch, capsys):
     assert exc.value.code == 2
     captured = capsys.readouterr()
     assert "--list-only and --verbose (> ERROR) cannot be used together" in captured.err
+
+
+def test_parse_list_only_null_byte(monkeypatch):
+    """Test that the --list-only null byte is parsed correctly."""
+    monkeypatch.setattr(sys, "argv", ["retentions.py", "/tmp", "*.txt", "--list-only", "\\0"])
+    args = parse_arguments()
+    assert args.list_only == "\0"
+
+
+def test_parse_list_arbitary_string(monkeypatch):
+    """Test an arbitrary --list-only argument."""
+    monkeypatch.setattr(sys, "argv", ["retentions.py", "/tmp", "*.txt", "--list-only", "foo"])
+    args = parse_arguments()
+    assert args.list_only == "foo"
