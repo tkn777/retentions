@@ -171,7 +171,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         print("\nError(s):", file=sys.stderr)
         for line in message.split("\n"):
             print(f"  • {line}", file=sys.stderr)
-        print("\nHint: Try '--help' for more information (or 'man retentions').")
+        print("\nHint: Try '--help' for more information (or 'man retentions' or the README.md at https://github.com/tkn777/retentions).")
         sys.exit(2)
 
     # Argument type helpers
@@ -277,37 +277,41 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
     @no_type_check
     def _validate_arguments(self, ns) -> None:  # noqa: ANN001
-        # Default verbosity, if none given
-        if ns.verbose is None:
-            ns.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
+        try:
+            # Default verbosity, if none given
+            if ns.verbose is None:
+                ns.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
 
-        # dry-run implies verbose
-        if ns.dry_run and not ns.list_only and not ns.verbose:
-            ns.verbose = LogLevel.INFO
+            # dry-run implies verbose
+            if ns.dry_run and not ns.list_only and not ns.verbose:
+                ns.verbose = LogLevel.INFO
 
-        # normalize 0-byte separator
-        if ns.list_only == "\\0":
-            ns.list_only = "\0"
+            # normalize 0-byte separator
+            if ns.list_only == "\\0":
+                ns.list_only = "\0"
 
-        # incompatible options (list-only and verbose > ERROR)
-        if ns.list_only and ns.verbose > LogLevel.ERROR:
-            self.add_error("--list-only and --verbose (> ERROR) cannot be used together")
+            # incompatible options (list-only and verbose > ERROR)
+            if ns.list_only and ns.verbose > LogLevel.ERROR:
+                self.add_error("--list-only and --verbose (> ERROR) cannot be used together")
 
-        # regex validation (and compilation), also for protect
-        if ns.regex_mode is not None:
-            ns.regex_compiled = self._compile_regex(ns.file_pattern, ns.regex_mode)
-            if ns.protect is not None:
-                ns.protect_compiled = self._compile_regex(ns.protect, ns.regex_mode)
+            # regex validation (and compilation), also for protect
+            if ns.regex_mode is not None:
+                ns.regex_compiled = self._compile_regex(ns.file_pattern, ns.regex_mode)
+                if ns.protect is not None:
+                    ns.protect_compiled = self._compile_regex(ns.protect, ns.regex_mode)
 
-        # max-size parsing
-        if ns.max_size is not None:
-            ns.max_size = "".join(token.strip() for token in ns.max_size)
-            ns.max_size_bytes = self.parse_positive_size_argument(ns.max_size)
+            # max-size parsing
+            if ns.max_size is not None:
+                ns.max_size = "".join(token.strip() for token in ns.max_size)
+                ns.max_size_bytes = self.parse_positive_size_argument(ns.max_size)
 
-        # max-age parsing
-        if ns.max_age is not None:
-            ns.max_age = "".join(token.strip() for token in ns.max_age)
-            ns.max_age_seconds = self.parse_positive_time_argument(ns.max_age)
+            # max-age parsing
+            if ns.max_age is not None:
+                ns.max_age = "".join(token.strip() for token in ns.max_age)
+                ns.max_age_seconds = self.parse_positive_time_argument(ns.max_age)
+
+        except (argparse.ArgumentTypeError, ValueError) as e:
+            self.add_error(str(e))
 
     # Main hook
     @no_type_check
@@ -661,8 +665,8 @@ def main() -> None:
 
     except OSError as e:
         handle_exception(e, 1, args.stacktrace if args is not None else True)
-    except ValueError as e:
-        handle_exception(e, 2, args.stacktrace if args is not None else True)
+    except (ValueError, argparse.ArgumentTypeError, argparse.ArgumentError) as e:
+        handle_exception(e, 2, args.stacktrace if args is not None else False)
     except NoFilesFoundError as e:
         handle_exception(e, 3, args.stacktrace if args is not None else True)
     except ConcurrencyError as e:

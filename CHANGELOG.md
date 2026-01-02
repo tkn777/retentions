@@ -1,3 +1,6 @@
+### 1.0.1 - 02.01.2026
+- Fixed error handling for max-age and max-size parsing (and validation overall)
+
 ### 1.0.0 - 02.01.2026 (initial production release)
 - Added `--week13`
 - Added templates for issues, pr's
