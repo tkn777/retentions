@@ -126,6 +126,37 @@ def test_multiple_retention_modes_and_last(tmp_path: Path) -> None:
 
 
 @no_type_check
+def test_month_quarter_year_retention(tmp_path: Path) -> None:
+    """RetentionLogic should apply retention rules for months, quarters and years."""
+    files = _create_files_with_times(tmp_path, offsets=[i * 2_592_000 for i in range(60)])  # 1 file per month for 60 months
+    args = _make_args(months=6, quarters=4, years=5, verbose=LogLevel.DEBUG)
+    cache = FileStatsCache("mtime")
+    logger = Logger(args, cache)
+    logic = RetentionLogic(files, args, logger, cache)
+    result = logic.process_retention_logic()
+    # 15 files: 6 month, 4 quarter, 5 years -> (effective 3 years, because we have only files for 5 years)
+    assert len(result.keep) == 13  # 6 month, 4 quarter, 5 year
+    assert len(result.prune) == 47
+    assert "Keeping for mode 'months'" in logger._decisions[files[0]][0][0]
+    assert "Pruning for mode 'years'" in logger._decisions[files[59]][0][0]
+
+
+@no_type_check
+def test_not_matched_by_retention_rule(tmp_path: Path) -> None:
+    """RetentionLogic should prune files that are not matched by any retention rule."""
+    files = _create_files_with_times(tmp_path, offsets=[i * 86_400 for i in range(3)])  # 3 file, 1 per day
+    args = _make_args(days=1, verbose=LogLevel.DEBUG)
+    cache = FileStatsCache("mtime")
+    logger = Logger(args, cache)
+    logic = RetentionLogic(files, args, logger, cache)
+    result = logic.process_retention_logic()
+    assert len(result.keep) == 1
+    assert len(result.prune) == 2
+    assert "Keeping for mode 'days'" in logger._decisions[files[0]][0][0]
+    assert "Pruning: not matched by any retention rule" in logger._decisions[files[2]][0][0]
+
+
+@no_type_check
 def test_filter_max_files(tmp_path: Path) -> None:
     """Filtering rules with last = 3 for max_files = 2 should keep just max_files (2)."""
     # Create three files with identical times but increasing sizes
@@ -138,15 +169,15 @@ def test_filter_max_files(tmp_path: Path) -> None:
     # Because there are 3 files but max_files=2, one file should be pruned
     assert len(result.keep) == 2
     assert len(result.prune) == 1
-    assert len(Logger._decisions[files[0]]) == 1
-    assert len(Logger._decisions[files[2]]) == 2
+    assert len(logger._decisions[files[0]]) == 1
+    assert len(logger._decisions[files[2]]) == 2
     assert "Filtering: max total files exceeded" in Logger._decisions[files[2]][0][0]
 
 
 @no_type_check
 def test_filter_max_size(tmp_path: Path) -> None:
     """Filtering rules with days=2, weeks=10 for max_size = 50 bytes by 10 bytes each file => should keep just max_files (2)."""
-    offsets = [i * 604800 for i in range(10)]
+    offsets = [i * 604800 for i in range(10)]  # 1 file per week
     files = _create_files_with_times(tmp_path, offsets)
     now = time.time()
     for f, offset in zip(files, offsets):
@@ -159,17 +190,25 @@ def test_filter_max_size(tmp_path: Path) -> None:
     result = logic.process_retention_logic()
     assert len(result.keep) == 5
     assert len(result.prune) == 5
-    assert len(Logger._decisions[files[0]]) == 2
-    assert "Skipping" in Logger._decisions[files[0]][1][0]
-    assert len(Logger._decisions[files[2]]) == 1
-    assert len(Logger._decisions[files[7]]) == 2
-    assert "Filtering: max total size exceeded" in Logger._decisions[files[8]][0][0]
+    assert len(logger._decisions[files[0]]) == 2
+    assert "Skipping" in logger._decisions[files[0]][1][0]
+    assert len(logger._decisions[files[2]]) == 1
+    assert len(logger._decisions[files[7]]) == 2
+    assert "Filtering: max total size exceeded" in logger._decisions[files[8]][0][0]
 
 
 @no_type_check
 def test_filter_max_age(tmp_path: Path) -> None:
-    pass  # TODO
-    # TODO - capsys
+    files = _create_files_with_times(tmp_path, offsets=[i * 86_400 for i in range(5)])  # 5 file, 1 per day
+    args = _make_args(days=5, max_age="3d", max_age_seconds=259_200, verbose=LogLevel.DEBUG)
+    cache = FileStatsCache("mtime")
+    logger = Logger(args, cache)
+    logic = RetentionLogic(files, args, logger, cache)
+    result = logic.process_retention_logic()
+    assert len(result.keep) == 3
+    assert len(result.prune) == 2
+    assert "Keeping for mode 'days'" in logger._decisions[files[0]][0][0]
+    assert "Filtering: max total age exceeded" in logger._decisions[files[4]][0][0]
 
 
 @no_type_check
