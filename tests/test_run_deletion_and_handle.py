@@ -1,5 +1,8 @@
 """Tests for run_deletion and handle_exception functions."""
 
+import os
+from pathlib import Path
+
 import pytest
 
 from retentions import (
@@ -84,3 +87,38 @@ def test_handle_exception_exits_and_outputs(capsys) -> None:
     captured = capsys.readouterr()
     assert "[ERROR]" in captured.err
     assert "boom" in captured.err
+
+
+def test_warning_for_file_not_deleted(tmp_path, capsys, monkeypatch):
+    protected = tmp_path / "protected.txt"
+    normal = tmp_path / "normal.txt"
+
+    protected.write_text("do not delete")
+    normal.write_text("delete me")
+
+    original_unlink = os.unlink
+
+    def unlink_with_permission_error(path, *args, **kwargs):
+        if Path(path).resolve() == protected.resolve():
+            raise OSError("simulated permission error")
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "unlink", unlink_with_permission_error)
+
+    cache = FileStatsCache("mtime")
+    args = _make_args(path=str(tmp_path), dry_run=False)
+    logger = Logger(args, cache)
+
+    # protected file triggers warning
+    run_deletion(protected, args, logger, cache)
+    assert protected.exists()
+
+    err = capsys.readouterr().err
+    assert "[WARN]" in err
+    assert "Error while deleting file" in err
+    assert protected.name in err
+
+    # normal file is deleted
+    run_deletion(normal, args, logger, cache)
+    assert not normal.exists()
+
