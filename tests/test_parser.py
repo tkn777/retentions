@@ -1,4 +1,4 @@
-"""Tests for the argument parser and regex compilation in retentions."""
+"""Tests for the argument parser (only the addtions in retentions) and regex compilation."""
 
 import sys
 
