@@ -57,13 +57,14 @@ def test_fail_on_existing_lock_file(tmp_path, monkeypatch, capsys):
 
 
 def test_output_help(tmp_path, monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "-V", "debug"])
     monkeypatch.setattr(retentions, "RetentionLogic", DummyRetentionLogic)
     monkeypatch.setattr(retentions, "read_filelist", lambda args, logger, cache: [])
 
     main()
 
     captured = capsys.readouterr()
+    assert "Parsed arguments" in captured.out
     assert "Total files found" in captured.out
     assert "Total files keep" in captured.out
     assert "Total files prune" in captured.out
