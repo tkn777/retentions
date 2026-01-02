@@ -9,5 +9,4 @@
 - Fixed bash shell completion path
 
 ### 0.5.0-beta0 - 16.11.2025
-- Initial pre-release 
-- Deleted all former tags and releases, because they were kind of stable but not production grade
+- Initial pre-release
