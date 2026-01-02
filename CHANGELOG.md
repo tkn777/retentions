@@ -1,4 +1,4 @@
-### 1.0.0 - NOT RELEASED YES (First initial production release)
+### 1.0.0 - 02.01.2026 (initial production release)
 - Added `--week13`
 - Added templates for issues, pr's
 - Activated dependabot
