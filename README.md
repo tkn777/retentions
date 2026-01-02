@@ -305,7 +305,7 @@ retentions does not operate atomically. Since the underlying filesystem is not a
 This can lead to inconsistent or incorrect results if the target path is modified concurrently.
 If you require a strictly consistent state, ensure that the directory is not modified during execution.
 
-By default retentions writes a lock file .retentions.lock - This can be used by other tools.
+By default retentions writes a lock file `.retentions.lock` - This can be used by other tools.
 
 ---
 
