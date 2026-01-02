@@ -112,9 +112,12 @@ class Logger:
         if self.has_log_level(level):
             self._raw_verbose(level, message, file, prefix)
 
-    def add_decision(self, level: LogLevel, file: Path, message: str, debug: Optional[str] = None, pos: int = 0) -> None:
+    def add_decision(self, level: LogLevel, file: Path, message: str, debug: Optional[str] = None, append: bool = False) -> None:
         if self.has_log_level(LogLevel.DEBUG):  # Decision history and debug message and file details only with debug log level
-            self._decisions[file].insert(pos, (message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats_cache)}"))
+            if append:
+                self._decisions[file].append((message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats_cache)})"))
+            else:
+                self._decisions[file].insert(0, (message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats_cache)}"))
         elif self.has_log_level(level):  # Without debug log level no decision history
             if len(self._decisions[file]) == 0:
                 self._decisions[file].append((message, None))
@@ -497,7 +500,7 @@ class RetentionLogic:
                 break  # No more buckets
             first_bucket_file = buckets[sorted_keys[current_count]][0]
             if first_bucket_file in self._keep:  # Already kept by one previous retention mode
-                self._logger.add_decision(LogLevel.DEBUG, first_bucket_file, f"Skipping for mode '{retention_mode}' as already kept by one previous retention mode", pos=1)
+                self._logger.add_decision(LogLevel.DEBUG, first_bucket_file, f"Skipping for mode '{retention_mode}' as already kept by one previous retention mode", append=True)
                 effective_count += 1
             else:
                 # Keep first entry (file) of bucket, prune the rest
