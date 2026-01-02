@@ -2,7 +2,7 @@
   <img src="resources/retentions-logo.png" alt="retentions – deterministic file retention CLI tool" height=110>
 </p>
 
-# retentions
+## retentions
 
 A small, feature-rich cross-platform CLI tool to apply backup-style retention rules to any file set. 
 
