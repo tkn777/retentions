@@ -1,17 +1,10 @@
 """Tests for the RetentionLogic class."""
 
 import os
-import time
 from pathlib import Path
 from typing import no_type_check
 
-from retentions import (
-    ConfigNamespace,
-    FileStatsCache,
-    Logger,
-    LogLevel,
-    RetentionLogic,
-)
+from retentions import SCRIPT_START, ConfigNamespace, FileStatsCache, Logger, LogLevel, RetentionLogic
 
 
 @no_type_check
@@ -51,11 +44,10 @@ def _make_args(**overrides) -> ConfigNamespace:  # noqa: F821
 def _create_files_with_times(tmp_path: Path, offsets: list[int]) -> list[Path]:
     """Create files whose mtime is offset by the given seconds from now."""
     files: list[Path] = []
-    now = time.time()
     for idx, offset in enumerate(offsets):
         f = tmp_path / f"file{idx}.txt"
         f.write_text(str(idx))
-        mod_time = now - offset
+        mod_time = SCRIPT_START - offset
         os.utime(f, (mod_time, mod_time))
         files.append(f)
     return files
@@ -179,10 +171,9 @@ def test_filter_max_size(tmp_path: Path) -> None:
     """Filtering rules with days=2, weeks=10 for max_size = 50 bytes by 10 bytes each file => should keep just max_files (2)."""
     offsets = [i * 604800 for i in range(10)]  # 1 file per week
     files = _create_files_with_times(tmp_path, offsets)
-    now = time.time()
     for f, offset in zip(files, offsets):
         f.write_bytes(b"x" * 10)
-        os.utime(f, (now - offset, now - offset))
+        os.utime(f, (SCRIPT_START - offset, SCRIPT_START - offset))
     args = _make_args(days=2, weeks=10, max_size=50, max_size_bytes=50, verbose=LogLevel.DEBUG)
     cache = FileStatsCache("mtime")
     logger = Logger(args, cache)
