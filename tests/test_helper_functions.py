@@ -80,6 +80,29 @@ def test_parse_positive_size_argument_valid(value: str, expected: int):
 
 
 @pytest.mark.parametrize(
+    "value",
+    [
+        "",  # empty
+        "   ",  # whitespace only
+        "K",  # missing number
+        ".5K",  # leading dot not allowed by regex
+        "1KB",  # invalid unit
+        "1Ki",  # invalid unit
+        "1.2.3",  # malformed number
+        "1,5K",  # comma instead of dot
+        "-1",  # negative number
+        "-1K",  # negative with unit
+        "1 K B",  # spaces + extra chars
+        "abc",  # non-numeric
+        "1Q",  # unsupported unit
+        "1kib",  # looks plausible but invalid
+    ],
+)
+def test_parse_positive_size_argument_invalid(value) -> None:
+    with pytest.raises(argparse.ArgumentTypeError):
+        ModernStrictArgumentParser().parse_positive_size_argument(value)
+
+@pytest.mark.parametrize(
     "text, expected",
     [
         # --- plain seconds (no unit) ---
@@ -127,7 +150,7 @@ def test_parse_positive_size_argument_valid(value: str, expected: int):
         ("1 w", 1 * 7 * 24 * 60 * 60),
     ],
 )
-def test_valid_times(text: str, expected: int):
+def test_parse_positive_time_arguments_valid(text: str, expected: int):
     """Valid inputs should return the expected millisecond value."""
     assert ModernStrictArgumentParser().parse_positive_time_argument(text) == pytest.approx(expected)
 
@@ -178,7 +201,44 @@ def test_valid_times(text: str, expected: int):
         "2.75 s",
     ],
 )
-def test_invalid_times(text: str):
+def test_parse_positive_time_arguments_invalid(text: str):
     """Invalid inputs must raise ValueError."""
     with pytest.raises(argparse.ArgumentTypeError):
         ModernStrictArgumentParser().parse_positive_time_argument(text)
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (0, "0"),
+        (1, "1"),
+        (512, "512"),
+        (1024, "1K"),
+        (1536, "1.5K"),
+        (1024**2, "1M"),
+        (1024**2 * 2.5, "2.5M"),
+        (1024**3, "1G"),
+    ],
+)
+def test_format_size_valid(value, expected) -> None:
+    assert ModernStrictArgumentParser().format_size(int(value)) == expected
+
+
+@pytest.mark.parametrize(
+    "seconds, expected",
+    [
+        (0, "0"),
+        (1, "1"),
+        (59, "59"),
+        (60, "60"),
+        (3599, "3599"),
+        (3600, "1h"),
+        (5400, "1.5h"),
+        (24 * 60 * 60, "1d"),
+        (7 * 24 * 60 * 60, "1w"),
+        (30 * 24 * 60 * 60, "1m"),
+        (90 * 24 * 60 * 60, "1q"),
+        (365 * 24 * 60 * 60, "1y"),
+    ],
+)
+def test_format_time_valid(seconds, expected) -> None:
+    assert ModernStrictArgumentParser.format_time(seconds) == expected
