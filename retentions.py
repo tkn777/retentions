@@ -156,6 +156,13 @@ class ModernHelpFormatter(argparse.HelpFormatter):
         return f"retentions {VERSION}\n\n" + "A small feature-rich cross-platform CLI tool for file retention management\n\n" + super().format_help()
 
 
+class ExitOnlyVersion(argparse.Action):
+    @no_type_check
+    def __call__(self, parser, namespace, values, option_string=None):  # noqa: ARG002,ANN001,ANN204
+        print(f"retentions {VERSION}")
+        parser.exit(0)
+
+
 class ModernStrictArgumentParser(argparse.ArgumentParser):
     @no_type_check
     def __init__(self, *a, **kw) -> None:  # noqa: ANN002, ANN003
@@ -391,7 +398,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_behavior.add_argument("--no-lock-file", action="store_false", dest="use_lock_file", default=True, help="Omit lock file (default: enabled)")
 
     # common flags
-    g_common.add_argument("--version", "-R", action="version", version=f"%(prog)s {VERSION}")
+    g_common.add_argument("--version", "-R", nargs=0, action=ExitOnlyVersion, help="show version and exit")
     g_common.add_argument("--help", "-H", action="help", help="Show this help message and exit")
     g_common.add_argument("--stacktrace", action="store_true", help=argparse.SUPPRESS)
 
