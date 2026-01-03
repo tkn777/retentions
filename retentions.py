@@ -118,7 +118,7 @@ class Logger:
                 self._decisions[file].append((message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats_cache)})"))
             else:
                 self._decisions[file].insert(0, (message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats_cache)}"))
-        elif self.has_log_level(level):  # Without debug log level no decision history
+        elif self.has_log_level(level):
             if len(self._decisions[file]) == 0:
                 self._decisions[file].append((message, None))
             else:
