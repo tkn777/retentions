@@ -143,9 +143,11 @@ class Logger:
 
 
 class ModernHelpFormatter(argparse.HelpFormatter):
+    JOINED_ARGS = {"max_size", "max_age"}
+
     @no_type_check
     def __init__(self, *a, **kw) -> None:  # noqa: ANN002, ANN003
-        super().__init__(*a, max_help_position=30, width=160, **kw)
+        super().__init__(*a, max_help_position=50, width=160, **kw)
 
     @no_type_check
     def start_section(self, heading) -> None:  # noqa: ANN001
@@ -154,6 +156,12 @@ class ModernHelpFormatter(argparse.HelpFormatter):
     @no_type_check
     def format_help(self) -> str:
         return f"retentions {VERSION}\n\n" + "A small feature-rich cross-platform CLI tool for file retention management\n\n" + super().format_help()
+
+    @no_type_check
+    def _format_args(self, action, default_metavar):  # noqa: ANN001, ANN202
+        if action.dest in self.JOINED_ARGS:
+            return action.metavar
+        return super()._format_args(action, default_metavar)
 
 
 class ExitOnlyVersion(argparse.Action):
@@ -368,8 +376,8 @@ def create_parser() -> ModernStrictArgumentParser:
     # fmt: off
     g_flags.add_argument("--regex-mode", "-r", type=str, choices=["casesensitive", "ignorecase"], metavar="mode", const="casesensitive", nargs="?", default=None,
         help="file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive, ignorecase, default: casesensitive")
-    g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime"], metavar="time", default="mtime", help="Used time attribute for file age (default: mtime)")
-    g_flags.add_argument("--protect", "-p", type=str, default=None, help="Protect files from deletion (using regex or glob, like file_pattern)")
+    g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime"], metavar="time", default="mtime", nargs="?", help="Used time attribute for file age (default: mtime)")
+    g_flags.add_argument("--protect", "-p", type=str, default=None, metavar="protect", help="Protect files from deletion (using regex or glob, like file_pattern)")
     # fmt: on
 
     # optional retention arguments (validated, no defaults)
@@ -383,9 +391,9 @@ def create_parser() -> ModernStrictArgumentParser:
     g_ret.add_argument("--last", "-l", type=parser.positive_int_argument, metavar="N", help="Always retain the N most recently modified files")
 
     # filter arguments
-    g_filter.add_argument("--max-size", "-s", type=str, nargs="+", metavar="N", help="Keep maximum within total size N (e.g. 12, 10.5M, 500G, 3E)")
+    g_filter.add_argument("--max-size", "-s", type=str, metavar="N", nargs="+", help="Keep maximum within total size N (e.g. 12, 10.5M, 500 G, 3E)")
     g_filter.add_argument("--max-files", "-f", type=parser.positive_int_argument, metavar="N", help="Keep maximum total files N")
-    g_filter.add_argument("--max-age", "-a", type=str, nargs="+", metavar="N", help="Keep maximum within time span N from script start (e.g. 3600, 1h, 1d, 1w, 1m, 1q, 1y - with 1 month = 30 days)")
+    g_filter.add_argument("--max-age", "-a", type=str, metavar="N", nargs="+", help="Keep maximum within time span N from script start (e.g. 3600, 1h, 1 d, 1w, 1m, 1q, 1y - with 1 month = 30 days)")
 
     # behavior flags
     # fmt: off
