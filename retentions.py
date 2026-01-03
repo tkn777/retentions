@@ -310,7 +310,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 ns.max_age = "".join(token.strip() for token in ns.max_age)
                 ns.max_age_seconds = self.parse_positive_time_argument(ns.max_age)
 
-        except (argparse.ArgumentTypeError, ValueError) as e:
+        except BaseException as e:
             self.add_error(str(e))
 
     # Main hook
