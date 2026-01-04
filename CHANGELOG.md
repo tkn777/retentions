@@ -1,3 +1,6 @@
+### 1.0.3 - 03.01.2026
+- Removed generation of shell-completion und used manual created completion files
+
 ### 1.0.2 - 03.01.2026
 - Fixed test to be more robust again its time of execution
 - Optimized README.md for SEO
