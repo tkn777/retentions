@@ -60,3 +60,9 @@ v1.1.2
 
 - Tags preserve history.  
 - Branches exist to solve active problems.
+
+## Release Checklist
+- [ ] argparse options reviewed
+- [ ] bash completion updated
+- [ ] zsh completion updated
+- [ ] man page updated
