@@ -6,9 +6,8 @@
 ## 1.2
 - Implement `--folder / -f`: `age-type` (of folder, default), latest (by `age-type`), oldest (`by age-type`)
     - Implement `--file` (current default to co-existent with folder)
-- Implement `--confirm-delete / -c` (for tty's)
-- Implement `--delete-companions / -o`
-- Implement `--last-within / -i`
+- Implement `--confirm-delete / -c` (for tty's) [force]
+- Implement `--delete-companions / -o` .....
 - Implement `--fail-on-delete-error`
 
 ---
