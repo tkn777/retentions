@@ -1,3 +1,13 @@
+### 1.1 - NOT RELEASED YET
+- Fixed test to be more robust again its time of execution
+- Optimized README.md for SEO
+- Fixed and generalize error handling for validation (parser)
+- Omit printing duplicate version on --version
+- Cleanup and beautify --help output
+- Added test for error handling for validation (parsing) and extend existing test for invalid arguments
+- Revised DESIGN_DECISIONS.md and moved to root
+- Added RELEASE_POLICY.md
+
 ### 1.0.1 - 02.01.2026
 - Fixed error handling for max-age and max-size parsing (and validation overall)
 
