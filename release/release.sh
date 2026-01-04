@@ -18,7 +18,7 @@ ROOT_DIR="$(dirname "$(dirname "$0")")"
 BUILD_DIR="${ROOT_DIR}/build"
 PKG_DIR="${BUILD_DIR}/${APP}-${VERSION}"
 DEB_DIR="${BUILD_DIR}/deb"
-COMPL_DIR="${PKG_DIR}/shell-completions"
+COMPL_DIR="${ROOT_DIR}/deploy/shell-completions"
 
 echo "==> Building version ${VERSION}"
 
@@ -42,13 +42,6 @@ mkdir -p "$DEB_DIR/usr/bin" \
 echo "==> Injecting version into retentions.py..."
 cd "$ROOT_DIR"
 sed -i.bak -E "s/^(VERSION\s*(:\s*str)?\s*=\s*\")[^\"]*(\")/\1${VERSION}\3/" retentions.py
-
-# -----------------------------------------------------------------------------
-# Generate Shell Completions
-# -----------------------------------------------------------------------------
-echo "==> Generating shell completions..."
-cd "$ROOT_DIR"
-bash release/generate_completions.sh "$COMPL_DIR"
 
 # -----------------------------------------------------------------------------
 # Build macOS / Linux variants

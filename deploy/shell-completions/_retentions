@@ -1,0 +1,32 @@
+#compdef retentions
+
+_arguments -s \
+  '1:path:base directory:_files -/' \
+  '2:file_pattern:glob pattern:_files' \
+  '--regex-mode[pattern is regex]:mode:(casesensitive ignorecase)' \
+  '--age-type[file age attribute]:time:(ctime mtime atime)' \
+  '--protect[protect files from deletion]:pattern:_files' \
+  '-r[regex mode]:mode:(casesensitive ignorecase)' \
+  '-p[protect files]:pattern:_files' \
+  '--hours[retain per hour]:N:' \
+  '--days[retain per day]:N:' \
+  '--weeks[retain per week]:N:' \
+  '--months[retain per month]:N:' \
+  '--quarters[retain per quarter]:N:' \
+  '--week13[retain per 13-week block]:N:' \
+  '--years[retain per year]:N:' \
+  '--last[retain last N files]:N:' \
+  '--max-size[maximum total size]:size:' \
+  '--max-files[maximum number of files]:N:' \
+  '--max-age[maximum total age]:time:' \
+  '--list-only[list only, optional separator]:sep:' \
+  '--verbose[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3)' \
+  '-v[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3)' \
+  '-V[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3)' \
+  '-X[dry run]' \
+  '--dry-run[do not delete files]' \
+  '--no-lock-file[disable lock file]' \
+  '-R[show version]' \
+  '--version[show version]' \
+  '-H[show help]' \
+  '--help[show help]'
