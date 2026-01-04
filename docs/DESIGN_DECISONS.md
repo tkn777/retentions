@@ -40,7 +40,7 @@ retentions intentionally does **not aim** to:
 4. Optional filtering phase
 5. Deletion phase (or simulation / listing)
 
-- **No filesystem modifications** occur before all retention and filtering decisions have been fully computed and validated.
+**No filesystem modifications** occur before all retention and filtering decisions have been fully computed and validated.
 
 ---
 
