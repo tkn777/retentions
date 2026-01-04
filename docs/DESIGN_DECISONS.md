@@ -46,7 +46,7 @@ retentions intentionally does **not aim** to:
 
 ## Integrity and Safety Guarantees
 
-retentions enforces internal consistency checks before executing destructive actions:
+retentions **enforces internal consistency checks** before executing destructive actions:
 - Every file must end up in exactly one of the sets: **keep or prune**.
 - Mismatches between computed decisions and deletion candidates **abort execution**.
 - A **lock file** prevents concurrent retention runs on the same directory by default.
