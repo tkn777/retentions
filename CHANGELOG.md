@@ -1,4 +1,4 @@
-### 1.1 - NOT RELEASED YET
+### 1.0.2 - 03.01.2026
 - Fixed test to be more robust again its time of execution
 - Optimized README.md for SEO
 - Fixed and generalize error handling for validation (parser)
