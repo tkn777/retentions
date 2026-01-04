@@ -24,14 +24,15 @@ def test_duplicate_flags_raise_system_exit(argv) -> None:
 
 
 @pytest.mark.parametrize(
-    "argv, suggest",
+    "argv, suggest, error",
     [
-        (["/tmp", "*.txt", "--unknown-option"], None),
-        (["/tmp", "*.txt", "-Q"], None),
-        (["/tmp", "*.txt", "--dais"], "days?"),
+        (["/tmp", "*.txt", "--unknown-option"], None, "Unknown option: --unknown-option"),
+        (["/tmp", "*.txt", "-Q"], None, "Unknown option: -Q"),
+        (["/tmp", "*.txt", "--dais"], "days?", None),
+        (["/tmp", "*.txt", "-a 3G"], None, "Invalid time format: '3G'"),
     ],
 )
-def test_unknown_option_suggestion_or_error(argv, suggest, capsys: pytest.CaptureFixture[str]) -> None:
+def test_unknown_option_suggestion_or_error(argv, suggest, error, capsys: pytest.CaptureFixture[str]) -> None:
     """Unknown options should result in SystemExit with an appropriate error message."""
     parser = create_parser()
     # Unknown option
@@ -43,6 +44,8 @@ def test_unknown_option_suggestion_or_error(argv, suggest, capsys: pytest.Captur
         assert "did you mean --" + suggest in str(captured.err)
     else:
         assert "did you mean" not in str(captured.err)
+    if error:
+        assert error in str(captured.err)
 
 
 def test_compile_regex_valid_and_invalid() -> None:
