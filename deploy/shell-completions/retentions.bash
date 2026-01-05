@@ -58,9 +58,9 @@ _retentions() {
         return
     fi
 
-    # 2nd: file_pattern (files / globs)
+    # 2nd: file_pattern -> intentionally no completion
     if [[ $COMP_CWORD -eq 2 ]]; then
-        COMPREPLY=( $(compgen -f -- "$cur") )
+        COMPREPLY=()
         return
     fi
 }
