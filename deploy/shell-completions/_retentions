@@ -1,32 +1,38 @@
 #compdef retentions
 
-_arguments -s \
-  '1:path:base directory:_files -/' \
-  '2:file_pattern:glob pattern:_files' \
-  '--regex-mode[pattern is regex]:mode:(casesensitive ignorecase)' \
-  '--age-type[file age attribute]:time:(ctime mtime atime)' \
-  '--protect[protect files from deletion]:pattern:_files' \
-  '-r[regex mode]:mode:(casesensitive ignorecase)' \
-  '-p[protect files]:pattern:_files' \
-  '--hours[retain per hour]:N:' \
-  '--days[retain per day]:N:' \
-  '--weeks[retain per week]:N:' \
-  '--months[retain per month]:N:' \
-  '--quarters[retain per quarter]:N:' \
-  '--week13[retain per 13-week block]:N:' \
-  '--years[retain per year]:N:' \
-  '--last[retain last N files]:N:' \
-  '--max-size[maximum total size]:size:' \
-  '--max-files[maximum number of files]:N:' \
-  '--max-age[maximum total age]:time:' \
-  '--list-only[list only, optional separator]:sep:' \
-  '--verbose[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3)' \
-  '-v[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3)' \
-  '-V[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3)' \
-  '-X[dry run]' \
-  '--dry-run[do not delete files]' \
-  '--no-lock-file[disable lock file]' \
-  '-R[show version]' \
-  '--version[show version]' \
-  '-H[show help]' \
-  '--help[show help]'
+_retentions() {
+  local state
+
+  _arguments -C -s \
+    '1:path:base directory:_files -/' \
+    '2:file_pattern:glob or regex pattern:->pattern' \
+    '{-r,--regex-mode}'[treat file_pattern / protect as regex]:mode:(casesensitive ignorecase) \
+    '--age-type'[file age attribute]:time:(ctime mtime atime) \
+    '{-p,--protect}'[protect files from deletion]:pattern:->protect \
+    '{-h,--hours}'[retain one per hour]:N: \
+    '{-d,--days}'[retain one per day]:N: \
+    '{-w,--weeks}'[retain one per week]:N: \
+    '{-m,--months}'[retain one per month]:N: \
+    '{-q,--quarters}'[retain one per quarter]:N: \
+    '--week13'[retain one per 13-week block]:N: \
+    '{-y,--years}'[retain one per year]:N: \
+    '{-l,--last}'[retain last N files]:N: \
+    '{-s,--max-size}'[maximum total size]:size: \
+    '{-f,--max-files}'[maximum total files]:N: \
+    '{-a,--max-age}'[maximum total age]:time: \
+    '{-L,--list-only}'[list files only, optional separator]:sep: \
+    '{-v,-V,--verbose}'[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3) \
+    '{-X,--dry-run}'[dry run, do not delete files] \
+    '--no-lock-file'[disable lock file] \
+    '{-R,--version}'[show version and exit] \
+    '{-H,--help}'[show help and exit]
+
+  case $state in
+    pattern|protect)
+      _message 'no completion'
+      return 0
+      ;;
+  esac
+}
+
+_retentions "$@"
