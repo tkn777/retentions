@@ -1,3 +1,6 @@
+### 1.0.4 - 05.01.2026
+- Fixed bash and zsh completions
+
 ### 1.0.3 - 03.01.2026
 - Removed generation of shell-completion und used manual created completion files
 
