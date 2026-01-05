@@ -29,10 +29,10 @@ _retentions() {
 
   case $state in
     pattern|protect)
-      _message 'no completion'
+      LBUFFER+="'"
+      RBUFFER="'$RBUFFER"
       return 0
       ;;
-  esac
-}
+  esac}
 
 _retentions "$@"
