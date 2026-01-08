@@ -44,6 +44,8 @@ class IntegrityCheckFailedError(Exception):
 class NoFilesFoundError(Exception):
     pass
 
+class FileCouldNotBeDeleteError(OSError):
+    pass
 
 class ConfigNamespace(SimpleNamespace):
     pass
@@ -630,7 +632,7 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, file_stats_c
                 file.unlink()
             except OSError as e:  # Catch deletion error, print it, and continue
                 if args.fail_on_delete_error:
-                    raise e
+                    raise FileCouldNotBeDeleteError(f"Error while deleting file '{file.name}': {e}")
                 logger.verbose(LogLevel.WARN, f"Error while deleting file '{file.name}': {e}", file=sys.stderr)
 
 

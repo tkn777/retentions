@@ -6,6 +6,7 @@ import pytest
 import retentions
 from retentions import (
     ConfigNamespace,
+    FileCouldNotBeDeleteError,
     FileStatsCache,
     IntegrityCheckFailedError,
     Logger,
@@ -130,7 +131,7 @@ def test_exception_for_file_not_deleted(tmp_path, capsys, monkeypatch):
     protected.write_text("do not delete")
     normal.write_text("delete me")
 
-    original_unlink = retentions.Path.unlink  # <<< WICHTIG
+    original_unlink = retentions.Path.unlink
 
     def unlink_with_permission_error(self, *args, **kwargs):
         if self == protected:
@@ -144,7 +145,9 @@ def test_exception_for_file_not_deleted(tmp_path, capsys, monkeypatch):
     logger = Logger(args, cache)
 
     # protected file triggers warning
-    with pytest.raises(OSError):
+    with pytest.raises(FileCouldNotBeDeleteError) as exc:
         run_deletion(protected, args, logger, cache)
+    assert "Error while deleting file" in str(exc)
+    assert "protected.txt" in str(exc)
     assert protected.exists()
     assert normal.exists()
