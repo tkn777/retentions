@@ -1,4 +1,4 @@
-### 1.0.5
+### NEXT RELEASE
 - Added '--fail-on-delete-error'
 
 ### 1.0.4 - 05.01.2026
