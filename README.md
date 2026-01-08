@@ -206,6 +206,7 @@ python3 retentions.py [path] [file_pattern] <options>
 | `-V, v, --verbose <int>` | Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names) |
 | `-X, --dry-run` | Show planned actions but do not delete any files |
 | `--no-lock-file` | Omit lock file (default: enabled) |
+| `--fail-on-delete-error` | Fails and exits if a file could not be deleted (default: disabled and print warning) |
 
 💡 Using `--dry-run` is a good option to start with `retentions` 😏\
 &nbsp;

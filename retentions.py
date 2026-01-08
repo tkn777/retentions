@@ -404,6 +404,7 @@ def create_parser() -> ModernStrictArgumentParser:
     # fmt: on
     g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files")
     g_behavior.add_argument("--no-lock-file", action="store_false", dest="use_lock_file", default=True, help="Omit lock file (default: enabled)")
+    g_behavior.add_argument("--fail-on-delete-error", action="store_true", default=False, help="Fails and exits if a file could not be deleted (default: disabled and print warning)")
 
     # common flags
     g_common.add_argument("--version", "-R", nargs=0, action=ExitOnlyVersion, help="show version and exit")
@@ -628,6 +629,8 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, file_stats_c
             try:
                 file.unlink()
             except OSError as e:  # Catch deletion error, print it, and continue
+                if args.fail_on_delete_error:
+                    raise e
                 logger.verbose(LogLevel.WARN, f"Error while deleting file '{file.name}': {e}", file=sys.stderr)
 
 

@@ -22,6 +22,7 @@ def _make_args(**overrides):
         list_only=None,
         dry_run=False,
         verbose=LogLevel.INFO,
+        fail_on_delete_error=False,
     )
     defaults.update(overrides)
     return ConfigNamespace(**defaults)
@@ -120,3 +121,30 @@ def test_warning_for_file_not_deleted(tmp_path, capsys, monkeypatch):
     # normal file is deleted
     run_deletion(normal, args, logger, cache)
     assert not normal.exists()
+
+
+def test_exception_for_file_not_deleted(tmp_path, capsys, monkeypatch):
+    protected = tmp_path / "protected.txt"
+    normal = tmp_path / "normal.txt"
+
+    protected.write_text("do not delete")
+    normal.write_text("delete me")
+
+    original_unlink = retentions.Path.unlink  # <<< WICHTIG
+
+    def unlink_with_permission_error(self, *args, **kwargs):
+        if self == protected:
+            raise OSError("simulated permission error")
+        return original_unlink(self, *args, **kwargs)
+
+    monkeypatch.setattr(retentions.Path, "unlink", unlink_with_permission_error)
+
+    cache = FileStatsCache("mtime")
+    args = _make_args(path=str(tmp_path), dry_run=False, fail_on_delete_error=True)
+    logger = Logger(args, cache)
+
+    # protected file triggers warning
+    with pytest.raises(OSError):
+        run_deletion(protected, args, logger, cache)
+    assert protected.exists()
+    assert normal.exists()

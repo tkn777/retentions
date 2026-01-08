@@ -26,6 +26,7 @@ _retentions() {
         -v -V --verbose
         -X --dry-run
         --no-lock-file
+        --fail-on-delete-error
         -R --version
         -H --help
     "

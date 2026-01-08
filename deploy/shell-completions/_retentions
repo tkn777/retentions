@@ -24,6 +24,7 @@ _retentions() {
     '{-v,-V,--verbose}'[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3) \
     '{-X,--dry-run}'[dry run, do not delete files] \
     '--no-lock-file'[disable lock file] \
+    '--fail-on-delete-error'[fail and exit on delete error] \
     '{-R,--version}'[show version and exit] \
     '{-H,--help}'[show help and exit]
 
