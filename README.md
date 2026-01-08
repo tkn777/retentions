@@ -151,7 +151,7 @@ python3 retentions.py [path] [file_pattern] <options>
 
 ---
 
-## 🔧 Arguments
+## 🔧 Arguments and Options
 
 | Arguments | Description |
 |--------|--------------|
@@ -161,7 +161,6 @@ python3 retentions.py [path] [file_pattern] <options>
 ⚠️ `path` and `file_pattern` are mandatory
 &nbsp;
 
-## 🔧 Argument flags
 | Flag | Description |
 |--------|--------------|
 | `-r, --regex <mode>` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
