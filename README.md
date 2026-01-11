@@ -144,7 +144,7 @@ retentions --help
 ## 🖥️ Usage
 
 ```bash
-python3 retentions.py [path] [file_pattern] <options>
+python3 retentions.py <path> <file_pattern> [options]
 ```
 
 *If you installed via .deb or .rpm or a shebang'ed version from the tar.gz / zip, you can simply run `retentions` instead of `python3 retentions.py`.*
@@ -163,8 +163,8 @@ python3 retentions.py [path] [file_pattern] <options>
 
 | Flag | Description |
 |--------|--------------|
-| `-r, --regex <mode>` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
-| `--age-type <time>` | Used time attribute for file age - time: ctime, mtime (default), atime |
+| `-r, --regex [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
+| `--age-type [time]` | Used time attribute for file age - time: ctime, mtime (default), atime |
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
 
 | Retention options | Description |
@@ -202,7 +202,7 @@ python3 retentions.py [path] [file_pattern] <options>
 
 | Behavior options | Description |
 |--------|--------------|
-| `-L, --list-only <separator>` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
+| `-L, --list-only [separator]` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
 | `-V, v, --verbose <int>` | Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names) |
 | `-X, --dry-run` | Show planned actions but do not delete any files |
 | `--no-lock-file` | Omit lock file (default: enabled) |
@@ -213,7 +213,7 @@ python3 retentions.py [path] [file_pattern] <options>
 
 | Expert options | Description |
 |--------|--------------|
-| `--delete-companions` | Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5') |
+| `--delete-companions [rules]` | Delete companion files defined by the rules (prefix\|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5') |
 
 
 | Common arguments | Description |
@@ -306,7 +306,7 @@ TYPE:MATCH:COMPANIONS
 
 ### ⚠️ Quoting File Patterns
 
-Always **quote your file patterns** when calling `retentions`.
+Always **quote your file patterns** (and companion rules) when calling `retentions`.
 
 If you omit the quotes, your shell (e.g. Bash, Zsh, PowerShell) will expand the pattern **before** it reaches the program, resulting in unexpected arguments or errors.
 
