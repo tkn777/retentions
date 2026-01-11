@@ -396,7 +396,10 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 ns.max_age_seconds = self._parse_positive_time_argument(ns.max_age)
 
             # companion deletes
-            ns.delete_companions_set = self._parse_delete_companions(ns.delete_companions) if ns.delete_companions is not None else set()
+            ns.delete_companion_set = self._parse_delete_companions(ns.delete_companions) if ns.delete_companions is not None else set()
+
+            # Init some defaults
+            ns.protected_files = set()
 
         except BaseException as e:
             self.add_error(str(e))
@@ -511,7 +514,8 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileS
         matches = [file for file in base.glob(args.file_pattern) if file.is_file()]
 
     if not matches:
-        raise NoFilesFoundError(f"No files found in '{base}' using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
+        logger.verbose(LogLevel.WARN, f"No files found in '{base}' using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
+        return []
 
     # Check, if child of base directory
     for file in matches:
@@ -519,17 +523,15 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileS
             raise ValueError(f"File '{file}' is not a child of base directory '{base}'")
 
     # Check for protection
-    protected: set[Path] = set()
     if args.protect:
         for file in matches:
             if args.regex_mode and args.protect_compiled.match(file.name):
                 logger.add_decision(LogLevel.INFO, file, f"Protected by regex: '{args.protect}'")
-                protected.add(file)
+                args.protected_files.add(file)
             elif fnmatch(file.name, args.protect):
                 logger.add_decision(LogLevel.INFO, file, f"Protected by glob: '{args.protect}'")
-                protected.add(file)
-        matches = [file for file in matches if file not in protected]
-    args.protected_files = protected
+                args.protected_files.add(file)
+        matches = [file for file in matches if file not in args.protected_files]
 
     # Ignore lock file (in any case, even if it is is disabled by user)
     matches = [m for m in matches if m.name != LOCK_FILE_NAME]
@@ -693,7 +695,7 @@ def is_file_to_delete(keep: set[Path], prune: set[Path], file: Path) -> bool:
     return file not in keep and file in prune
 
 
-def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion: bool = False) -> None:
+def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion: bool = False) -> int:
     if file.parent.resolve() != Path(args.path).resolve():
         raise IntegrityCheckFailedError(f"{'(Companion) ' if is_companion else ''}File '{file}' is not a child of parent directory '{file.parent}'")
     if args.dry_run:
@@ -707,19 +709,22 @@ def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion:
             if args.fail_on_delete_error:
                 raise FileCouldNotBeDeleteError(error_message)
             logger.verbose(LogLevel.WARN, error_message, file=sys.stderr)
+    return 1
 
 
-def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_companions: set[Path]) -> None:
+def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_companions: set[Path]) -> int:
+    deletion_count = 0
     if args.list_only:
         print(file.absolute(), end=args.list_only)  # List mode
     else:
-        delete_file(file, args, logger)
+        deletion_count += delete_file(file, args, logger)
         # delete companion files (if any)
         for companion_file in {companion_rule.replace(file) for companion_rule in args.delete_companion_set if companion_rule.matches(file)}:
             if companion_file in disallowed_companions:
                 raise IntegrityCheckFailedError(f"Companion file '{file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
             if companion_file.exists() and companion_file.is_file():
-                delete_file(companion_file, args, logger, is_companion=True)
+                deletion_count += delete_file(companion_file, args, logger, is_companion=True)
+    return deletion_count
 
 
 def handle_exception(exception: Exception, exit_code: int, stacktrace: bool, prefix: str = "") -> None:
@@ -751,7 +756,8 @@ def main() -> None:
 
         matches = read_filelist(args, logger, file_stats_cache)
         logger.verbose(LogLevel.INFO, f"Found {len(matches)} files using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
-        logger.verbose(LogLevel.DEBUG, "    : " + ", ".join(f'"{p.name}"' for p in matches))
+        if len(matches) > 0:
+            logger.verbose(LogLevel.DEBUG, "    : " + ", ".join(f'"{p.name}"' for p in matches))
 
         retentions_result = RetentionLogic(matches, args, logger, file_stats_cache).process_retention_logic()
 
@@ -759,17 +765,22 @@ def main() -> None:
 
         logger.verbose(LogLevel.INFO, f"Total files found:     {len(matches):03d}")
         logger.verbose(LogLevel.INFO, f"Total files protected: {len(args.protected_files):03d}")
-        logger.verbose(LogLevel.INFO, f"Total files keep:      {len(retentions_result.keep):03d}")
-        logger.verbose(LogLevel.INFO, f"Total files prune:     {len(retentions_result.prune):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files to keep:   {len(retentions_result.keep):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files to prune:  {len(retentions_result.prune):03d}")
 
         deletion_started = False
+        deletion_count = 0
         disallowed_companions = retentions_result.keep | retentions_result.prune | args.protected_files | {lock_file} if lock_file is not None else set[Path]()
         for file in matches:
             if is_file_to_delete(retentions_result.keep, retentions_result.prune, file):
                 if not deletion_started:
                     logger.verbose(LogLevel.INFO, "Deletion phase started")
                     deletion_started = True
-                run_deletion(file, args, logger, disallowed_companions)
+                deletion_count += run_deletion(file, args, logger, disallowed_companions)
+
+        if deletion_started:
+            logger.verbose(LogLevel.INFO, "Deletion phase completed")
+            logger.verbose(LogLevel.INFO, f"Total files deleted:   {len(retentions_result.prune):03d}")
 
     except OSError as e:
         handle_exception(e, 1, args.stacktrace if args is not None else True)

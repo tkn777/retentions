@@ -1,4 +1,5 @@
 ### NEXT RELEASE
+- **BREAKING CHANGE:** If no files found by glob or regex a warning is printed instead of a raised error
 - Added `--fail-on-delete-error`
 - Added `--delete-companions`
 

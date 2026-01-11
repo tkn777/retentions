@@ -8,7 +8,6 @@ from retentions import (
     Logger,
     LogLevel,
     ModernStrictArgumentParser,
-    NoFilesFoundError,
     read_filelist,
 )
 
@@ -22,6 +21,7 @@ def _make_args(**overrides):
         regex_compiled=None,
         protect=None,
         protect_compiled=None,
+        protected_files=set(),
         age_type="ctime",
         list_only=None,
         verbose=LogLevel.ERROR,
@@ -90,7 +90,7 @@ def test_read_filelist_regex_and_protect(tmp_path) -> None:
     assert result and result[0].name == "report1.txt"
 
 
-def test_read_filelist_errors(tmp_path) -> None:
+def test_read_filelist_errors(tmp_path, capsys) -> None:
     """read_filelist should raise appropriate errors for invalid inputs."""
     cache = FileStatsCache("mtime")
     # Path does not exist
@@ -108,10 +108,11 @@ def test_read_filelist_errors(tmp_path) -> None:
     # No files found
     empty_dir = tmp_path / "empty"
     empty_dir.mkdir()
-    args = _make_args(path=str(empty_dir), file_pattern="*.doesnotexist")
+    args = _make_args(path=str(empty_dir), file_pattern="*.doesnotexist", verbose=LogLevel.WARN)
     logger = Logger(args, cache)
-    with pytest.raises(NoFilesFoundError):
-        read_filelist(args, logger, cache)
+    assert not read_filelist(args, logger, cache)
+    out = capsys.readouterr().out
+    assert "No files found in" in out
     # File not a direct child (in subdirectory)
     parent = tmp_path / "parent"
     child_dir = parent / "sub"
