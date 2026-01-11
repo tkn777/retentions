@@ -15,8 +15,8 @@ class DummyRetentionLogic:
 
     def process_retention_logic(self):
         class Result:
-            keep = []
-            prune = []
+            keep = set()
+            prune = set()
 
         return Result()
 
@@ -27,8 +27,9 @@ def test_create_lockfile(tmp_path, monkeypatch, capsys):
 
     lock = tmp_path / LOCK_FILE_NAME
 
-    def fake_read_filelist(arg, logger, cache):
+    def fake_read_filelist(args, logger, cache):
         assert lock.exists()
+        args.protected_files = set()
         return []
 
     monkeypatch.setattr(retentions, "RetentionLogic", DummyRetentionLogic)
@@ -45,8 +46,9 @@ def test_create_no_lockfile(tmp_path, monkeypatch, capsys):
 
     lock = tmp_path / LOCK_FILE_NAME
 
-    def fake_read_filelist(arg, logger, cache):
+    def fake_read_filelist(args, logger, cache):
         assert not lock.exists()
+        args.protected_files = set()
         return []
 
     monkeypatch.setattr(retentions, "RetentionLogic", DummyRetentionLogic)
@@ -78,12 +80,18 @@ def test_output_help(tmp_path, monkeypatch, capsys):
     """Test that output is printed."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "-V", "debug"])
     monkeypatch.setattr(retentions, "RetentionLogic", DummyRetentionLogic)
-    monkeypatch.setattr(retentions, "read_filelist", lambda args, logger, cache: [])
+
+    def fake_read_filelist(args, logger, cache):
+        args.protected_files = set()
+        return []
+
+    monkeypatch.setattr(retentions, "read_filelist", fake_read_filelist)
 
     main()
 
     captured = capsys.readouterr()
     assert "Parsed arguments" in captured.out
     assert "Total files found" in captured.out
+    assert "Total files protected" in captured.out
     assert "Total files keep" in captured.out
     assert "Total files prune" in captured.out

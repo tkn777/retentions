@@ -4,7 +4,7 @@ import argparse
 
 import pytest
 
-from retentions import LogLevel, ModernStrictArgumentParser
+from retentions import CompanionRule, CompanionType, LogLevel, ModernStrictArgumentParser
 
 
 @pytest.mark.parametrize("value, expected", [("1", 1), ("42", 42), ("9999", 9999)])
@@ -76,7 +76,7 @@ def test_verbose_argument_invalid(value):
 )
 def test_parse_positive_size_argument_valid(value: str, expected: int):
     """Valid positive strings should return the correct size in bytes."""
-    assert ModernStrictArgumentParser().parse_positive_size_argument(value) == expected
+    assert ModernStrictArgumentParser()._parse_positive_size_argument(value) == expected
 
 
 @pytest.mark.parametrize(
@@ -100,7 +100,8 @@ def test_parse_positive_size_argument_valid(value: str, expected: int):
 )
 def test_parse_positive_size_argument_invalid(value) -> None:
     with pytest.raises(argparse.ArgumentTypeError):
-        ModernStrictArgumentParser().parse_positive_size_argument(value)
+        ModernStrictArgumentParser()._parse_positive_size_argument(value)
+
 
 @pytest.mark.parametrize(
     "text, expected",
@@ -152,7 +153,7 @@ def test_parse_positive_size_argument_invalid(value) -> None:
 )
 def test_parse_positive_time_arguments_valid(text: str, expected: int):
     """Valid inputs should return the expected millisecond value."""
-    assert ModernStrictArgumentParser().parse_positive_time_argument(text) == pytest.approx(expected)
+    assert ModernStrictArgumentParser()._parse_positive_time_argument(text) == pytest.approx(expected)
 
 
 @pytest.mark.parametrize(
@@ -204,7 +205,8 @@ def test_parse_positive_time_arguments_valid(text: str, expected: int):
 def test_parse_positive_time_arguments_invalid(text: str):
     """Invalid inputs must raise ValueError."""
     with pytest.raises(argparse.ArgumentTypeError):
-        ModernStrictArgumentParser().parse_positive_time_argument(text)
+        ModernStrictArgumentParser()._parse_positive_time_argument(text)
+
 
 @pytest.mark.parametrize(
     "value, expected",
@@ -242,3 +244,49 @@ def test_format_size_valid(value, expected) -> None:
 )
 def test_format_time_valid(seconds, expected) -> None:
     assert ModernStrictArgumentParser.format_time(seconds) == expected
+
+
+@pytest.mark.parametrize(
+    "companion_rule_strings, expected_set, expected_size",
+    [
+        ([], set(), 0),
+        ([" suffix::.bak"], {CompanionRule(CompanionType.SUFFIX, "", ".bak")}, 1),
+        (["suFfix: .tar.gz: .bak"], {CompanionRule(CompanionType.SUFFIX, ".tar.gz", ".bak")}, 1),
+        (["suffix ::.bak", "suffix::.bak"], {CompanionRule(CompanionType.SUFFIX, "", ".bak")}, 1),
+        (["PREFIX:my-:tm\\,p-, temp-"], {CompanionRule(CompanionType.PREFIX, "my-", "tm,p-"), CompanionRule(CompanionType.PREFIX, "my-", "temp-")}, 2),
+        (["prefix:my-:tmp-", "prefix:my-:temp-"], {CompanionRule(CompanionType.PREFIX, "my-", "tmp-"), CompanionRule(CompanionType.PREFIX, "my-", "temp-")}, 2),
+    ],
+)
+def test_parse_delete_companions_valid(companion_rule_strings, expected_set, expected_size):
+    companion_rule_set = ModernStrictArgumentParser()._parse_delete_companions(companion_rule_strings)
+    assert companion_rule_set == expected_set
+    assert len(companion_rule_set) == expected_size
+
+
+@pytest.mark.parametrize(
+    "companion_rule_strings, expected_error, expected_msg_part",
+    [
+        ([""], ValueError, "Missing value"),
+        (["suffix"], ValueError, "Invalid companion definition: suffix - Expect 3 values, got 1 values by splitting on ':'"),
+        (["suffix:.bak"], ValueError, "Invalid companion definition: suffix:.bak - Expect 3 values, got 2 values by splitting on ':'"),
+        (["suffix:foo:bar:baz"], ValueError, "Invalid companion definition: suffix:foo:bar:baz - Expect 3 values, got 4 values by splitting on ':'"),
+        (["prefix:foo:"], ValueError, "Invalid companion definition: prefix:foo: - Missing value"),
+        (["suffix:foo,:"], ValueError, "Invalid companion definition: suffix:foo,: - Missing value"),
+        (["regex:foo:.bak"], ValueError, "Invalid CompanionType: regex"),
+        (["SUFFIX:.bak:.bak"], ValueError, "CompanionRule \"SUFFIX:.bak:.bak\": 'match' and 'companion' must be different"),
+        (["suffix::.bak", ""], ValueError, "Missing value"),
+        (["suffix:.tmp:.bak", "suffix:.bak"], ValueError, "Expect 3 values"),
+        (["suffix::.bak", "middle:foo:.tmp"], ValueError, "middle"),
+        (["prefix::.bak", "suffix:foo:.tmp,foo"], ValueError, "must be different"),
+        (["suffix::.bak", "suffix:.bak:.bak"], ValueError, "must be different"),
+        (["suffix::.bak", "suffix:.bak"], ValueError, "Expect 3 values"),
+        (["suffix:foo:   ,bar"], ValueError, "must not be empty"),
+        (["prefix::"], ValueError, "Missing value"),
+    ],
+)
+def test_parse_delete_companions_invalid(companion_rule_strings, expected_error, expected_msg_part):
+    parser = ModernStrictArgumentParser()
+    with pytest.raises(expected_error) as excinfo:
+        parser._parse_delete_companions(companion_rule_strings)
+    print("ERROR: " + str(excinfo.value))
+    assert expected_msg_part in str(excinfo.value)

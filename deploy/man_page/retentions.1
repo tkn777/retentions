@@ -195,6 +195,11 @@ Fails and exits if a file could not be deleted (default: disabled and print warn
 .PP
 Using --dry-run is a good option to start with retentions.
 
+.SS Experts options
+.TP
+--delete-companions rule-def [rule-def, ...]
+Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5')
+
 .SS Common arguments
 .TP
 -H, --help

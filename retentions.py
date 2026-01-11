@@ -16,9 +16,9 @@ import sys
 import traceback
 from collections import defaultdict
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from enum import IntEnum
+from enum import Enum, IntEnum
 from fnmatch import fnmatch
 from os import stat_result
 from pathlib import Path
@@ -44,8 +44,10 @@ class IntegrityCheckFailedError(Exception):
 class NoFilesFoundError(Exception):
     pass
 
+
 class FileCouldNotBeDeleteError(OSError):
     pass
+
 
 class ConfigNamespace(SimpleNamespace):
     pass
@@ -79,12 +81,12 @@ class LogLevel(IntEnum):
     @classmethod
     def from_name_or_number(cls, prefix: str) -> "LogLevel":
         result = None
-        match = next((m for m in cls if m.name == prefix.upper()), None)
+        match = next((m for m in cls if m.name == prefix.upper().strip()), None)
         if match is not None:
             result = match
         else:
             try:
-                result = cls(int(prefix.upper()))
+                result = cls(int(prefix.upper().strip()))
             except ValueError:
                 raise ValueError("Invalid log level: " + prefix)
         return result
@@ -142,6 +144,51 @@ class Logger:
                     continue
                 for idx, decision in enumerate(decisions[1:]):
                     self._raw_verbose(LogLevel.DEBUG, f"{' ' * ((longest_file_name_length + 2) + idx * 4)}└── {self._format_decision(decision)}")
+
+
+class CompanionType(Enum):
+    PREFIX = 1
+    SUFFIX = 2
+
+    @classmethod
+    def by_name(cls, name: str) -> "CompanionType":
+        try:
+            return cls[name.strip().upper()]
+        except KeyError:
+            raise ValueError(f"Invalid CompanionType: {name}")
+
+
+@dataclass(frozen=True)
+class CompanionRule:
+    type: CompanionType
+    match: str
+    companion: str
+    rule_def: Optional[str] = field(default=None, compare=False, hash=False)
+
+    def __post_init__(self) -> None:
+        if self.match == self.companion:
+            raise ValueError(f"CompanionRule \"{self.rule_def if self.rule_def is not None else '<unspecified>'}\": 'match' and 'companion' must be different")
+        if not self.companion:
+            raise ValueError(f"CompanionRule \"{self.rule_def if self.rule_def is not None else '<unspecified>'}\": 'companion' must not be empty")
+
+    def matches(self, file: Path) -> bool:
+        if len(self.match) == 0:
+            return True
+        if self.type is CompanionType.PREFIX:
+            return file.name.startswith(self.match)
+        if self.type is CompanionType.SUFFIX:
+            return file.name.endswith(self.match)
+        raise AssertionError(f"Unhandled CompanionType: {self.type}")
+
+    def replace(self, file: Path) -> Path:
+        if self.type is CompanionType.PREFIX:
+            new_name = self.companion + file.name[len(self.match) :]
+            return file.with_name(new_name)
+        if self.type is CompanionType.SUFFIX:
+            stem = file.name if self.match == "" else file.name[: -len(self.match)]
+            new_name = stem + self.companion
+            return file.with_name(new_name)
+        raise AssertionError(f"Unhandled CompanionType: {self.type}")
 
 
 class ModernHelpFormatter(argparse.HelpFormatter):
@@ -207,7 +254,24 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         except ValueError:
             raise argparse.ArgumentTypeError(f"Invalid verbose value '{value}' (use ERROR, WARN, INFO, DEBUG or 0, 1, 2, 3)")
 
-    def parse_positive_size_argument(self, size_str: str) -> float:
+    def _parse_delete_companions(self, companion_rule_strings: list[str]) -> set[CompanionRule]:
+        companion_rule_set: set[CompanionRule] = set()
+
+        def split_escaped(delim: str, text: str, expected_length: Optional[int] = None) -> list[str]:
+            if not text:
+                raise ValueError(f"Invalid companion definition: {companion_rule_string} - Missing value")
+            pattern = rf"(?<!\\){re.escape(delim)}"
+            parts = [p.replace(f"\\{delim}", delim) for p in re.split(pattern, text)]
+            if expected_length is not None and expected_length > 0 and len(parts) != expected_length:
+                raise ValueError(f"Invalid companion definition: {companion_rule_string} - Expect {expected_length} values, got {len(parts)} values by splitting on '{delim}'")
+            return parts
+
+        for companion_rule_string in companion_rule_strings:
+            (type, match, companions_string) = tuple(split_escaped(":", companion_rule_string, 3))
+            companion_rule_set.update(CompanionRule(CompanionType.by_name(type), match.strip(), companion.strip(), companion_rule_string) for companion in split_escaped(",", companions_string))
+        return companion_rule_set
+
+    def _parse_positive_size_argument(self, size_str: str) -> float:
         size_str = size_str.strip().upper()
         re_match = re.match(r"^([0-9]+(?:\.[0-9]*)?)\s*([KMGTPE]?)$", size_str)
         if not re_match:
@@ -215,7 +279,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         multipliers = {"": 1, "K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4, "P": 1024**5, "E": 1024**6}
         return int(float(re_match.group(1)) * multipliers[re_match.group(2)])
 
-    def parse_positive_time_argument(self, time_str: str) -> float:
+    def _parse_positive_time_argument(self, time_str: str) -> float:
         time_str = time_str.strip(" ")
         m = re.fullmatch(r"([0-9]+(?:\.[0-9]*)?)(?: ?([hdwmyq]))?", time_str)
         if not m:
@@ -311,6 +375,10 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             if ns.list_only and ns.verbose > LogLevel.ERROR:
                 self.add_error("--list-only and --verbose (> ERROR) cannot be used together")
 
+            # incompatible options (list-only and delete_companions)
+            if ns.list_only and ns.delete_companions:
+                self.add_error("--list-only and --delete-companions must not be combined, because list-only is not for companions")
+
             # regex validation (and compilation), also for protect
             if ns.regex_mode is not None:
                 ns.regex_compiled = self._compile_regex(ns.file_pattern, ns.regex_mode)
@@ -320,12 +388,15 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             # max-size parsing
             if ns.max_size is not None:
                 ns.max_size = "".join(token.strip() for token in ns.max_size)
-                ns.max_size_bytes = self.parse_positive_size_argument(ns.max_size)
+                ns.max_size_bytes = self._parse_positive_size_argument(ns.max_size)
 
             # max-age parsing
             if ns.max_age is not None:
                 ns.max_age = "".join(token.strip() for token in ns.max_age)
-                ns.max_age_seconds = self.parse_positive_time_argument(ns.max_age)
+                ns.max_age_seconds = self._parse_positive_time_argument(ns.max_age)
+
+            # companion deletes
+            ns.delete_companions_set = self._parse_delete_companions(ns.delete_companions) if ns.delete_companions is not None else set()
 
         except BaseException as e:
             self.add_error(str(e))
@@ -368,6 +439,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_ret = parser.add_argument_group("Retention options")
     g_filter = parser.add_argument_group("Filter options")
     g_behavior = parser.add_argument_group("Behavior options")
+    g_expert = parser.add_argument_group("Experts options")
     g_common = parser.add_argument_group("Common arguments")
 
     # positional arguments
@@ -382,7 +454,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_flags.add_argument("--protect", "-p", type=str, default=None, metavar="protect", help="Protect files from deletion (using regex or glob, like file_pattern)")
     # fmt: on
 
-    # optional retention arguments (validated, no defaults)
+    # retention options
     g_ret.add_argument("--hours", "-h", type=parser.positive_int_argument, metavar="N", help="Retain one file per hour from the last N hours")
     g_ret.add_argument("--days", "-d", type=parser.positive_int_argument, metavar="N", help="Retain one file per day from the last N days")
     g_ret.add_argument("--weeks", "-w", type=parser.positive_int_argument, metavar="N", help="Retain one file per week from the last N weeks")
@@ -392,23 +464,26 @@ def create_parser() -> ModernStrictArgumentParser:
     g_ret.add_argument("--years", "-y", type=parser.positive_int_argument, metavar="N", help="Retain one file per year from the last N years")
     g_ret.add_argument("--last", "-l", type=parser.positive_int_argument, metavar="N", help="Always retain the N most recently modified files")
 
-    # filter arguments
+    # filter options
     g_filter.add_argument("--max-size", "-s", type=str, metavar="N", nargs="+", help="Keep maximum within total size N (e.g. 12, 10.5M, 500 G, 3E)")
     g_filter.add_argument("--max-files", "-f", type=parser.positive_int_argument, metavar="N", help="Keep maximum total files N")
     g_filter.add_argument("--max-age", "-a", type=str, metavar="N", nargs="+", help="Keep maximum within time span N from script start (e.g. 3600, 1h, 1 d, 1w, 1m, 1q, 1y - with 1 month = 30 days)")
 
-    # behavior flags
+    # behavior options
+    g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files")
+    g_behavior.add_argument("--no-lock-file", action="store_false", dest="use_lock_file", default=True, help="Omit lock file (default: enabled)")
+    g_behavior.add_argument("--fail-on-delete-error", action="store_true", default=False, help="Fails and exits if a file could not be deleted (default: disabled and print warning)")
     # fmt: off
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep",
         help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
     g_behavior.add_argument("--verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
         help="Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)")
     # fmt: on
-    g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files")
-    g_behavior.add_argument("--no-lock-file", action="store_false", dest="use_lock_file", default=True, help="Omit lock file (default: enabled)")
-    g_behavior.add_argument("--fail-on-delete-error", action="store_true", default=False, help="Fails and exits if a file could not be deleted (default: disabled and print warning)")
 
-    # common flags
+    # experts options
+    g_expert.add_argument("--delete-companions", type=str, metavar="rule", nargs="+", help="Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5')")
+
+    # common options
     g_common.add_argument("--version", "-R", nargs=0, action=ExitOnlyVersion, help="show version and exit")
     g_common.add_argument("--help", "-H", action="help", help="Show this help message and exit")
     g_common.add_argument("--stacktrace", action="store_true", help=argparse.SUPPRESS)
@@ -444,8 +519,8 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileS
             raise ValueError(f"File '{file}' is not a child of base directory '{base}'")
 
     # Check for protection
+    protected: set[Path] = set()
     if args.protect:
-        protected: set[Path] = set()
         for file in matches:
             if args.regex_mode and args.protect_compiled.match(file.name):
                 logger.add_decision(LogLevel.INFO, file, f"Protected by regex: '{args.protect}'")
@@ -454,6 +529,7 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileS
                 logger.add_decision(LogLevel.INFO, file, f"Protected by glob: '{args.protect}'")
                 protected.add(file)
         matches = [file for file in matches if file not in protected]
+    args.protected_files = protected
 
     # Ignore lock file (in any case, even if it is is disabled by user)
     matches = [m for m in matches if m.name != LOCK_FILE_NAME]
@@ -462,7 +538,7 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileS
     return sort_files(matches, file_stats_cache)
 
 
-@dataclass
+@dataclass(frozen=True)
 class RetentionsResult:
     keep: set[Path]
     prune: set[Path]
@@ -617,23 +693,33 @@ def is_file_to_delete(keep: set[Path], prune: set[Path], file: Path) -> bool:
     return file not in keep and file in prune
 
 
-def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, file_stats_cache: FileStatsCache) -> None:
-    time = datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))
+def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion: bool = False) -> None:
+    if file.parent.resolve() != Path(args.path).resolve():
+        raise IntegrityCheckFailedError(f"{'(Companion) ' if is_companion else ''}File '{file}' is not a child of parent directory '{file.parent}'")
+    if args.dry_run:
+        logger.verbose(LogLevel.INFO, f"DRY-RUN DELETE{' (COMPANION)' if is_companion else ''}: {file.name}")  # Just simulate deletion
+    else:
+        logger.verbose(LogLevel.INFO, f"DELETING{' (COMPANION)' if is_companion else ''}: {file.name}")
+        try:
+            file.unlink()
+        except OSError as e:
+            error_message = f"Error while deleting {'(companion) ' if is_companion else ''}file '{file.name}': {e}"
+            if args.fail_on_delete_error:
+                raise FileCouldNotBeDeleteError(error_message)
+            logger.verbose(LogLevel.WARN, error_message, file=sys.stderr)
+
+
+def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_companions: set[Path]) -> None:
     if args.list_only:
         print(file.absolute(), end=args.list_only)  # List mode
     else:
-        if file.parent.resolve() != Path(args.path).resolve():
-            raise IntegrityCheckFailedError(f"File '{file}' is not a child of parent directory '{file.parent}'")
-        if args.dry_run:
-            logger.verbose(LogLevel.INFO, f"DRY-RUN DELETE: {file.name} ({file_stats_cache.age_type}: {time})")  # Just simulate deletion
-        else:
-            logger.verbose(LogLevel.INFO, f"DELETING: {file.name} ({file_stats_cache.age_type}: {time})")
-            try:
-                file.unlink()
-            except OSError as e:  # Catch deletion error, print it, and continue
-                if args.fail_on_delete_error:
-                    raise FileCouldNotBeDeleteError(f"Error while deleting file '{file.name}': {e}")
-                logger.verbose(LogLevel.WARN, f"Error while deleting file '{file.name}': {e}", file=sys.stderr)
+        delete_file(file, args, logger)
+        # delete companion files (if any)
+        for companion_file in {companion_rule.replace(file) for companion_rule in args.delete_companion_set if companion_rule.matches(file)}:
+            if companion_file in disallowed_companions:
+                raise IntegrityCheckFailedError(f"Companion file '{file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
+            if companion_file.exists() and companion_file.is_file():
+                delete_file(companion_file, args, logger, is_companion=True)
 
 
 def handle_exception(exception: Exception, exit_code: int, stacktrace: bool, prefix: str = "") -> None:
@@ -671,17 +757,19 @@ def main() -> None:
 
         logger.print_decisions()
 
-        logger.verbose(LogLevel.INFO, f"Total files found: {len(matches):03d}")
-        logger.verbose(LogLevel.INFO, f"Total files keep:  {len(retentions_result.keep):03d}")
-        logger.verbose(LogLevel.INFO, f"Total files prune: {len(retentions_result.prune):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files found:     {len(matches):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files protected: {len(args.protected_files):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files keep:      {len(retentions_result.keep):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files prune:     {len(retentions_result.prune):03d}")
 
         deletion_started = False
+        disallowed_companions = retentions_result.keep | retentions_result.prune | args.protected_files | {lock_file} if lock_file is not None else set[Path]()
         for file in matches:
             if is_file_to_delete(retentions_result.keep, retentions_result.prune, file):
                 if not deletion_started:
                     logger.verbose(LogLevel.INFO, "Deletion phase started")
                     deletion_started = True
-                run_deletion(file, args, logger, file_stats_cache)
+                run_deletion(file, args, logger, disallowed_companions)
 
     except OSError as e:
         handle_exception(e, 1, args.stacktrace if args is not None else True)

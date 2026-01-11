@@ -1,7 +1,4 @@
 ## 1.1
-- Stabilize and test by others
-- Implement `--delete-companions / -o` .....
-- Implement `--fail-on-delete-error`
 - Implement `--fail-on-empty-filelist (by default just print a warning) - BREAKING-CHANGE
 
 ---

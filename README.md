@@ -211,6 +211,11 @@ python3 retentions.py [path] [file_pattern] <options>
 💡 Using `--dry-run` is a good option to start with `retentions` 😏\
 &nbsp;
 
+| Expert options | Description |
+|--------|--------------|
+| `--delete-companions` | Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5') |
+
+
 | Common arguments | Description |
 |--------|--------------|
 | `-H, --help` | Show the help / usage of `retentions` |
@@ -260,6 +265,42 @@ python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\0' | xar
 # Detailed logging
 python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
 ```
+
+---
+
+### 🔗 Delete Companions (`--delete-companions)
+
+Deletes *companion files* together with a file being removed (e.g. checksum or metadata files).
+
+#### Rule-Definition
+
+```
+TYPE:MATCH:COMPANIONS
+```
+
+- `TYPE`: `suffix` or `prefix`
+- `MATCH`: prefix or suffix to match (may be empty → always matches)
+- `COMPANIONS`: comma-separated replacements
+
+#### Rule-Examples:
+
+```
+--delete-companions "suffix:.tar:.md5,.info" 
+# Deletes `archive.md5` and `archive.info` when deleting `archive.tar`.
+
+--delete-companions "suffix::.bak" "suffix::.tmp" 
+# Deletes `file.txt.bak` and `file.txt.tmp` when deleting `file.txt`.
+
+--delete-companions "prefix:backup-:meta-" 
+# Deletes `meta-data.tar` when deleting `backup-data.tar`
+```
+
+#### Notes
+
+- Only existing regular files are deleted.
+- Companion paths are deduplicated.
+- Protected or otherwise disallowed companions abort deletion (e.g. files marked as kept or pruned).
+- Rules must be quoted.
 
 ---
 

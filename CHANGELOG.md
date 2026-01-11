@@ -1,5 +1,6 @@
 ### NEXT RELEASE
-- Added '--fail-on-delete-error'
+- Added `--fail-on-delete-error`
+- Added `--delete-companions`
 
 ### 1.0.4 - 05.01.2026
 - Fixed bash and zsh completions

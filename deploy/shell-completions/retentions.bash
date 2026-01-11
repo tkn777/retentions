@@ -27,6 +27,7 @@ _retentions() {
         -X --dry-run
         --no-lock-file
         --fail-on-delete-error
+        --delete-companions
         -R --version
         -H --help
     "

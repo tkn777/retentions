@@ -1,6 +1,8 @@
 # mypy: ignore-errors
 """Tests for run_deletion and handle_exception functions."""
 
+from pathlib import Path
+
 import pytest
 
 import retentions
@@ -24,6 +26,8 @@ def _make_args(**overrides):
         dry_run=False,
         verbose=LogLevel.INFO,
         fail_on_delete_error=False,
+        protected_files=set(),
+        delete_companion_set=set(),
     )
     defaults.update(overrides)
     return ConfigNamespace(**defaults)
@@ -151,3 +155,154 @@ def test_exception_for_file_not_deleted(tmp_path, capsys, monkeypatch):
     assert "protected.txt" in str(exc)
     assert protected.exists()
     assert normal.exists()
+
+
+# ---------------------------------------------------------------------------
+# tests for run_deletion – companion handling
+# ---------------------------------------------------------------------------
+
+
+class _DummyCompanionRule:
+    """Minimal stub for CompanionRule to test run_deletion companion handling."""
+
+    def __init__(self, companion: Path):
+        self._companion = companion
+
+    def matches(self, file: Path) -> bool:  # noqa: ARG002
+        return True
+
+    def replace(self, file: Path) -> Path:  # noqa: ARG002
+        return self._companion
+
+
+def test_run_deletion_with_companion_deleted(tmp_path, capsys) -> None:
+    main = tmp_path / "data.tar"
+    companion = tmp_path / "data.tar.md5"
+
+    main.write_text("main")
+    companion.write_text("companion")
+
+    cache = FileStatsCache("mtime")
+    args = _make_args(
+        path=str(tmp_path),
+        dry_run=False,
+        delete_companion_set={_DummyCompanionRule(companion)},
+    )
+    logger = Logger(args, cache)
+
+    disallowed_companions = set()
+
+    run_deletion(main, args, logger, disallowed_companions)
+
+    assert not main.exists()
+    assert not companion.exists()
+
+    out = capsys.readouterr().out
+    assert "DELETING" in out
+    assert "DELETING (COMPANION)" in out
+    assert main.name in out
+    assert companion.name in out
+
+
+def test_run_deletion_with_missing_companion(tmp_path) -> None:
+    main = tmp_path / "data.tar"
+    missing_companion = tmp_path / "data.tar.md5"
+
+    main.write_text("main")
+
+    cache = FileStatsCache("mtime")
+    args = _make_args(
+        path=str(tmp_path),
+        dry_run=False,
+        delete_companion_set={_DummyCompanionRule(missing_companion)},
+    )
+    logger = Logger(args, cache)
+
+    disallowed_companions = set()
+
+    run_deletion(main, args, logger, disallowed_companions)
+
+    assert not main.exists()
+    assert not missing_companion.exists()  # still missing, no error
+
+
+def test_run_deletion_with_disallowed_companion(tmp_path) -> None:
+    main = tmp_path / "data.tar"
+    companion = tmp_path / "data.tar.md5"
+
+    main.write_text("main")
+    companion.write_text("companion")
+
+    cache = FileStatsCache("mtime")
+    args = _make_args(
+        path=str(tmp_path),
+        dry_run=False,
+        delete_companion_set={_DummyCompanionRule(companion)},
+    )
+    logger = Logger(args, cache)
+
+    disallowed_companions = {companion}
+
+    with pytest.raises(IntegrityCheckFailedError) as e:
+        run_deletion(main, args, logger, disallowed_companions)
+    assert "must not be deleted" in str(e.value)
+
+    # Companion must not be deleted
+    assert companion.exists()
+
+
+def test_run_deletion_multiple_files_multiple_companions(tmp_path, capsys) -> None:
+    # main files
+    file_a = tmp_path / "a.tar"
+    file_b = tmp_path / "b.tar"
+
+    # companions
+    a_md5 = tmp_path / "a.tar.md5"
+    a_info = tmp_path / "a.tar.info"
+    b_md5 = tmp_path / "b.tar.md5"
+    b_info = tmp_path / "b.tar.info"
+
+    for p in [file_a, file_b, a_md5, a_info, b_md5, b_info]:
+        p.write_text(p.name)
+
+    # two companion rules, both always matching
+    rule_md5 = _DummyCompanionRule(None)
+    rule_info = _DummyCompanionRule(None)
+
+    def replace_md5(file: Path) -> Path:
+        return file.with_name(file.name + ".md5")
+
+    def replace_info(file: Path) -> Path:
+        return file.with_name(file.name + ".info")
+
+    rule_md5.replace = replace_md5
+    rule_info.replace = replace_info
+
+    cache = FileStatsCache("mtime")
+    args = _make_args(
+        path=str(tmp_path),
+        dry_run=False,
+        delete_companion_set={rule_md5, rule_info},
+    )
+    logger = Logger(args, cache)
+
+    disallowed_companions = set()
+
+    # delete first file
+    run_deletion(file_a, args, logger, disallowed_companions)
+
+    # delete second file
+    run_deletion(file_b, args, logger, disallowed_companions)
+
+    # main files deleted
+    assert not file_a.exists()
+    assert not file_b.exists()
+
+    # all companions deleted
+    assert not a_md5.exists()
+    assert not a_info.exists()
+    assert not b_md5.exists()
+    assert not b_info.exists()
+
+    out = capsys.readouterr().out
+    assert "DELETING" in out

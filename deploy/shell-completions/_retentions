@@ -25,11 +25,12 @@ _retentions() {
     '{-X,--dry-run}'[dry run, do not delete files] \
     '--no-lock-file'[disable lock file] \
     '--fail-on-delete-error'[fail and exit on delete error] \
+    '--delete-companions'[Delete companion files defined by rules]:pattern:->companions \
     '{-R,--version}'[show version and exit] \
     '{-H,--help}'[show help and exit]
 
   case $state in
-    pattern|protect)
+    pattern|protect|companions)
       LBUFFER+="'"
       RBUFFER="'$RBUFFER"
       return 0
