@@ -1,4 +1,4 @@
-### NEXT RELEASE
+### 1.1.0 - 11.01.2026
 - **BREAKING CHANGE:** If no files found by glob or regex a warning is printed instead of a raised error
 - Added `--fail-on-delete-error`
 - Added `--delete-companions`
