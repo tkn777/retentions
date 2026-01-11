@@ -334,7 +334,6 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 | 0 | Execution successful |
 | 1 | I/O or filesystem error |
 | 2 | Invalid or conflicting arguments |
-| 3 | Pattern matched no file(s) |
 | 5 | Concurrency error |
 | 7 | Integrity check failed |
 | 9 | Unexpected error |
