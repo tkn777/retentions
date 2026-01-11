@@ -6,8 +6,8 @@ The following versions of **retentions** currently receive security updates:
 
 | Version  | Supported          |
 |----------|--------------------|
-| 1.0.x    | ✅ Supported       |
-| < 1.0.x  | ❌ No longer fixed |
+| 1.1.x    | ✅ Supported       |
+| < 1.1.x  | ❌ No longer fixed |
 
 ## Reporting a Vulnerability
 
