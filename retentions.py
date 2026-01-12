@@ -364,7 +364,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 ns.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
 
             # dry-run implies verbose
-            if ns.dry_run and not ns.list_only and not ns.verbose:
+            if ns.dry_run and not ns.list_only and ns.verbose is None:
                 ns.verbose = LogLevel.INFO
 
             # normalize 0-byte separator
