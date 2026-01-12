@@ -359,7 +359,6 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             if not Path(ns.path).resolve().is_dir():
                 raise OSError(f"Path {ns.path} is not a valid directory")
 
-
             # Default verbosity, if none given
             if ns.verbose is None:
                 ns.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
@@ -592,27 +591,22 @@ class RetentionLogic:
                 self._logger.verbose(LogLevel.DEBUG, f"Retention buckets: {key} - {', '.join(f'{file.name} ({datetime.fromtimestamp(self._file_stats_cache.get_file_seconds(file))})' for file in files)}")
         return buckets
 
-    def _process_retention_buckets(self, retention_mode: str, retention_mode_count: int, buckets: dict[str, list[Path]]) -> None:
-        sorted_keys = sorted(buckets.keys(), reverse=True)  # newest bucket-key first => e.g. "2025-01" before "2023-11" for 'months' retention mode
-        effective_count = retention_mode_count
-        current_count = 0
-        while current_count < effective_count:
-            if current_count >= len(sorted_keys):
-                break  # No more buckets
-            first_bucket_file = buckets[sorted_keys[current_count]][0]
-            if first_bucket_file in self._keep:  # Already kept by one previous retention mode
-                self._logger.add_decision(LogLevel.DEBUG, first_bucket_file, f"Skipping for mode '{retention_mode}' as already kept by one previous retention mode", append=True)
-                effective_count += 1
-            else:
-                # Keep first entry (file) of bucket, prune the rest
-                self._logger.add_decision(
-                    LogLevel.INFO, first_bucket_file, f"Keeping for mode '{retention_mode}' {(current_count - (effective_count - retention_mode_count) + 1):02d}/{retention_mode_count:02d}", debug=f"key: {sorted_keys[current_count]}"
-                )
-                self._keep.add(first_bucket_file)
-                for file_prune in buckets[sorted_keys[current_count]][1:]:
-                    self._logger.add_decision(LogLevel.INFO, file_prune, f"Pruning for mode '{retention_mode}'", debug=f"key: {sorted_keys[current_count]}")
-                    self._prune.add(file_prune)
-            current_count += 1
+    def _process_retention_buckets(self, retention_mode: str, retention_mode_count: int, buckets: dict[str, list[Path]], last_keep_time: int) -> int:
+        count = 0
+        for key in sorted(buckets, reverse=True):  # newest bucket-key first => e.g. "2025-01" before "2023-11" for 'months' retention mode
+            files = [file for file in buckets[key] if file not in self._keep and self._file_stats_cache.get_file_seconds(file) < last_keep_time]
+            if len(files) == 0:
+                continue
+
+            if retention_mode_count > count:
+                file_keep = files[0]
+                self._logger.add_decision(LogLevel.INFO, file_keep, f"Keeping for mode '{retention_mode}' {count + 1:02d} / {retention_mode_count:02d}", debug=f"key: {key}")
+                self._keep.add(file_keep)
+                last_keep_time = self._file_stats_cache.get_file_seconds(file_keep)
+
+            count += 1
+
+        return last_keep_time
 
     def _process_last_n(self) -> None:
         last_files = self._matches[: self._args.last]  # Get the N most recently modified files regardless from any retention rule (newest first)
@@ -656,12 +650,13 @@ class RetentionLogic:
     def process_retention_logic(self) -> RetentionsResult:
         # Retention by time buckets; generation and processing must be done per retention mode sequently in one single loop
         retention_rules_applied = False
+        last_keep_time = sys.maxsize
         for retention_mode in ["hours", "days", "weeks", "months", "quarters", "week13", "years"]:
             retention_mode_count = getattr(self._args, retention_mode)
             if retention_mode_count:
                 retention_rules_applied = True
                 buckets = self._create_retention_buckets(retention_mode)
-                self._process_retention_buckets(retention_mode, retention_mode_count, buckets)
+                last_keep_time = self._process_retention_buckets(retention_mode, retention_mode_count, buckets, last_keep_time)
 
         # Keep last N files (additional to time-based retention)
         if self._args.last:

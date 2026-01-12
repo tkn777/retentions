@@ -1,5 +1,3 @@
-# **THE TOOL IS CURRENTLY BROKEN. I WORK ON A QUICK SOLUTION. SORRY FOR ANY INCONVENIENCES**
-
 <p align="left">
   <img src="resources/retentions-logo.png" alt="retentions – deterministic file retention CLI tool" height=110>
 </p>

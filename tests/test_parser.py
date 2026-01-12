@@ -10,9 +10,9 @@ from retentions import LogLevel, ModernStrictArgumentParser, create_parser, pars
 @pytest.mark.parametrize(
     "argv",
     [
-        ["/tmp", "*.txt", "-d", "1", "-d", "2"],  # duplicate short flag
-        ["/tmp", "*.txt", "--days", "1", "--days", "2"],  # duplicate long flag
-        ["/tmp", "*.txt", "-d", "1", "--days", "2"],  # combined long and short flag
+        [".", "*.txt", "-d", "1", "-d", "2"],  # duplicate short flag
+        [".", "*.txt", "--days", "1", "--days", "2"],  # duplicate long flag
+        [".", "*.txt", "-d", "1", "--days", "2"],  # combined long and short flag
     ],
 )
 def test_duplicate_flags_raise_system_exit(argv) -> None:
@@ -26,10 +26,10 @@ def test_duplicate_flags_raise_system_exit(argv) -> None:
 @pytest.mark.parametrize(
     "argv, suggest, error",
     [
-        (["/tmp", "*.txt", "--unknown-option"], None, "Unknown option: --unknown-option"),
-        (["/tmp", "*.txt", "-Q"], None, "Unknown option: -Q"),
-        (["/tmp", "*.txt", "--dais"], "days?", None),
-        (["/tmp", "*.txt", "-a 3G"], None, "Invalid time format: '3G'"),
+        ([".", "*.txt", "--unknown-option"], None, "Unknown option: --unknown-option"),
+        ([".", "*.txt", "-Q"], None, "Unknown option: -Q"),
+        ([".", "*.txt", "--dais"], "days?", None),
+        ([".", "*.txt", "-a 3G"], None, "Invalid time format: '3G'"),
     ],
 )
 def test_unknown_option_suggestion_or_error(argv, suggest, error, capsys: pytest.CaptureFixture[str]) -> None:
@@ -64,7 +64,7 @@ def test_compile_regex_valid_and_invalid() -> None:
 
 def test_size_parsig(monkeypatch) -> None:
     """Test that the --max-size argument is parsed correctly."""
-    monkeypatch.setattr(sys, "argv", ["retentions.py", "/tmp", "*.txt", "-s", "1k"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-s", "1k"])
     args = parse_arguments()
     assert args.max_size == "1k"
     assert args.max_size_bytes == 1024
@@ -72,7 +72,7 @@ def test_size_parsig(monkeypatch) -> None:
 
 def test_age_parsig(monkeypatch) -> None:
     """Test that the --max-age argument is parsed correctly."""
-    monkeypatch.setattr(sys, "argv", ["retentions.py", "/tmp", "*.txt", "-a", "3", "d"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-a", "3", "d"])
     args = parse_arguments()
     assert args.max_age == "3d"
     assert args.max_age_seconds == 259_200
@@ -81,13 +81,13 @@ def test_age_parsig(monkeypatch) -> None:
 @pytest.mark.parametrize(
     "argv, loglevel",
     [
-        (["retentions.py", "/tmp", "*.txt"], LogLevel.INFO),
-        (["retentions.py", "/tmp", "*.txt", "--verbose", "DEBUG"], LogLevel.DEBUG),
-        (["retentions.py", "/tmp", "*.txt", "-L"], LogLevel.ERROR),
-        (["retentions.py", "/tmp", "*.txt", "-L", "-V 0"], LogLevel.ERROR),
-        (["retentions.py", "/tmp", "*.txt", "-L", "-X"], LogLevel.ERROR),
-        (["retentions.py", "/tmp", "*.txt", "-X"], LogLevel.INFO),
-        (["retentions.py", "/tmp", "*.txt", "-X", "-V 3"], LogLevel.DEBUG),
+        (["retentions.py", ".", "*.txt"], LogLevel.INFO),
+        (["retentions.py", ".", "*.txt", "--verbose", "DEBUG"], LogLevel.DEBUG),
+        (["retentions.py", ".", "*.txt", "-L"], LogLevel.ERROR),
+        (["retentions.py", ".", "*.txt", "-L", "-V 0"], LogLevel.ERROR),
+        (["retentions.py", ".", "*.txt", "-L", "-X"], LogLevel.ERROR),
+        (["retentions.py", ".", "*.txt", "-X"], LogLevel.INFO),
+        (["retentions.py", ".", "*.txt", "-X", "-V 3"], LogLevel.DEBUG),
     ],
 )
 def test_parse_verbose(monkeypatch, argv, loglevel):
@@ -99,21 +99,21 @@ def test_parse_verbose(monkeypatch, argv, loglevel):
 
 def test_parse_list_only_null_byte(monkeypatch):
     """Test that the --list-only null byte is parsed correctly."""
-    monkeypatch.setattr(sys, "argv", ["retentions.py", "/tmp", "*.txt", "--list-only", "\\0"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "--list-only", "\\0"])
     args = parse_arguments()
     assert args.list_only == "\0"
 
 
 def test_parse_list_arbitary_string(monkeypatch):
     """Test an arbitrary --list-only argument."""
-    monkeypatch.setattr(sys, "argv", ["retentions.py", "/tmp", "*.txt", "--list-only", "foo"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "--list-only", "foo"])
     args = parse_arguments()
     assert args.list_only == "foo"
 
 
 def test_combine_verbose_list_failed(monkeypatch, capsys):
     """Test that the verbose > ERROR must not be combined with list-only."""
-    monkeypatch.setattr(sys, "argv", ["retentions.py", "/tmp", "*.txt", "-X", "-V 3", "-L"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-X", "-V 3", "-L"])
     with pytest.raises(SystemExit) as exc:
         parse_arguments()
     assert exc.value.code == 2
@@ -123,7 +123,7 @@ def test_combine_verbose_list_failed(monkeypatch, capsys):
 
 def test_combine_companions_list_failed(monkeypatch, capsys):
     """Test that the delete-companions must not be combined with delete-companions."""
-    monkeypatch.setattr(sys, "argv", ["retentions.py", "/tmp", "*.txt", "-X", "--delete-companions", "suffix::.bak", "-L"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-X", "--delete-companions", "suffix::.bak", "-L"])
     with pytest.raises(SystemExit) as exc:
         parse_arguments()
     assert exc.value.code == 2

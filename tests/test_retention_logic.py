@@ -94,7 +94,6 @@ def test_multiple_retention_modes(tmp_path: Path) -> None:
     pruned_names = {f.name for f in result.prune}
     expected_prune = {files[5].name}
     assert pruned_names == expected_prune
-    assert "Skipping" in Logger._decisions[files[0]][1][0]
 
 
 @no_type_check
@@ -128,10 +127,9 @@ def test_month_quarter_year_retention(tmp_path: Path) -> None:
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
     # 15 files: 6 month, 4 quarter, 5 years -> (effective 3 years, because we have only files for 5 years)
-    assert len(result.keep) == 13  # 6 month, 4 quarter, 5 year
-    assert len(result.prune) == 47
+    assert len(result.keep) == 14  # 6 month, 4 quarter, 5 year
+    assert len(result.prune) == 46
     assert "Keeping for mode 'months'" in logger._decisions[files[0]][0][0]
-    assert "Pruning for mode 'years'" in logger._decisions[files[59]][0][0]
 
 
 @no_type_check
@@ -182,9 +180,9 @@ def test_filter_max_size(tmp_path: Path) -> None:
     result = logic.process_retention_logic()
     assert len(result.keep) == 5
     assert len(result.prune) == 5
-    assert len(logger._decisions[files[0]]) == 2
-    assert "Skipping" in logger._decisions[files[0]][1][0]
+    assert len(logger._decisions[files[0]]) == 1
     assert len(logger._decisions[files[2]]) == 1
+    assert len(logger._decisions[files[5]]) == 2
     assert len(logger._decisions[files[7]]) == 2
     assert "Filtering: max total size exceeded" in logger._decisions[files[8]][0][0]
 
