@@ -502,7 +502,7 @@ def parse_arguments() -> ConfigNamespace:
 
 
 def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileStatsCache) -> list[Path]:
-    base: Path = Path(args.path)
+    base: Path = Path(args.path).resolve()
     if not base.exists():
         raise FileNotFoundError(f"Path not found: {base}")
     if not base.is_dir():
@@ -749,7 +749,7 @@ def main() -> None:
         logger.verbose(LogLevel.DEBUG, f"Parsed arguments: {args}")
 
         if args.use_lock_file:
-            lock_file = Path(args.path + f"/{LOCK_FILE_NAME}")
+            lock_file = Path(args.path + f"/{LOCK_FILE_NAME}").resolve()
             if lock_file.exists():
                 raise ConcurrencyError(f"A retention process is already running on {args.path} (or there is a stale lockfile)")
             lock_file.touch()
