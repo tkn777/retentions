@@ -680,7 +680,7 @@ class RetentionLogic:
 
         # Simple integrity checks
         if not len(self._matches) == len(self._keep) + len(self._prune):
-            raise IntegrityCheckFailedError(f"File count mismatch: some files are neither kept nor prune (all: {len(self._matches)}, keep: {len(self._keep)}, prune: {len(self._prune)}!!")
+            raise IntegrityCheckFailedError(f"File count mismatch: some files are neither kept nor prune (all: {len(self._matches)}, keep: {len(self._keep)}, prune: {len(self._prune)}!!)")
         if not len(self._prune) == sum(1 for file in self._matches if is_file_to_delete(self._keep, self._prune, file)):
             raise IntegrityCheckFailedError("File deletion count mismatch!!")
 
