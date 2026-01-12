@@ -382,6 +382,17 @@ By default retentions writes a lock file `.retentions.lock` - This can be used b
 
 ---
 
+## 🪨 Project Status
+
+retentions is a deliberately small, complete tool.
+
+Its feature set is stable and sufficient for its intended purpose.
+Future changes will primarily consist of bug fixes, portability improvements, or documentation updates.
+
+A low commit frequency is therefore a sign of maturity, not abandonment.
+
+---
+
 ## 🪶 License
 
 MIT License  
