@@ -61,7 +61,7 @@ class FileStatsCache:
         self.age_type = age_type
         self._file_stats_cache: dict[Path, stat_result] = {}
 
-    def get_file_seconds(self, file: Path) -> float:
+    def get_file_seconds(self, file: Path) -> int:
         return int(getattr(self._file_stats_cache.setdefault(file, file.stat()), f"st_{self.age_type}"))
 
     def get_file_bytes(self, file: Path) -> int:
