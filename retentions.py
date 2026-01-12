@@ -355,6 +355,11 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
     @no_type_check
     def _validate_arguments(self, ns) -> None:  # noqa: ANN001
         try:
+            # Check path
+            if not Path(ns.path).resolve().is_dir():
+                raise OSError(f"Path {ns.path} is not a valid directory")
+
+
             # Default verbosity, if none given
             if ns.verbose is None:
                 ns.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
