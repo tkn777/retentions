@@ -6,13 +6,13 @@
 
 A small, feature-rich cross-platform CLI tool to apply backup-style retention rules to any file set. 
 
-It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
-
-It is a safe alternative to ad-hoc cleanup scripts and traditional log rotation for backups, archives, and artifacts.
+It remains only the most recent or representative files according to simple time-based rules and removes the rest.
 
 ```bash
 retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 weeks and 6 months
 ```
+
+It is a safe alternative to ad-hoc cleanup scripts and traditional log rotation for backups, archives, and artifacts.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/tkn777/retentions)](https://github.com/tkn777/retentions/releases)
@@ -29,7 +29,7 @@ It groups files into time **buckets** (hours, days, weeks, months, quarters, yea
 
 And filters can be used to reduce the retention scope to a subset of files.
 
-Everything outside your defined retention scope is deleted / not kept (unless `--dry-run` or `--list-only` is used).
+Everything outside your defined retention scope is deleted (unless `--dry-run` or `--list-only` is used).
 
 ⚠️ **Warning:** This tool permanently deletes files outside the defined retention scope.  
 Use `--dry-run` first to verify behavior. The author assumes no liability for data loss.
@@ -45,7 +45,7 @@ It is intended for administrators who understand retention concepts and want det
 - Supports **hourly, daily, weekly, monthly, quarterly, yearly** retention buckets.  
 - Supports **keeping the last N files** (`--last`) regardless of age.  
 - Supports **filtering (max-age, max-size, max-files)** to reduce the retention scope to a subset of files.
-- Supports **protecting file**s against deletion.
+- Supports **protecting files** against deletion.
 - Supports **regex or glob** pattern matching.  
 - Safe modes:  
   - `--dry-run` → simulate actions  
@@ -327,7 +327,7 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 
 --- 
 
-## ⚡ Exit Codes
+### ⚡ Exit Codes
 
 | Code | Meaning |
 |------|----------|
@@ -338,29 +338,10 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 | 7 | Integrity check failed |
 | 9 | Unexpected error |
 
----
-
-## ~~☢️~~ Non-atomic behavior
-
-retentions does not operate atomically. Since the underlying filesystem is not atomic, directory contents may change while retentions is scanning or evaluating files.
-This can lead to inconsistent or incorrect results if the target path is modified concurrently.
-If you require a strictly consistent state, ensure that the directory is not modified during execution.
-
-By default retentions writes a lock file `.retentions.lock` - This can be used by other tools.
 
 ---
 
-## 📦 Design Principles
-
-- **KISS** – no configuration files, no hidden behavior.  
-- **Deterministic** – same input, same output.  
-- **Safe by design** – dry-run and list-only modes available.  
-- **Cross-platform** – runs anywhere Python 3 does.  
-- **Plain ASCII** – no colors, no locale dependencies.
-
----
-
-## 💡 Tip
+### 💡 Tip
 
 Use `--list-only` to integrate with external scripts or pipelines:
 
@@ -383,17 +364,21 @@ The following behaviors are known, intentional trade-offs rather than bugs.
 
 ---
 
+### ~~☢️~~ Non-atomic behavior
+
+retentions does not operate atomically. Since the underlying filesystem is not atomic, directory contents may change while retentions is scanning or evaluating files.
+This can lead to inconsistent or incorrect results if the target path is modified concurrently.
+If you require a strictly consistent state, ensure that the directory is not modified during execution.
+
+By default retentions writes a lock file `.retentions.lock` - This can be used by other tools.
+
+---
+
 ## 🛠️ Troubleshooting
 
 - No files are deleted: Check retention options and filters, and use `--verbose debug --dry-run`.
 - Unexpected deletions: Review the decision log output (`--verbose debug`).
 - Script aborts early: Check exit codes and error messages.
-
----
-
-## 📜 Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for recent updates.
 
 ---
 
