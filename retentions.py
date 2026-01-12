@@ -41,10 +41,6 @@ class IntegrityCheckFailedError(Exception):
     pass
 
 
-class NoFilesFoundError(Exception):
-    pass
-
-
 class FileCouldNotBeDeleteError(OSError):
     pass
 
@@ -786,8 +782,6 @@ def main() -> None:
         handle_exception(e, 1, args.stacktrace if args is not None else True)
     except (ValueError, argparse.ArgumentTypeError, argparse.ArgumentError) as e:
         handle_exception(e, 2, args.stacktrace if args is not None else False)
-    except NoFilesFoundError as e:
-        handle_exception(e, 3, args.stacktrace if args is not None else True)
     except ConcurrencyError as e:
         handle_exception(e, 5, args.stacktrace if args is not None else True)
     except IntegrityCheckFailedError as e:
