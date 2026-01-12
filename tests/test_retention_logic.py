@@ -127,8 +127,8 @@ def test_month_quarter_year_retention(tmp_path: Path) -> None:
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
     # 15 files: 6 month, 4 quarter, 5 years -> (effective 3 years, because we have only files for 5 years)
-    assert len(result.keep) == 14  # 6 month, 4 quarter, 5 year
-    assert len(result.prune) == 46
+    assert len(result.keep) == 13  # 6 month, 4 quarter, 5 year
+    assert len(result.prune) == 47
     assert "Keeping for mode 'months'" in logger._decisions[files[0]][0][0]
 
 

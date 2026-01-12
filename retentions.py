@@ -563,49 +563,57 @@ class RetentionLogic:
         self._logger = logger
         self._file_stats_cache = file_stats_cache
 
+    def _get_bucket_key(self, retention_mode: str, timestamp: int) -> str:
+        dt = datetime.fromtimestamp(timestamp)
+        if retention_mode == "hours":
+            return dt.strftime("%Y-%m-%d-%H")
+        if retention_mode == "days":
+            return dt.strftime("%Y-%m-%d")
+        if retention_mode == "weeks":
+            year, week, _ = dt.isocalendar()
+            return f"{year}-W{week:02d}"
+        if retention_mode == "months":
+            return dt.strftime("%Y-%m")
+        if retention_mode == "quarters":
+            quarter = ((dt.month - 1) // 3) + 1
+            return f"{dt.year}-Q{quarter}"
+        if retention_mode == "week13":
+            year, week, _ = dt.isocalendar()
+            bucket = ((week - 1) // 13) + 1
+            return f"{year}-week13-{bucket}"
+        if retention_mode == "years":
+            return str(dt.year)
+        raise ValueError(f"invalid retention mode: {retention_mode}")
+
     def _create_retention_buckets(self, retention_mode: str) -> dict[str, list[Path]]:
-        buckets: dict[str, list[Path]] = defaultdict(list)
+        buckets: dict[str, list[Path]] = {}
         for file in self._matches:
-            timestamp = datetime.fromtimestamp(self._file_stats_cache.get_file_seconds(file))
-            if retention_mode == "hours":
-                key = timestamp.strftime("%Y-%m-%d-%H")
-            elif retention_mode == "days":
-                key = timestamp.strftime("%Y-%m-%d")
-            elif retention_mode == "weeks":
-                year, week, _ = timestamp.isocalendar()
-                key = f"{year}-W{week:02d}"
-            elif retention_mode == "months":
-                key = timestamp.strftime("%Y-%m")
-            elif retention_mode == "quarters":
-                key = f"{timestamp.year}-Q{((timestamp.month - 1) // 3) + 1}"
-            elif retention_mode == "week13":
-                year, week, _ = timestamp.isocalendar()
-                key = f"{year}-week13-{(week - 1) // 13 + 1}"
-            elif retention_mode == "years":
-                key = str(timestamp.year)
-            else:
-                raise ValueError(f"invalid bucket mode: {retention_mode}")
-            buckets[key].append(file)  # add file to appropriate bucket by the computed key generated from the timestamp of the file
-        if self._logger.has_log_level(LogLevel.DEBUG):
-            for key, files in buckets.items():
-                self._logger.verbose(LogLevel.DEBUG, f"Retention buckets: {key} - {', '.join(f'{file.name} ({datetime.fromtimestamp(self._file_stats_cache.get_file_seconds(file))})' for file in files)}")
+            ts = self._file_stats_cache.get_file_seconds(file)
+            key = self._get_bucket_key(retention_mode, ts)
+            buckets.setdefault(key, []).append(file)
+        # newest file first inside each bucket
+        for files_in_bucket in buckets.values():
+            files_in_bucket.sort(
+                key=lambda f: self._file_stats_cache.get_file_seconds(f),
+                reverse=True,
+            )
         return buckets
 
     def _process_retention_buckets(self, retention_mode: str, retention_mode_count: int, buckets: dict[str, list[Path]], last_keep_time: int) -> int:
+        cutoff_key: Optional[str] = None
+        if last_keep_time != sys.maxsize:
+            cutoff_key = self._get_bucket_key(retention_mode, last_keep_time)
         count = 0
-        for key in sorted(buckets, reverse=True):  # newest bucket-key first => e.g. "2025-01" before "2023-11" for 'months' retention mode
-            files = [file for file in buckets[key] if file not in self._keep and self._file_stats_cache.get_file_seconds(file) < last_keep_time]
-            if len(files) == 0:
+        for key in sorted(buckets.keys(), reverse=True):
+            if cutoff_key is not None and key >= cutoff_key:  # Skip buckets already consumed by finer-grained retention modes
                 continue
-
-            if retention_mode_count > count:
+            files = [file for file in buckets[key] if file not in self._keep and self._file_stats_cache.get_file_seconds(file) < last_keep_time]
+            if count < retention_mode_count and len(files) > 0:
                 file_keep = files[0]
-                self._logger.add_decision(LogLevel.INFO, file_keep, f"Keeping for mode '{retention_mode}' {count + 1:02d} / {retention_mode_count:02d}", debug=f"key: {key}")
+                self._logger.add_decision(LogLevel.INFO, file_keep, f"Keeping for mode '{retention_mode}' {count + 1:02d} / {retention_mode_count:02d}", debug=f"bucket: {key}")
                 self._keep.add(file_keep)
                 last_keep_time = self._file_stats_cache.get_file_seconds(file_keep)
-
-            count += 1
-
+                count += 1
         return last_keep_time
 
     def _process_last_n(self) -> None:
