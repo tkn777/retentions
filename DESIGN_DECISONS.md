@@ -70,3 +70,23 @@ retentions **enforces internal consistency checks** before executing destructive
 - **Global filters** such as --max-files, --max-size, and --max-age are applied after retention decisions, not instead of them. Filters may override previous keep decisions.
 - **Decision logging**: for each file, retentions records not only the final action, but also the reasoning behind it. At higher verbosity levels, the full decision chain is preserved.
 - **Single-directory scope**: retention rules are applied only to direct children of the given base directory.
+
+---
+
+## Stability and Scope Commitment
+
+retentions is intentionally designed as a small, self-contained, single-file tool
+with a clearly bounded scope.
+
+The current feature set is considered complete for the intended use cases.
+New features that significantly expand complexity, introduce heuristics,
+or weaken determinism are generally out of scope.
+
+Future development is expected to focus on:
+- bug fixes
+- correctness and safety improvements
+- portability across platforms and Python versions
+- documentation clarity
+
+A low rate of change is an explicit design goal and should be interpreted
+as a sign of stability and maturity rather than inactivity.
