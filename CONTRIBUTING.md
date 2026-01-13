@@ -68,10 +68,10 @@ ruff format .
 Keep commits focused and clear.\
 Use conventional prefixes where helpful, for example:
 
--   `fix:` -- bug fixes\
--   `feat:` -- new features\
--   `docs:` -- documentation updates\
--   `refactor:` -- internal changes\
+-   `fix:` -- bug fixes
+-   `feat:` -- new features
+-   `docs:` -- documentation updates
+-   `refactor:` -- internal changes
 -   `test:` -- adding or improving tests
 
 Example:
