@@ -208,19 +208,21 @@ python3 retentions.py <path> <file_pattern> [options]
 | `--no-lock-file` | Omit lock file (default: enabled) |
 | `--fail-on-delete-error` | Fails and exits if a file could not be deleted (default: disabled and print warning) |
 
-💡 Using `--dry-run` is a good option to start with `retentions` 😏\
+💡 Using `--dry-run` is a good option to start with `retentions` 😏
 &nbsp;
 
 | Expert options | Description |
 |--------|--------------|
 | `--delete-companions [rules]` | Delete companion files defined by the rules (prefix\|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5') |
 
+💡 See section [Delete Companions](#-delete-companions---delete-companions) for details
 &nbsp;
 
 | Developer options | Description |
 |--------|--------------|
 | `--stacktrace` | Add output of stacktrace in case of errors |
 
+📝 For developers only
 &nbsp;
 
 | Common arguments | Description |
