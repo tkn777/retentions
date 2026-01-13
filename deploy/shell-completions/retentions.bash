@@ -28,6 +28,7 @@ _retentions() {
         --no-lock-file
         --fail-on-delete-error
         --delete-companions
+        --stacktrace
         -R --version
         -H --help
     "

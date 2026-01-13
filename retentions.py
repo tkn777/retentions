@@ -445,6 +445,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_filter = parser.add_argument_group("Filter options")
     g_behavior = parser.add_argument_group("Behavior options")
     g_expert = parser.add_argument_group("Experts options")
+    g_developers = parser.add_argument_group("Developers options")
     g_common = parser.add_argument_group("Common arguments")
 
     # positional arguments
@@ -488,10 +489,12 @@ def create_parser() -> ModernStrictArgumentParser:
     # experts options
     g_expert.add_argument("--delete-companions", type=str, metavar="rule", nargs="+", help="Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5')")
 
+    # developers options
+    g_developers.add_argument("--stacktrace", action="store_true", help="Add output of stacktrace in case of errors")
+
     # common options
     g_common.add_argument("--version", "-R", nargs=0, action=ExitOnlyVersion, help="show version and exit")
     g_common.add_argument("--help", "-H", action="help", help="Show this help message and exit")
-    g_common.add_argument("--stacktrace", action="store_true", help=argparse.SUPPRESS)
 
     return parser
 

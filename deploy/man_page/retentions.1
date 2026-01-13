@@ -93,7 +93,7 @@ provide interactive safety prompts
 retentions [path] [file_pattern] <options>
 .fi
 
-.SH ARGUMENTS
+.SH Arguments
 .TP
 path
 Base directory to scan.
@@ -104,8 +104,7 @@ Glob pattern for matching files (use quotes to prevent shell expansion).
 .PP
 path and file_pattern are mandatory.
 
-.SH ARGUMENT FLAGS
-.SS Flag
+.SS Flags
 .TP
 -r, --regex <mode>
 file_pattern / protect is a regex (otherwise: glob pattern) \- mode: casesensitive (default), ignorecase
@@ -199,6 +198,11 @@ Using --dry-run is a good option to start with retentions.
 .TP
 --delete-companions rule-def [rule-def, ...]
 Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5')
+
+.SS Developer options
+.TP
+--stacktrace
+Add output of stacktrace in case of errors
 
 .SS Common arguments
 .TP

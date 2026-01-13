@@ -26,6 +26,7 @@ _retentions() {
     '--no-lock-file'[disable lock file] \
     '--fail-on-delete-error'[fail and exit on delete error] \
     '--delete-companions'[Delete companion files defined by rules]:pattern:->companions \
+    '--stacktrace'[Add output of stacktrace in case of errors] \
     '{-R,--version}'[show version and exit] \
     '{-H,--help}'[show help and exit]
 

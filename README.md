@@ -216,6 +216,11 @@ python3 retentions.py <path> <file_pattern> [options]
 | `--delete-companions [rules]` | Delete companion files defined by the rules (prefix\|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5') |
 
 
+| Developer options | Description |
+|--------|--------------|
+| `--stacktrace` | Add output of stacktrace in case of errors |
+
+
 | Common arguments | Description |
 |--------|--------------|
 | `-H, --help` | Show the help / usage of `retentions` |
