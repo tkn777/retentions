@@ -1,3 +1,6 @@
+### 1.1.2 - NOT RELEASE
+- Added tests for retention logic to avoid the bug of release 1.1.0
+
 ### 1.1.1 - 12.01.2026
 - Fixed retention logic
 - Optimized for relative paths
