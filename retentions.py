@@ -32,6 +32,8 @@ SCRIPT_START = datetime.now().timestamp()
 
 LOCK_FILE_NAME: str = ".retentions.lock"
 
+MAX_FILE_SIZE = sys.maxsize
+
 
 class ConcurrencyError(Exception):
     pass
@@ -601,7 +603,7 @@ class RetentionLogic:
 
     def _process_retention_buckets(self, retention_mode: str, retention_mode_count: int, buckets: dict[str, list[Path]], last_keep_time: int) -> int:
         cutoff_key: Optional[str] = None
-        if last_keep_time != sys.maxsize:
+        if last_keep_time != MAX_FILE_SIZE:
             cutoff_key = self._get_bucket_key(retention_mode, last_keep_time)
         count = 0
         for key in sorted(buckets.keys(), reverse=True):
@@ -658,7 +660,7 @@ class RetentionLogic:
     def process_retention_logic(self) -> RetentionsResult:
         # Retention by time buckets; generation and processing must be done per retention mode sequently in one single loop
         retention_rules_applied = False
-        last_keep_time = sys.maxsize
+        last_keep_time = MAX_FILE_SIZE
         for retention_mode in ["hours", "days", "weeks", "months", "quarters", "week13", "years"]:
             retention_mode_count = getattr(self._args, retention_mode)
             if retention_mode_count:
