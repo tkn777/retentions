@@ -361,13 +361,13 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             if not Path(ns.path).resolve().is_dir():
                 raise OSError(f"Path {ns.path} is not a valid directory")
 
-            # Default verbosity, if none given
-            if ns.verbose is None:
-                ns.verbose = LogLevel.ERROR
-
             # dry-run implies verbose
             if ns.dry_run and not ns.list_only and ns.verbose is None:
                 ns.verbose = LogLevel.INFO
+
+            # Default verbosity, if none given
+            if ns.verbose is None:
+                ns.verbose = LogLevel.ERROR
 
             # normalize 0-byte separator
             if ns.list_only == "\\0":

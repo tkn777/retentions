@@ -81,7 +81,7 @@ def test_age_parsig(monkeypatch) -> None:
 @pytest.mark.parametrize(
     "argv, loglevel",
     [
-        (["retentions.py", ".", "*.txt"], LogLevel.INFO),
+        (["retentions.py", ".", "*.txt", "-V"], LogLevel.INFO),
         (["retentions.py", ".", "*.txt", "--verbose", "DEBUG"], LogLevel.DEBUG),
         (["retentions.py", ".", "*.txt", "-L"], LogLevel.ERROR),
         (["retentions.py", ".", "*.txt", "-L", "-V 0"], LogLevel.ERROR),
