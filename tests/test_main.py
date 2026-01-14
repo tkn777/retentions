@@ -1,12 +1,13 @@
 # mypy: ignore-errors
 """Tests main function (only specific logic there, no function calls)."""
 
+import argparse
 import sys
 
 import pytest
 
 import retentions
-from retentions import LOCK_FILE_NAME, main
+from retentions import LOCK_FILE_NAME, ConcurrencyError, IntegrityCheckFailedError, main, parse_arguments
 
 
 class DummyRetentionLogic:
@@ -95,3 +96,35 @@ def test_output_help(tmp_path, monkeypatch, capsys):
     assert "Total files protected" in captured.out
     assert "Total files to keep" in captured.out
     assert "Total files to prune" in captured.out
+
+
+@pytest.mark.parametrize(
+    "exception, exit_code",
+    [
+        (OSError, 1),
+        (ValueError, 2),
+        (argparse.ArgumentTypeError, 2),
+        (ConcurrencyError, 5),
+        (IntegrityCheckFailedError, 7),
+        (Exception, 9),
+    ],
+)
+def test_exception_handling(monkeypatch, tmp_path, exception, exit_code):
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "-V", "debug"])
+
+    original = main
+
+    def failing_main_wrapper(*args, **kwargs):
+        args = parse_arguments()
+        raise exception
+        return original(*args, **kwargs)
+
+    def asserting_handle_exception(exception: Exception, exit_code: int, stacktrace: bool, prefix: str = ""):
+        assert exception == exception
+        assert exit_code == exit_code
+
+    monkeypatch.setattr(sys.modules[__name__], "main", failing_main_wrapper)
+    monkeypatch.setattr(retentions, "handle_exception", asserting_handle_exception)
+
+    with pytest.raises(exception):
+        main()

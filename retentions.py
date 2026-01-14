@@ -793,7 +793,7 @@ def main() -> None:
 
     except OSError as e:
         handle_exception(e, 1, args.stacktrace if args is not None else True)
-    except (ValueError, argparse.ArgumentTypeError, argparse.ArgumentError) as e:
+    except (ValueError, argparse.ArgumentTypeError) as e:
         handle_exception(e, 2, args.stacktrace if args is not None else False)
     except ConcurrencyError as e:
         handle_exception(e, 5, args.stacktrace if args is not None else True)
