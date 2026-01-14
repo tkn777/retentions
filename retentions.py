@@ -363,7 +363,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
             # Default verbosity, if none given
             if ns.verbose is None:
-                ns.verbose = LogLevel.INFO if not ns.list_only else LogLevel.ERROR
+                ns.verbose = LogLevel.ERROR
 
             # dry-run implies verbose
             if ns.dry_run and not ns.list_only and ns.verbose is None:
@@ -766,7 +766,7 @@ def main() -> None:
         matches = read_filelist(args, logger, file_stats_cache)
         logger.verbose(LogLevel.INFO, f"Found {len(matches)} files using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
         if len(matches) > 0:
-            logger.verbose(LogLevel.DEBUG, "    : " + ", ".join(f'"{p.name}"' for p in matches))
+            logger.verbose(LogLevel.DEBUG, "Found files : " + ", ".join(f'"{p.name}"' for p in matches))
 
         retentions_result = RetentionLogic(matches, args, logger, file_stats_cache).process_retention_logic()
 
