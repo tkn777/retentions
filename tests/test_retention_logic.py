@@ -1,8 +1,9 @@
 """Tests for the RetentionLogic class."""
 
 import os
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import no_type_check
+from typing import Optional, no_type_check
 
 from retentions import SCRIPT_START, ConfigNamespace, FileStatsCache, Logger, LogLevel, RetentionLogic
 
@@ -40,15 +41,14 @@ def _make_args(**overrides) -> ConfigNamespace:  # noqa: F821
     return ConfigNamespace(**defaults)
 
 
-@no_type_check
-def _create_files_with_times(tmp_path: Path, offsets: list[int]) -> list[Path]:
-    """Create files whose mtime is offset by the given seconds from now."""
+def _create_files_with_times(tmp_path: Path, offsets: list[int], mod_time: Optional[int] = None) -> list[Path]:
+    base_time = SCRIPT_START if mod_time is None else mod_time
     files: list[Path] = []
     for idx, offset in enumerate(offsets):
         f = tmp_path / f"file{idx}.txt"
         f.write_text(str(idx))
-        mod_time = SCRIPT_START - offset
-        os.utime(f, (mod_time, mod_time))
+        ts = base_time - offset
+        os.utime(f, (ts, ts))
         files.append(f)
     return files
 
@@ -130,6 +130,42 @@ def test_month_quarter_year_retention(tmp_path: Path) -> None:
     assert len(result.keep) == 13  # 6 month, 4 quarter, 5 year
     assert len(result.prune) == 47
     assert "Keeping for mode 'months'" in logger._decisions[files[0]][0][0]
+
+
+@no_type_check
+def test_day_week_month_retention_next_bucket(tmp_path: Path) -> None:
+    """RetentionLogic should apply retention rules for days, weeks and months and should select next coarse granular bucket."""
+    files = _create_files_with_times(tmp_path, offsets=[i * 86_400 for i in range(60)], mod_time=int(datetime(2026, 1, 14, tzinfo=timezone.utc).timestamp()))  # 1 file per day
+    cache = FileStatsCache("mtime")
+    args = _make_args(days=7, weeks=4, months=3, verbose=LogLevel.DEBUG)
+    logger = Logger(args, cache)
+    logic = RetentionLogic(files, args, logger, cache)
+    result = logic.process_retention_logic()
+    assert len(result.keep) == 12  # 7 days, 4 weeks, 1 month
+    for d in range(7):
+        assert "Keeping for mode 'days'" in logger._decisions[files[d]][0][0]  # 14.-08.01.2026
+    for w in range(0, 4, 7):
+        assert "Keeping for mode 'weeks'" in logger._decisions[files[w + 10]][0][0]  # 04.01.2026, 28.12.2025, 21.12.2025, 14.12.2025 (sunday, last day of week) -> jump to coarser bucket
+    assert "Keeping for mode 'months'" in logger._decisions[files[45]][0][0]  # 30.11.2025 -> jump to coarser bucket
+
+
+@no_type_check
+def test_day_week_month_retention_bucket_boundaries(tmp_path: Path) -> None:
+    """RetentionLogic should apply retention rules for days, weeks and months and should select next coarse granular bucket even if it is the next file."""
+    files = _create_files_with_times(tmp_path, offsets=[i * 86_400 for i in range(100)], mod_time=int(datetime(2026, 3, 7, tzinfo=timezone.utc).timestamp()))  # 1 file per day
+    args = _make_args(days=6, weeks=5, months=10, verbose=LogLevel.DEBUG)
+    cache = FileStatsCache("mtime")
+    logger = Logger(args, cache)
+    logic = RetentionLogic(files, args, logger, cache)
+    result = logic.process_retention_logic()
+    assert len(result.keep) == 14  # 6 days, 5 weeks, 3 months
+    for d in range(6):
+        assert "Keeping for mode 'days'" in logger._decisions[files[d]][0][0]  # 07.03.2026 - 02.03.2026 (monday, first day of week)
+    for w in range(0, 3, 7):
+        assert "Keeping for mode 'weeks'" in logger._decisions[files[w + 6]][0][0]  # starts with 01.03.2026 (sunday, last day of previous week) - until 01.02.2026 (first day of month)
+    assert "Keeping for mode 'months'" in logger._decisions[files[35]][0][0]  # starts with 31.01.2026 (last day of month) - until 30.11.2026 (Jan 2025, Dec 2025, Nov 2025)
+    assert "Keeping for mode 'months'" in logger._decisions[files[66]][0][0]
+    assert "Keeping for mode 'months'" in logger._decisions[files[97]][0][0]
 
 
 @no_type_check
