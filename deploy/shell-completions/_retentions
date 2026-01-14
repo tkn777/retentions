@@ -6,29 +6,29 @@ _retentions() {
   _arguments -C -s \
     '1:path:base directory:_files -/' \
     '2:file_pattern:glob or regex pattern:->pattern' \
-    '{-r,--regex-mode}'[treat file_pattern / protect as regex]:mode:(casesensitive ignorecase) \
+    '--regex-mode'[treat file_pattern / protect as regex]:mode:(casesensitive ignorecase) \
     '--age-type'[file age attribute]:time:(ctime mtime atime) \
-    '{-p,--protect}'[protect files from deletion]:pattern:->protect \
-    '{-h,--hours}'[retain one per hour]:N: \
-    '{-d,--days}'[retain one per day]:N: \
-    '{-w,--weeks}'[retain one per week]:N: \
-    '{-m,--months}'[retain one per month]:N: \
-    '{-q,--quarters}'[retain one per quarter]:N: \
+    '--protect'[protect files from deletion]:pattern:->protect \
+    '--hours'[retain one per hour]:N: \
+    '--days'[retain one per day]:N: \
+    '--weeks'[retain one per week]:N: \
+    '--months'[retain one per month]:N: \
+    '--quarters'[retain one per quarter]:N: \
     '--week13'[retain one per 13-week block]:N: \
-    '{-y,--years}'[retain one per year]:N: \
-    '{-l,--last}'[retain last N files]:N: \
-    '{-s,--max-size}'[maximum total size]:size: \
-    '{-f,--max-files}'[maximum total files]:N: \
-    '{-a,--max-age}'[maximum total age]:time: \
-    '{-L,--list-only}'[list files only, optional separator]:sep: \
-    '{-v,-V,--verbose}'[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3) \
-    '{-X,--dry-run}'[dry run, do not delete files] \
+    '--years'[retain one per year]:N: \
+    '--last'[retain last N files]:N: \
+    '--max-size'[maximum total size]:size: \
+    '--max-files'[maximum total files]:N: \
+    '--max-age'[maximum total age]:time: \
+    '--list-only'[list files only, optional separator]:sep: \
+    '--verbose'[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3) \
+    '--dry-run'[dry run, do not delete files] \
     '--no-lock-file'[disable lock file] \
     '--fail-on-delete-error'[fail and exit on delete error] \
     '--delete-companions'[Delete companion files defined by rules]:pattern:->companions \
     '--stacktrace'[Add output of stacktrace in case of errors] \
-    '{-R,--version}'[show version and exit] \
-    '{-H,--help}'[show help and exit]
+    '--version'[show version and exit] \
+    '--help'[show help and exit]
 
   case $state in
     pattern|protect|companions)

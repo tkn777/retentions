@@ -8,29 +8,29 @@ _retentions() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     local opts="
-        -r --regex-mode
+        --regex-mode
         --age-type
-        -p --protect
-        -h --hours
-        -d --days
-        -w --weeks
-        -m --months
-        -q --quarters
+        --protect
+        --hours
+        --days
+        --weeks
+        --months
+        --quarters
         --week13
-        -y --years
-        -l --last
-        -s --max-size
-        -f --max-files
-        -a --max-age
-        -L --list-only
-        -v -V --verbose
-        -X --dry-run
+        --years
+        --last
+        --max-size
+        --max-files
+        --max-age
+        --list-only
+        --verbose
+        --dry-run
         --no-lock-file
         --fail-on-delete-error
         --delete-companions
         --stacktrace
-        -R --version
-        -H --help
+        --version
+        --help
     "
 
     case "$prev" in
