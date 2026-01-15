@@ -12,6 +12,7 @@
 
 import argparse
 import re
+import shlex
 import sys
 import traceback
 from collections import defaultdict
@@ -754,6 +755,7 @@ def main() -> None:
         file_stats_cache = FileStatsCache(args.age_type)
         logger = Logger(args, file_stats_cache)
 
+        logger.verbose(LogLevel.INFO, "Command line: " + " ".join(shlex.quote(arg) for arg in sys.argv))
         logger.verbose(LogLevel.DEBUG, f"Parsed arguments: {args}")
 
         if args.use_lock_file:
