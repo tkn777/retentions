@@ -21,7 +21,7 @@ It is a safe alternative to ad-hoc cleanup scripts and traditional log rotation 
 
 ---
 
-## 📌 Why retentions exists
+## 📌 Why `retentions` exists
 
 Retention is rarely the problem — implicit deletion usually is.
 
