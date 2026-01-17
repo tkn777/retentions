@@ -22,6 +22,7 @@ def _make_args(**overrides) -> ConfigNamespace:  # noqa: F821
         list_only=None,
         verbose=LogLevel.ERROR,
         use_lock_file=False,
+        minutes=None,
         hours=None,
         days=None,
         weeks=None,
