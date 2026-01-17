@@ -462,6 +462,7 @@ def create_parser() -> ModernStrictArgumentParser:
     # fmt: on
 
     # retention options
+    g_ret.add_argument("--minutes", type=parser.positive_int_argument, metavar="N", help=argparse.SUPPRESS)
     g_ret.add_argument("--hours", "-h", type=parser.positive_int_argument, metavar="N", help="Retain one file per hour from the last N hours")
     g_ret.add_argument("--days", "-d", type=parser.positive_int_argument, metavar="N", help="Retain one file per day from the last N days")
     g_ret.add_argument("--weeks", "-w", type=parser.positive_int_argument, metavar="N", help="Retain one file per week from the last N weeks")
@@ -571,6 +572,8 @@ class RetentionLogic:
 
     def _get_bucket_key(self, retention_mode: str, timestamp: int) -> str:
         dt = datetime.fromtimestamp(timestamp)
+        if retention_mode == "minutes":
+            return dt.strftime("%Y-%m-%d-%H-%M")
         if retention_mode == "hours":
             return dt.strftime("%Y-%m-%d-%H")
         if retention_mode == "days":
@@ -665,7 +668,7 @@ class RetentionLogic:
         # Retention by time buckets; generation and processing must be done per retention mode sequently in one single loop
         retention_rules_applied = False
         last_keep_time = MAX_FILE_SIZE
-        for retention_mode in ["hours", "days", "weeks", "months", "quarters", "week13", "years"]:
+        for retention_mode in ["minutes", "hours", "days", "weeks", "months", "quarters", "week13", "years"]:
             retention_mode_count = getattr(self._args, retention_mode)
             if retention_mode_count:
                 retention_rules_applied = True

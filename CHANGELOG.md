@@ -1,5 +1,6 @@
 ### 1.1.3 - NOT RELEASED YET
 - Removed short options from shell completions
+- Added (hidden) retention mode `--minutes`
 
 ### 1.1.2 - 14.01.2026
 - Added tests for retention logic to avoid the bug of release 1.1.0
