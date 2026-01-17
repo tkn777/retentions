@@ -6,13 +6,13 @@
 
 A small, feature-rich cross-platform CLI tool to apply backup-style retention rules to any file set. 
 
-It remains only the most recent or representative files according to simple time-based rules and removes the rest.
+It remains only the most recent or representative files according to simple time-based rules and deletes the rest.
 
 ```bash
 retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 weeks and 6 months
 ```
 
-It is a safe alternative to ad-hoc cleanup scripts and traditional log rotation for backups, archives, and artifacts.
+It is a safe alternative to ad-hoc cleanup scripts for backups, archives, and artifacts.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/tkn777/retentions)](https://github.com/tkn777/retentions/releases)
@@ -194,7 +194,7 @@ python3 retentions.py <path> <file_pattern> [options]
 &nbsp;
 
 🧠 Logic:
-- The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` cannot also be marked as keep with the retention `--week`.
+- The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` **cannot** be marked as keep with the retention `--week`.
 - One exception here is `--last`. It always marks the last `N` files as retained, regardless of all other retentions.
 - If no retention period are specified all files are retained (and may be filtered)
 &nbsp;
@@ -209,7 +209,7 @@ python3 retentions.py <path> <file_pattern> [options]
 &nbsp;
 
 🧠 Logic:
-- Filters apply after retention and may remove files previously marked to keep. (Use `--verbose debug` and `--dry-run` to see decision history.)
+- Filters apply after retention and may delete files previously marked to keep. (Use `--verbose debug` and `--dry-run` to see decision history.)
 &nbsp;
 
 | Behavior options | Description |
@@ -251,19 +251,19 @@ python3 retentions.py <path> <file_pattern> [options]
 #### Retentions & Filters
 
 ```bash
-# Keep last 7 days, 4 weeks, 6 months
+# Retain last 7 days, 4 weeks, 6 months
 python3 retentions.py /data/backups '*.tar.gz' -d 7 -w 4 -m 6
 ```
 
 ```bash
-# Retain daily/weekly/monthly backups, but keep at most 10 files in total.
-# Older retained files are removed if the limit is exceeded.
+# Keep daily/weekly/monthly backups, but retain at most 10 files in total.
+# Older retained files are deleted if the limit is exceeded.
 python3 retentions.py /data/backups '*.tar.gz' -d 7 -w 4 -m 6 --max-files 10 --dry-run
 ```
 
 ```bash
-# Retain up to 12 monthly backups, but limit total retained size to 50 GB.
-# Older retained files are removed once the size limit is exceeded.
+# Keep up to 12 monthly backups, but limit total retained size to 50 GB.
+# Older retained files are deleted once the size limit is exceeded.
 python3 retentions.py /data/backups '*.tar.gz' -m 12 --max-size 50G --dry-run
 ```
 
