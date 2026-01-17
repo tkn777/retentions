@@ -21,6 +21,18 @@ It is a safe alternative to ad-hoc cleanup scripts and traditional log rotation 
 
 ---
 
+## 📌 Why retentions exists
+
+Retention is rarely the problem — implicit deletion usually is.
+
+- How do we make retention decisions auditable and reproducible?
+- Why do time-based cleanup scripts so often delete the *wrong* backups?
+- How can deletion decisions be explained, reviewed, and justified later?
+
+retentions was built to answer these questions with explicit rules instead of implicit assumptions.
+
+---
+
 ## 🌐 Overview  
 
 `retentions` is a single-file Python script that applies retention logic to a directory of files. 
