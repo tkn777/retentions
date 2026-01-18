@@ -118,11 +118,13 @@ Protect files from deletion (using regex or glob, like file_pattern)
 .PP
 Hint to age-type:
 .IP \(bu 2
-ctime is os-dependent: e.g. Windows: create-time, Linux: change time of meta data
+ctime is platform-dependent: e.g. Windows: create-time, Linux: change time of meta data
 .IP \(bu 2
-atime may not reliable, check your os and your mount options
+atime may not reliable, check your platform and your mount options
 .IP \(bu 2
-birthtime may not available on your OS or your filesystem
+birthtime may not available on your platform or your filesystem
+.IP \(bu 2
+retentions checks the availability of the selected age-type, but not the semantic
 
 .SS Retention options
 .TP

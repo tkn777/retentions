@@ -180,9 +180,12 @@ python3 retentions.py <path> <file_pattern> [options]
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
 
 ⚠️ `age-type`: 
-- `ctime` is OS-dependent: e.g. Windows => create-time, Linux => change time of meta data
-- `atime` may not reliable, check your OS, your filesystem and your mount options
-- `birthtime` may not available on your OS or your filesystem
+- `ctime` is platform-dependent: e.g. Windows => create-time, Linux => change time of meta data
+- `atime` may not reliable, check your platform, your filesystem and your mount options
+- `birthtime` may not available on your platform or your filesystem
+&nbsp;
+
+`retentions` checks the availability of the selected `age-type`, but not the semantic
 &nbsp;
 
 | Retention options | Description |
