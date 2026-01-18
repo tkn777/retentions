@@ -4,7 +4,7 @@ import pytest
 
 from retentions import (
     ConfigNamespace,
-    FileStatsCache,
+    FileStats,
     Logger,
     LogLevel,
     ModernStrictArgumentParser,
@@ -56,7 +56,7 @@ def test_read_filelist_glob_and_protect(tmp_path) -> None:
         f.write_text("x")
 
     args = _make_args(path=str(tmp_path), file_pattern="*.log", protect="b.log", verbose=LogLevel.INFO)
-    cache = FileStatsCache("ctime")
+    cache = FileStats("ctime")
     logger = Logger(args, cache)
 
     result = read_filelist(args, logger, cache)
@@ -84,7 +84,7 @@ def test_read_filelist_regex_and_protect(tmp_path) -> None:
     parser = ModernStrictArgumentParser()
     args.regex_compiled = parser._compile_regex(args.file_pattern, args.regex_mode)
     args.protect_compiled = parser._compile_regex(args.protect, args.regex_mode)
-    cache = FileStatsCache("ctime")
+    cache = FileStats("ctime")
     logger = Logger(args, cache)
     result = read_filelist(args, logger, cache)
     assert result and result[0].name == "report1.txt"
@@ -92,7 +92,7 @@ def test_read_filelist_regex_and_protect(tmp_path) -> None:
 
 def test_read_filelist_errors(tmp_path, capsys) -> None:
     """read_filelist should raise appropriate errors for invalid inputs."""
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     # Path does not exist
     args = _make_args(path=str(tmp_path / "nonexistent"), file_pattern="*.txt")
     logger = Logger(args, cache)

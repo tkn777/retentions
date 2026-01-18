@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, no_type_check
 
-from retentions import SCRIPT_START, ConfigNamespace, FileStatsCache, Logger, LogLevel, RetentionLogic
+from retentions import SCRIPT_START, ConfigNamespace, FileStats, Logger, LogLevel, RetentionLogic
 
 
 @no_type_check
@@ -60,7 +60,7 @@ def test_hours_retention(tmp_path: Path) -> None:
     # Create three files spaced an hour apart: newest first
     files = _create_files_with_times(tmp_path, offsets=[0, 1, 3600, 2 * 3600])  # 0 and 3500 => same bucket (hour)
     args = _make_args(hours=2, verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
@@ -81,7 +81,7 @@ def test_multiple_retention_modes(tmp_path: Path) -> None:
     files = _create_files_with_times(tmp_path, offsets=[0, 86400, 2 * 86400, 3 * 86400, 4 * 86400, 5 * 86400])
     # Apply both days and hours retention and keep the last two files regardless
     args = _make_args(hours=2, days=3, verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
@@ -104,7 +104,7 @@ def test_multiple_retention_modes_and_last(tmp_path: Path) -> None:
     files = _create_files_with_times(tmp_path, offsets=[0, 86400, 2 * 86400, 3 * 86400])
     # Apply both days and hours retention and keep the last two files regardless
     args = _make_args(hours=1, days=2, last=5, verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
@@ -123,7 +123,7 @@ def test_month_quarter_year_retention(tmp_path: Path) -> None:
     """RetentionLogic should apply retention rules for months, quarters and years."""
     files = _create_files_with_times(tmp_path, offsets=[i * 2_592_000 for i in range(60)])  # 1 file per month for 60 months
     args = _make_args(months=6, quarters=4, years=5, verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
@@ -137,7 +137,7 @@ def test_month_quarter_year_retention(tmp_path: Path) -> None:
 def test_day_week_month_retention_next_bucket(tmp_path: Path) -> None:
     """RetentionLogic should apply retention rules for days, weeks and months and should select next coarse granular bucket."""
     files = _create_files_with_times(tmp_path, offsets=[i * 86_400 for i in range(60)], mod_time=int(datetime(2026, 1, 14, tzinfo=timezone.utc).timestamp()))  # 1 file per day
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     args = _make_args(days=7, weeks=4, months=3, verbose=LogLevel.DEBUG)
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
@@ -155,7 +155,7 @@ def test_day_week_month_retention_bucket_boundaries(tmp_path: Path) -> None:
     """RetentionLogic should apply retention rules for days, weeks and months and should select next coarse granular bucket even if it is the next file."""
     files = _create_files_with_times(tmp_path, offsets=[i * 86_400 for i in range(100)], mod_time=int(datetime(2026, 3, 7, tzinfo=timezone.utc).timestamp()))  # 1 file per day
     args = _make_args(days=6, weeks=5, months=10, verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
@@ -174,7 +174,7 @@ def test_not_matched_by_retention_rule(tmp_path: Path) -> None:
     """RetentionLogic should prune files that are not matched by any retention rule."""
     files = _create_files_with_times(tmp_path, offsets=[i * 86_400 for i in range(3)])  # 3 file, 1 per day
     args = _make_args(days=1, verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
@@ -190,7 +190,7 @@ def test_filter_max_files(tmp_path: Path) -> None:
     # Create three files with identical times but increasing sizes
     files = _create_files_with_times(tmp_path, offsets=[0, 86400, 2 * 86400])
     args = _make_args(last=3, max_files=2, verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
@@ -211,7 +211,7 @@ def test_filter_max_size(tmp_path: Path) -> None:
         f.write_bytes(b"x" * 10)
         os.utime(f, (SCRIPT_START - offset, SCRIPT_START - offset))
     args = _make_args(days=2, weeks=10, max_size=50, max_size_bytes=50, verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
@@ -228,7 +228,7 @@ def test_filter_max_size(tmp_path: Path) -> None:
 def test_filter_max_age(tmp_path: Path) -> None:
     files = _create_files_with_times(tmp_path, offsets=[i * 86_400 for i in range(5)])  # 5 file, 1 per day
     args = _make_args(days=5, max_age="3d", max_age_seconds=259_200, verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()
@@ -243,7 +243,7 @@ def test_no_retention_rules(tmp_path: Path, capsys) -> None:
     """Keep all files if no retention rules are specified."""
     files = _create_files_with_times(tmp_path, offsets=[0, 1, 2])
     args = _make_args(verbose=LogLevel.DEBUG)
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     logger = Logger(args, cache)
     logic = RetentionLogic(files, args, logger, cache)
     result = logic.process_retention_logic()

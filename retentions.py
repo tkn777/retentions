@@ -52,7 +52,7 @@ class ConfigNamespace(SimpleNamespace):
     pass
 
 
-class FileStatsCache:
+class FileStats:
     age_type: str
     _file_stats_cache: dict[Path, stat_result]
 
@@ -67,8 +67,8 @@ class FileStatsCache:
         return self._file_stats_cache.setdefault(file, file.stat()).st_size
 
 
-def sort_files(files: Iterable[Path], file_stats_cache: FileStatsCache) -> list[Path]:
-    return sorted(files, key=file_stats_cache.get_file_seconds, reverse=True)
+def sort_files(files: Iterable[Path], file_stats: FileStats) -> list[Path]:
+    return sorted(files, key=file_stats.get_file_seconds, reverse=True)
 
 
 class LogLevel(IntEnum):
@@ -94,14 +94,14 @@ class LogLevel(IntEnum):
 class Logger:
     _decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
     _args: ConfigNamespace
-    _file_stats_cache: FileStatsCache
+    _file_stats: FileStats
 
-    def __init__(self, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> None:
+    def __init__(self, args: ConfigNamespace, file_stats: FileStats) -> None:
         self._args = args
-        self._file_stats_cache = file_stats_cache
+        self._file_stats = file_stats
 
-    def _get_file_attributes(self, file: Path, args: ConfigNamespace, file_stats_cache: FileStatsCache) -> str:
-        return f"{args.age_type}: {datetime.fromtimestamp(file_stats_cache.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats_cache.get_file_bytes(file))}"
+    def _get_file_attributes(self, file: Path, args: ConfigNamespace, file_stats: FileStats) -> str:
+        return f"{args.age_type}: {datetime.fromtimestamp(file_stats.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats.get_file_bytes(file))}"
 
     def has_log_level(self, level: LogLevel) -> bool:
         return int(level) <= int(self._args.verbose)
@@ -118,9 +118,9 @@ class Logger:
     def add_decision(self, level: LogLevel, file: Path, message: str, debug: Optional[str] = None, append: bool = False) -> None:
         if self.has_log_level(LogLevel.DEBUG):  # Decision history and debug message and file details only with debug log level
             if append:
-                self._decisions[file].append((message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats_cache)})"))
+                self._decisions[file].append((message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats)})"))
             else:
-                self._decisions[file].insert(0, (message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats_cache)}"))
+                self._decisions[file].insert(0, (message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats)}"))
         elif self.has_log_level(level):
             if len(self._decisions[file]) == 0:
                 self._decisions[file].append((message, None))
@@ -134,7 +134,7 @@ class Logger:
     def print_decisions(self) -> None:
         if len(self._decisions) > 0:
             longest_file_name_length = max(len(p.name) for p in self._decisions) + 1
-            for file in sort_files(self._decisions, self._file_stats_cache):
+            for file in sort_files(self._decisions, self._file_stats):
                 decisions = self._decisions[file]
                 if not decisions:
                     continue
@@ -507,7 +507,7 @@ def parse_arguments() -> ConfigNamespace:
     return ConfigNamespace(**vars(args))
 
 
-def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileStatsCache) -> list[Path]:
+def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) -> list[Path]:
     base: Path = Path(args.path).resolve()
     if not base.exists():
         raise FileNotFoundError(f"Path not found: {base}")
@@ -544,7 +544,7 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats_cache: FileS
     matches = [m for m in matches if m.name != LOCK_FILE_NAME]
 
     # sort by time (youngest first)
-    return sort_files(matches, file_stats_cache)
+    return sort_files(matches, file_stats)
 
 
 @dataclass(frozen=True)
@@ -560,15 +560,15 @@ class RetentionLogic:
     _prune: set[Path]
     _args: ConfigNamespace
     _logger: Logger
-    _file_stats_cache: FileStatsCache
+    _file_stats: FileStats
 
-    def __init__(self, matches: list[Path], args: ConfigNamespace, logger: Logger, file_stats_cache: FileStatsCache) -> None:
+    def __init__(self, matches: list[Path], args: ConfigNamespace, logger: Logger, file_stats: FileStats) -> None:
         self._matches = matches
         self._keep = set()
         self._prune = set()
         self._args = args
         self._logger = logger
-        self._file_stats_cache = file_stats_cache
+        self._file_stats = file_stats
 
     def _get_bucket_key(self, retention_mode: str, timestamp: int) -> str:
         dt = datetime.fromtimestamp(timestamp)
@@ -597,13 +597,13 @@ class RetentionLogic:
     def _create_retention_buckets(self, retention_mode: str) -> dict[str, list[Path]]:
         buckets: dict[str, list[Path]] = {}
         for file in self._matches:
-            ts = self._file_stats_cache.get_file_seconds(file)
+            ts = self._file_stats.get_file_seconds(file)
             key = self._get_bucket_key(retention_mode, ts)
             buckets.setdefault(key, []).append(file)
         # newest file first inside each bucket
         for files_in_bucket in buckets.values():
             files_in_bucket.sort(
-                key=lambda f: self._file_stats_cache.get_file_seconds(f),
+                key=lambda f: self._file_stats.get_file_seconds(f),
                 reverse=True,
             )
         return buckets
@@ -616,12 +616,12 @@ class RetentionLogic:
         for key in sorted(buckets.keys(), reverse=True):
             if cutoff_key is not None and key >= cutoff_key:  # Skip buckets already consumed by finer-grained retention modes
                 continue
-            files = [file for file in buckets[key] if file not in self._keep and self._file_stats_cache.get_file_seconds(file) < last_keep_time]
+            files = [file for file in buckets[key] if file not in self._keep and self._file_stats.get_file_seconds(file) < last_keep_time]
             if count < retention_mode_count and len(files) > 0:
                 file_keep = files[0]
                 self._logger.add_decision(LogLevel.INFO, file_keep, f"Keeping for mode '{retention_mode}' {count + 1:02d} / {retention_mode_count:02d}", debug=f"bucket: {key}")
                 self._keep.add(file_keep)
-                last_keep_time = self._file_stats_cache.get_file_seconds(file_keep)
+                last_keep_time = self._file_stats.get_file_seconds(file_keep)
                 count += 1
         return last_keep_time
 
@@ -642,25 +642,25 @@ class RetentionLogic:
     def _filter_files(self) -> None:
         # max-files
         if self._args.max_files is not None and self._keep:
-            sorted_keep = sort_files(self._keep, self._file_stats_cache)  # Must be sorted by xtime before applying filters, because set is unfiltered
+            sorted_keep = sort_files(self._keep, self._file_stats)  # Must be sorted by xtime before applying filters, because set is unfiltered
             for idx, file in enumerate(sorted_keep[self._args.max_files :], start=self._args.max_files + 1):
                 self._filter_file(file, f"Filtering: max total files exceeded: {idx:02d} > {self._args.max_files:02d}")
 
         # max-size
         if self._args.max_size is not None and self._keep:
-            sorted_keep = sort_files(self._keep, self._file_stats_cache)  # Must be sorted by xtime before applying filters, because set is unfiltered
+            sorted_keep = sort_files(self._keep, self._file_stats)  # Must be sorted by xtime before applying filters, because set is unfiltered
             bytes_sum: int = 0
             for file in sorted_keep:
-                bytes_sum += self._file_stats_cache.get_file_bytes(file)
+                bytes_sum += self._file_stats.get_file_bytes(file)
                 if bytes_sum > self._args.max_size_bytes:
                     self._filter_file(file, f"Filtering: max total size exceeded: {ModernStrictArgumentParser.format_size(bytes_sum)} > {self._args.max_size}")
 
         # max-age
         if self._args.max_age is not None and self._keep:
-            sorted_keep = sort_files(self._keep, self._file_stats_cache)  # Must be sorted by xtime before applying filters, because set is unfiltered
+            sorted_keep = sort_files(self._keep, self._file_stats)  # Must be sorted by xtime before applying filters, because set is unfiltered
             threshold = SCRIPT_START - self._args.max_age_seconds
             for file in sorted_keep:
-                file_time = self._file_stats_cache.get_file_seconds(file)
+                file_time = self._file_stats.get_file_seconds(file)
                 if file_time < threshold:
                     self._filter_file(file, f"Filtering: max total age exceeded: {ModernStrictArgumentParser.format_time(int(SCRIPT_START - file_time))} > {self._args.max_age}")
 
@@ -755,8 +755,8 @@ def main() -> None:
     try:
         args = parse_arguments()
 
-        file_stats_cache = FileStatsCache(args.age_type)
-        logger = Logger(args, file_stats_cache)
+        file_stats = FileStats(args.age_type)
+        logger = Logger(args, file_stats)
 
         logger.verbose(LogLevel.INFO, "Command line: " + " ".join(shlex.quote(arg) for arg in sys.argv))
         logger.verbose(LogLevel.DEBUG, f"Parsed arguments: {args}")
@@ -768,12 +768,12 @@ def main() -> None:
             lock_file.touch()
             created_lock_file = True
 
-        matches = read_filelist(args, logger, file_stats_cache)
+        matches = read_filelist(args, logger, file_stats)
         logger.verbose(LogLevel.INFO, f"Found {len(matches)} files using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
         if len(matches) > 0:
             logger.verbose(LogLevel.DEBUG, "Found files : " + ", ".join(f'"{p.name}"' for p in matches))
 
-        retentions_result = RetentionLogic(matches, args, logger, file_stats_cache).process_retention_logic()
+        retentions_result = RetentionLogic(matches, args, logger, file_stats).process_retention_logic()
 
         logger.print_decisions()
 

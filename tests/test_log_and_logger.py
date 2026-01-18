@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from retentions import FileStatsCache, Logger, LogLevel
+from retentions import FileStats, Logger, LogLevel
 
 
 def test_logger_add_and_print_decisions(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -15,7 +15,7 @@ def test_logger_add_and_print_decisions(tmp_path: Path, capsys: pytest.CaptureFi
 
     # Prepare a logger with INFO level
     args = SimpleNamespace(verbose=LogLevel.INFO, age_type="atime")
-    cache = FileStatsCache(args.age_type)
+    cache = FileStats(args.age_type)
     logger = Logger(args, cache)
 
     # Create a file and record a decision

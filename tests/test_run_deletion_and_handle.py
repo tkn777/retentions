@@ -9,7 +9,7 @@ import retentions
 from retentions import (
     ConfigNamespace,
     FileCouldNotBeDeleteError,
-    FileStatsCache,
+    FileStats,
     IntegrityCheckFailedError,
     Logger,
     LogLevel,
@@ -37,7 +37,7 @@ def test_run_deletion_dry_run_and_real(tmp_path, capsys) -> None:
     """run_deletion should simulate deletion when dry_run is True and actually delete when False."""
     file_path = tmp_path / "to_delete.txt"
     file_path.write_text("data")
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     # Dry run: should not delete the file
     args = _make_args(path=str(tmp_path), dry_run=True)
     logger = Logger(args, cache)
@@ -58,7 +58,7 @@ def test_run_deletion_list_only(tmp_path, capsys) -> None:
     """In list_only mode run_deletion should print file paths separated by the given separator."""
     file_path = tmp_path / "list.txt"
     file_path.write_text("x")
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     args = _make_args(path=str(tmp_path), list_only="\0", dry_run=False)
     logger = Logger(args, cache)
     run_deletion(file_path, args, logger, cache)
@@ -74,7 +74,7 @@ def test_run_deletion_not_child(tmp_path) -> None:
     # File outside of the specified path
     outer_file = tmp_path / "outer.txt"
     outer_file.write_text("1")
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     # Use a different base path
     args = _make_args(path=str(tmp_path / "other"), dry_run=False)
     logger = Logger(args, cache)
@@ -110,7 +110,7 @@ def test_warning_for_file_not_deleted(tmp_path, capsys, monkeypatch):
 
     monkeypatch.setattr(retentions.Path, "unlink", unlink_with_permission_error)
 
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     args = _make_args(path=str(tmp_path), dry_run=False)
     logger = Logger(args, cache)
 
@@ -144,7 +144,7 @@ def test_exception_for_file_not_deleted(tmp_path, capsys, monkeypatch):
 
     monkeypatch.setattr(retentions.Path, "unlink", unlink_with_permission_error)
 
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     args = _make_args(path=str(tmp_path), dry_run=False, fail_on_delete_error=True)
     logger = Logger(args, cache)
 
@@ -182,7 +182,7 @@ def test_run_deletion_with_companion_deleted(tmp_path, capsys) -> None:
     main.write_text("main")
     companion.write_text("companion")
 
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     args = _make_args(
         path=str(tmp_path),
         dry_run=False,
@@ -210,7 +210,7 @@ def test_run_deletion_with_missing_companion(tmp_path) -> None:
 
     main.write_text("main")
 
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     args = _make_args(
         path=str(tmp_path),
         dry_run=False,
@@ -233,7 +233,7 @@ def test_run_deletion_with_disallowed_companion(tmp_path) -> None:
     main.write_text("main")
     companion.write_text("companion")
 
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     args = _make_args(
         path=str(tmp_path),
         dry_run=False,
@@ -278,7 +278,7 @@ def test_run_deletion_multiple_files_multiple_companions(tmp_path, capsys) -> No
     rule_md5.replace = replace_md5
     rule_info.replace = replace_info
 
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     args = _make_args(
         path=str(tmp_path),
         dry_run=False,

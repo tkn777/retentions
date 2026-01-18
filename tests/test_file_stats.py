@@ -4,7 +4,7 @@ import os
 import time
 from pathlib import Path
 
-from retentions import FileStatsCache, sort_files
+from retentions import FileStats, sort_files
 
 
 def test_file_stats_cache_and_sort_files(tmp_path: Path) -> None:
@@ -21,7 +21,7 @@ def test_file_stats_cache_and_sort_files(tmp_path: Path) -> None:
     os.utime(file_new, (now, now))
     os.utime(file_old, (old_time, old_time))
 
-    cache = FileStatsCache("mtime")
+    cache = FileStats("mtime")
     # Check that the cache returns the correct timestamp and size
     assert cache.get_file_seconds(file_old) == int(old_time)
     assert cache.get_file_bytes(file_old) == len("old")
