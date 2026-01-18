@@ -697,7 +697,7 @@ class RetentionLogic:
 
         # Simple integrity checks
         if not len(self._matches) == len(self._keep) + len(self._prune):
-            raise IntegrityCheckFailedError(f"File count mismatch: some files are neither kept nor prune (all: {len(self._matches)}, keep: {len(self._keep)}, prune: {len(self._prune)}!!)")
+            raise IntegrityCheckFailedError(f"File count mismatch: some files are neither to retain nor to delete (all: {len(self._matches)}, keep: {len(self._keep)}, prune: {len(self._prune)}!!)")
         if not len(self._prune) == sum(1 for file in self._matches if is_file_to_delete(self._keep, self._prune, file)):
             raise IntegrityCheckFailedError("File deletion count mismatch!!")
 
@@ -779,8 +779,8 @@ def main() -> None:
 
         logger.verbose(LogLevel.INFO, f"Total files found:     {len(matches):03d}")
         logger.verbose(LogLevel.INFO, f"Total files protected: {len(args.protected_files):03d}")
-        logger.verbose(LogLevel.INFO, f"Total files to keep:   {len(retentions_result.keep):03d}")
-        logger.verbose(LogLevel.INFO, f"Total files to prune:  {len(retentions_result.prune):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files to retain: {len(retentions_result.keep):03d}")
+        logger.verbose(LogLevel.INFO, f"Total files to delete: {len(retentions_result.prune):03d}")
 
         deletion_started = False
         deletion_count = 0
