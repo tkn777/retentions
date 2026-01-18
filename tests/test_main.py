@@ -94,8 +94,8 @@ def test_output_help(tmp_path, monkeypatch, capsys):
     assert "Parsed arguments" in captured.out
     assert "Total files found" in captured.out
     assert "Total files protected" in captured.out
-    assert "Total files to keep" in captured.out
-    assert "Total files to prune" in captured.out
+    assert "Total files to retain" in captured.out
+    assert "Total files to delete" in captured.out
 
 
 @pytest.mark.parametrize(
