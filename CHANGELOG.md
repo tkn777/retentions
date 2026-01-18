@@ -1,4 +1,6 @@
 ### 1.1.3 - NOT RELEASED YET
+- Added `birthtime` as `--age-type` and added `--age-type` availability check
+- More consistent use of terms like `keep`/`retain`, `prune`/`delete`
 - Removed short options from shell completions
 - Added (hidden) retention mode `--minutes`
 

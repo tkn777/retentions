@@ -110,10 +110,19 @@ path and file_pattern are mandatory.
 file_pattern / protect is a regex (otherwise: glob pattern) \- mode: casesensitive (default), ignorecase
 .TP
 --age-type <time>
-Used time attribute for file age \- time: ctime, mtime (default), atime
+Used time attribute for file age \- time: ctime, mtime (default), atime, birthtime
 .TP
 --protect <pattern>
 Protect files from deletion (using regex or glob, like file_pattern)
+
+.PP
+Hint to age-type:
+.IP \(bu 2
+ctime is os-dependent: e.g. Windows: create-time, Linux: change time of meta data
+.IP \(bu 2
+atime may not reliable, check your os and your mount options
+.IP \(bu 2
+birthtime may not available on your OS or your filesystem
 
 .SS Retention options
 .TP
@@ -171,7 +180,9 @@ Every filter option can be combined with any (or all) others.
 
 .PP
 Logic:
+.IP \(bu 2
 Filters apply after retention and may remove files previously marked to keep.
+.IP \(bu 2
 Use --verbose debug and --dry-run to see decision history.
 
 .SS Behavior options
@@ -270,8 +281,10 @@ retentions /data/temp '.*\\.bak'
 retentions /data/backups *.tar.gz
 .fi
 
-.PP
+.SS Explanation
+.nf
 retentions itself handles pattern matching internally using glob or regex, so quoting ensures the pattern is passed as intended.
+.fi
 
 .SH EXIT CODES
 .TP

@@ -358,9 +358,11 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
     @no_type_check
     def _validate_arguments(self, ns) -> None:  # noqa: ANN001
         try:
-            # Check path
+            # Check path and availability of age-type
             if not Path(ns.path).resolve().is_dir():
-                raise OSError(f"Path {ns.path} is not a valid directory")
+                self.add_error(f"Path {ns.path} is not a valid directory")
+            elif not hasattr(Path(ns.path).stat(), "st_" + ns.age_type):
+                self.add_error(f"Your system (OS or FS) does not support age-type '{ns.age_type}'.")
 
             # dry-run implies verbose
             if ns.dry_run and not ns.list_only and ns.verbose is None:
@@ -457,8 +459,9 @@ def create_parser() -> ModernStrictArgumentParser:
     # fmt: off
     g_flags.add_argument("--regex-mode", "-r", type=str, choices=["casesensitive", "ignorecase"], metavar="mode", const="casesensitive", nargs="?", default=None,
         help="file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive, ignorecase, default: casesensitive")
-    g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime"], metavar="time", default="mtime", nargs="?", help="Used time attribute for file age (default: mtime)")
     g_flags.add_argument("--protect", "-p", type=str, default=None, metavar="protect", help="Protect files from deletion (using regex or glob, like file_pattern)")
+    g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime", "birthtime"], metavar="time-attr", default="mtime", nargs="?",
+        help="Used time attribute for file age: mtime (default), ctime, atime, birthtime - They are OS and filesystem dependent, see README.md or man page. (mtime is always safe)")
     # fmt: on
 
     # retention options

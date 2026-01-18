@@ -176,8 +176,14 @@ python3 retentions.py <path> <file_pattern> [options]
 | Flag | Description |
 |--------|--------------|
 | `-r, --regex [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
-| `--age-type [time]` | Used time attribute for file age - time: ctime, mtime (default), atime |
+| `--age-type [time]` | Used time attribute for file age - time: ctime, mtime (default), atime, birthtime |
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
+
+⚠️ `age-type`: 
+- `ctime` is OS-dependent: e.g. Windows => create-time, Linux => change time of meta data
+- `atime` may not reliable, check your OS, your filesystem and your mount options
+- `birthtime` may not available on your OS or your filesystem
+&nbsp;
 
 | Retention options | Description |
 |--------|--------------|
