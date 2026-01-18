@@ -773,6 +773,8 @@ def main() -> None:
 
         if args.age_type == "atime":
             logger.verbose(LogLevel.WARN, "age-type 'atime' depends on platform, filesystem and mount options (e.g. 'relatime'/'noatime') => results may be misleading")
+        if args.age_type == "ctime":
+            logger.verbose(LogLevel.WARN, "age-type 'ctime' has platform-dependent semantics")
 
         matches = read_filelist(args, logger, file_stats)
         logger.verbose(LogLevel.INFO, f"Found {len(matches)} files using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
