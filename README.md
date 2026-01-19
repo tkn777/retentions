@@ -29,7 +29,7 @@ Retention is rarely the problem — implicit deletion usually is.
 - Why do time-based cleanup scripts so often delete the *wrong* backups?
 - How can deletion decisions be explained, reviewed, and justified later?
 
-retentions was built to answer these questions with explicit rules instead of implicit assumptions — treating retention as policy expressed in code.
+`retentions` was built to answer these questions with explicit rules instead of implicit assumptions — treating retention as policy expressed in code.
 
 ---
 
