@@ -54,11 +54,15 @@ class ConfigNamespace(SimpleNamespace):
 
 @dataclass
 class FileStats:
+    _folder_mode: bool
+    _folder_mode_time_src: Optional[str]
     _age_type: str
     __file_stats_cache: dict[Path, stat_result]
 
-    def __init__(self, age_type: str) -> None:
+    def __init__(self, age_type: str, folder_mode: bool = False, folder_mode_time_src: Optional[str] = None) -> None:
         self._age_type = age_type
+        self._folder_mode = folder_mode
+        self._folder_mode_time_src = folder_mode_time_src
         self.__file_stats_cache: dict[Path, stat_result] = {}
 
     def get_file_seconds(self, file: Path) -> int:
@@ -531,7 +535,7 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
         matches = [file for file in iterator if file.is_dir() and (not args.regex_mode or args.regex_compiled.match(file.name))]
         for folder in [f for f in matches if not any(f.iterdir())]:
             logger.verbose(LogLevel.WARN, f"Folder '{folder}' is empty -> It is ignored")
-            matches.remove(folder) # Using a copy of matches in for-loop
+            matches.remove(folder)  # Using a copy of matches in for-loop
     else:
         matches = [file for file in iterator if file.is_file() and (not args.regex_mode or args.regex_compiled.match(file.name))]
 
@@ -770,7 +774,7 @@ def main() -> None:
     try:
         args = parse_arguments()
 
-        file_stats = FileStats(args.age_type)
+        file_stats = FileStats(args.age_type, args.folder_mode, args.folder_mode_time_src)
         logger = Logger(args, file_stats)
 
         logger.verbose(LogLevel.INFO, "Command line: " + " ".join(shlex.quote(arg) for arg in sys.argv))
