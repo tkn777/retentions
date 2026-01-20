@@ -525,11 +525,14 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
     if not base.is_dir():
         raise NotADirectoryError(f"Path is not a directory: {base}")
 
-    matches: list[Path] = []
-    if args.regex_mode:
-        matches = [file for file in base.iterdir() if file.is_file() and (args.regex_compiled.match(file.name))]
+    iterator = base.iterdir() if args.regex_mode else base.glob(args.file_pattern)
+    if args.folder_mode:
+        matches = [file for file in iterator if file.is_dir() and (not args.regex_mode or args.regex_compiled.match(file.name))]
+        for folder in [f for f in matches if not any(f.iterdir())]:
+            logger.verbose(LogLevel.WARN, f"Folder '{folder}' is empty -> It is ignored")
+            matches.remove(folder) # Using a copy of matches in for-loop
     else:
-        matches = [file for file in base.glob(args.file_pattern) if file.is_file()]
+        matches = [file for file in iterator if file.is_file() and (not args.regex_mode or args.regex_compiled.match(file.name))]
 
     if not matches:
         logger.verbose(LogLevel.WARN, f"No files found in '{base}' using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
