@@ -70,6 +70,18 @@ retentions **enforces internal consistency checks** before executing destructive
 - **Global filters** such as --max-files, --max-size, and --max-age are applied after retention decisions, not instead of them. Filters may override previous keep decisions.
 - **Decision logging**: for each file, retentions records not only the final action, but also the reasoning behind it. At higher verbosity levels, the full decision chain is preserved.
 - **Single-directory scope**: retention rules are applied only to direct children of the given base directory.
+- **Folder Mode:** In folder mode, retention is always applied to top-level directories only. Recursive traversal is used exclusively to derive a directory's age. Depth-based selection is intentionally not supported.
+
+---
+
+## Shell completions: long options only
+
+Shell completions in retentions intentionally expose only long option names (e.g. --days) and omit their short aliases (e.g. -d).
+
+Short options exist to reduce typing for experienced users and in scripts.
+Shell completions, however, serve a different purpose: they are a discovery and recall aid. Long option names are self-describing and minimize cognitive load, while short options add redundancy without additional information.
+
+Omitting short options from completions is therefore a deliberate usability decision, not a limitation. All short options remain fully supported when typed explicitly.
 
 ---
 
