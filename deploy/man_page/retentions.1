@@ -112,6 +112,10 @@ file_pattern / protect is a regex (otherwise: glob pattern) \- mode: casesensiti
 --age-type <time>
 Used time attribute for file age \- time: ctime, mtime (default), atime, birthtime
 .TP
+--folder-mode <time-src>
+Use folders instead of files in `path`: You need to specify the mode, to get the xtime and of the folder: folder, youngest-file (default), oldest-file, path=<path>), youngest-|oldest-file are recursive within the folder
+
+.TP
 --protect <pattern>
 Protect files from deletion (using regex or glob, like file_pattern)
 
