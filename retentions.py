@@ -52,19 +52,20 @@ class ConfigNamespace(SimpleNamespace):
     pass
 
 
+@dataclass
 class FileStats:
-    age_type: str
-    _file_stats_cache: dict[Path, stat_result]
+    _age_type: str
+    __file_stats_cache: dict[Path, stat_result]
 
     def __init__(self, age_type: str) -> None:
-        self.age_type = age_type
-        self._file_stats_cache: dict[Path, stat_result] = {}
+        self._age_type = age_type
+        self.__file_stats_cache: dict[Path, stat_result] = {}
 
     def get_file_seconds(self, file: Path) -> int:
-        return int(getattr(self._file_stats_cache.setdefault(file, file.stat()), f"st_{self.age_type}"))
+        return int(getattr(self.__file_stats_cache.setdefault(file, file.stat()), f"st_{self._age_type}"))
 
     def get_file_bytes(self, file: Path) -> int:
-        return self._file_stats_cache.setdefault(file, file.stat()).st_size
+        return self.__file_stats_cache.setdefault(file, file.stat()).st_size
 
 
 def sort_files(files: Iterable[Path], file_stats: FileStats) -> list[Path]:
