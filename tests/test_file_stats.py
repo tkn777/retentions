@@ -4,7 +4,7 @@ import os
 import time
 from pathlib import Path
 
-from retentions import FileStats, sort_files
+from retentions import SCRIPT_START, FileStats, sort_files
 
 
 def test_file_stats_cache_and_sort_files(tmp_path: Path) -> None:
@@ -29,3 +29,103 @@ def test_file_stats_cache_and_sort_files(tmp_path: Path) -> None:
     # Sorting should return files with newest mtime first
     sorted_files = sort_files([file_old, file_new], cache)
     assert sorted_files == [file_new, file_old]
+
+
+def test_filestats_folder_mode_youngest_file_two_levels(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+    sub = folder / "sub"
+
+    sub.mkdir(parents=True)
+
+    f_very_old = sub / "very_old.txt"
+    f_old = sub / "old.txt"
+    f_new = sub / "new.txt"
+
+    f_very_old.write_text("very_old")
+    f_old.write_text("old")
+    f_new.write_text("new")
+
+    now = SCRIPT_START
+    os.utime(f_very_old, (now - 200_000, now - 200_000))
+    os.utime(f_old, (now - 120, now - 120))
+    os.utime(f_new, (now - 15, now - 15))
+
+    stats = FileStats("mtime", folder_mode=True, folder_mode_time_src="youngest-file")
+
+    # youngest file is in subdirectory, must still define folder age
+    assert stats.get_file_seconds(folder) == now - 15
+
+
+def test_filestats_folder_mode_oldest_file(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+    folder.mkdir()
+
+    f_old = folder / "old.txt"
+    f_new = folder / "new.txt"
+
+    f_old.write_text("old")
+    f_new.write_text("new")
+
+    now = SCRIPT_START
+    os.utime(f_old, (now - 200, now - 200))
+    os.utime(f_new, (now - 20, now - 20))
+
+    stats = FileStats("mtime", folder_mode=True, folder_mode_time_src="oldest-file")
+
+    assert stats.get_file_seconds(folder) == now - 200
+
+
+def test_filestats_folder_mode_folder_time_src_folder(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+    sub = folder / "sub"
+
+    sub.mkdir(parents=True)
+
+    f_old = sub / "old.txt"
+    f_new = sub / "new.txt"
+
+    f_old.write_text("old")
+    f_new.write_text("new")
+
+    now = SCRIPT_START
+
+    # Dateien haben unterschiedliche mtimes
+    os.utime(f_old, (now - 300, now - 300))
+    os.utime(f_new, (now - 100, now - 100))
+
+    # Folder-mtime explizit setzen (strukturelle Änderung simulieren)
+    folder_mtime = now - 50
+    os.utime(folder, (folder_mtime, folder_mtime))
+
+    stats = FileStats(
+        "mtime",
+        folder_mode=True,
+        folder_mode_time_src="folder",
+    )
+
+    # Entscheidend: Datei-mtimes dürfen keinen Einfluss haben
+    assert stats.get_file_seconds(folder) == folder_mtime
+
+
+def test_filestats_folder_mode_size_sum(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+
+    sub_a = folder / "sub_a"
+    sub_b = folder / "sub_b"
+
+    sub_a.mkdir(parents=True)
+    sub_b.mkdir(parents=True)
+
+    f1 = folder / "root.bin"
+    f2 = sub_a / "a.bin"
+    f3 = sub_a / "b.bin"
+    f4 = sub_b / "c.bin"
+
+    f1.write_bytes(b"x" * 5)
+    f2.write_bytes(b"x" * 10)
+    f3.write_bytes(b"x" * 15)
+    f4.write_bytes(b"x" * 20)
+
+    stats = FileStats("mtime", folder_mode=True, folder_mode_time_src="youngest-file")
+
+    assert stats.get_file_bytes(folder) == 50

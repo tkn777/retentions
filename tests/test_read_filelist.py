@@ -1,5 +1,7 @@
 """Tests for the read_filelist function in the retentions module."""
 
+from pathlib import Path
+
 import pytest
 
 from retentions import (
@@ -124,3 +126,60 @@ def test_read_filelist_errors(tmp_path, capsys) -> None:
     logger = Logger(args, cache)
     with pytest.raises(ValueError):
         read_filelist(args, logger, cache)
+
+
+def test_read_filelist_folder_mode_top_level_only(tmp_path: Path) -> None:
+    folder1 = tmp_path / "folder1"
+    folder2 = tmp_path / "folder2"
+    file1 = tmp_path / "file.txt"
+
+    folder1.mkdir()
+    folder2.mkdir()
+    file1.write_text("nope")
+
+    (folder1 / "a.txt").write_text("x")
+    (folder2 / "b.txt").write_text("y")
+
+    args = _make_args(
+        path=str(tmp_path),
+        file_pattern="*",
+        folder_mode=True,
+        verbose=LogLevel.INFO,
+    )
+
+    cache = FileStats("mtime", folder_mode=True, folder_mode_time_src="youngest-file")
+    logger = Logger(args, cache)
+
+    result = read_filelist(args, logger, cache)
+
+    names = {p.name for p in result}
+    assert names == {"folder1", "folder2"}
+
+
+def test_read_filelist_folder_mode_ignores_empty_folders(tmp_path: Path, capsys) -> None:
+    blank = tmp_path / "blank"
+    full = tmp_path / "full"
+
+    full.mkdir()
+    (full / "file.txt").write_text("x")
+    blank.mkdir()
+
+    args = _make_args(
+        path=str(tmp_path),
+        file_pattern="*",
+        folder_mode=True,
+        verbose=LogLevel.WARN,
+    )
+
+    cache = FileStats("mtime", folder_mode=True, folder_mode_time_src="youngest-file")
+    logger = Logger(args, cache)
+
+    result = read_filelist(args, logger, cache)
+
+    assert [p.name for p in result] == ["full"]
+
+    out = capsys.readouterr().out
+    assert "blank' is empty -> It is ignored" in out
+    assert "is empty -> It is ignored" in out
+    assert "blank" in out
+    assert "[WARN] " in out

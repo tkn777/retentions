@@ -129,3 +129,44 @@ def test_combine_companions_list_failed(monkeypatch, capsys):
     assert exc.value.code == 2
     captured = capsys.readouterr()
     assert "--list-only and --delete-companions must not be combined, because list-only is not for companion" in captured.err
+
+
+def test_parse_folder_mode_default(monkeypatch):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["retentions.py", ".", "*", "--folder-mode"],
+    )
+
+    args = parse_arguments()
+
+    assert args.folder_mode is True
+    assert args.folder_mode_time_src == "youngest-file"
+
+
+def test_parse_folder_mode_folder_time_src(monkeypatch):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["retentions.py", ".", "*", "--folder-mode", "folder"],
+    )
+
+    args = parse_arguments()
+
+    assert args.folder_mode is True
+    assert args.folder_mode_time_src == "folder"
+
+def test_parse_folder_mode_invalid_value(monkeypatch, capsys):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["retentions.py", ".", "*", "--folder-mode", "foobar"],
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        parse_arguments()
+
+    assert exc.value.code == 2
+
+    err = capsys.readouterr().err
+    assert "folder-mode" in err
