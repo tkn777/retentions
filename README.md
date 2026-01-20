@@ -178,14 +178,15 @@ python3 retentions.py <path> <file_pattern> [options]
 | `-r, --regex [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
 | `--age-type [time]` | Used time attribute for file age - time: ctime, mtime (default), atime, birthtime |
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
+| `--folder-mode` | Use folders instead of files in `path`: You need to specify the mode, to get the xtime of the folder: folder, youngest-file (default), oldest-file, path=<path>), youngest-|oldest-file are recursive within the folder |
 
 ⚠️ `age-type`: 
 - `ctime` is platform-dependent: e.g. Windows => create-time, Linux => change time of meta data
 - `atime` may not reliable, check your platform, your filesystem and your mount options
 - `birthtime` may not available on your platform or your filesystem
-&nbsp;
+- ❗`retentions` checks the availability of the selected `age-type`, but not the semantic
 
-`retentions` checks the availability of the selected `age-type`, but not the semantic
+💡 See section [Folder Mode](#-delete-companions---delete-companions) for details about `--folder-mode`
 &nbsp;
 
 | Retention options | Description |
@@ -295,6 +296,30 @@ python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\0' | xar
 # Detailed logging
 python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
 ```
+
+---
+
+### 📁 Folder mode (`--folder-mode`)
+
+By default, `retentions` applies retention rules only to files.
+With `--folder-mode`, retention rules are applied to **directories instead**.
+
+Only **top-level directories** in the base directory are considered.
+Subdirectories are never selected as retention objects.
+
+The age of a directory is determined by one of the following time references:
+
+- `youngest-file` (default):  
+  Uses the most recent file inside the directory (recursive).
+
+- `oldest-file`:  
+  Uses the oldest file inside the directory (recursive).
+
+- `folder`:  
+  Uses the directory’s own timestamp (`mtime`, `ctime`, etc.).
+
+Empty directories are ignored (with a warning).
+Recursive traversal is used only to determine a directory’s age.
 
 ---
 
