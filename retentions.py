@@ -66,7 +66,13 @@ class FileStats:
         self.__file_stats_cache: dict[Path, stat_result] = {}
 
     def get_file_seconds(self, file: Path) -> int:
-        return int(getattr(self.__file_stats_cache.setdefault(file, file.stat()), f"st_{self._age_type}"))
+        if not self._folder_mode or (self._folder_mode and self._folder_mode_time_src == "folder"):
+            return int(getattr(self.__file_stats_cache.setdefault(file, file.stat()), f"st_{self._age_type}"))
+        if self._folder_mode_time_src == "youngest-file":
+            return int(max(getattr(self.__file_stats_cache.setdefault(f, f.stat()), f"st_{self._age_type}") for f in file.rglob("*") if f.is_file() and not f.is_symlink()))
+        if self._folder_mode_time_src == "oldest-file":
+            return int(min(getattr(self.__file_stats_cache.setdefault(f, f.stat()), f"st_{self._age_type}") for f in file.rglob("*") if f.is_file() and not f.is_symlink()))
+        raise ValueError(f"Invalid or missing time source for folder mode: {self._folder_mode_time_src}))")
 
     def get_file_bytes(self, file: Path) -> int:
         if self._folder_mode:
@@ -375,6 +381,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             if ns.folder_mode:
                 ns.folder_mode_time_src = ns.folder_mode
                 ns.folder_mode = True
+            ns.folder_mode_time_src = None
 
             # dry-run implies verbose
             if ns.dry_run and not ns.list_only and ns.verbose is None:
