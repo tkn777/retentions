@@ -364,6 +364,11 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             elif not hasattr(Path(ns.path).stat(), "st_" + ns.age_type):
                 self.add_error(f"Your system (OS or FS) does not support age-type '{ns.age_type}'.")
 
+            # Folder mode
+            if ns.folder_mode:
+                ns.folder_mode_time_src = ns.folder_mode
+                ns.folder_mode = True
+
             # dry-run implies verbose
             if ns.dry_run and not ns.list_only and ns.verbose is None:
                 ns.verbose = LogLevel.INFO
