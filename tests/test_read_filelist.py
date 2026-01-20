@@ -40,6 +40,7 @@ def _make_args(**overrides):
         max_age=None,
         max_age_seconds=None,
         dry_run=False,
+        folder_mode=None,
     )
     defaults.update(overrides)
     return ConfigNamespace(**defaults)
