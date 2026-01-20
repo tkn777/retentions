@@ -251,3 +251,118 @@ def test_no_retention_rules(tmp_path: Path, capsys) -> None:
     assert len(result.prune) == 0
     out = capsys.readouterr().out
     assert "No retention rules specified, keeping all files" in out
+
+
+def test_retention_folder_mode_days_two_levels(tmp_path: Path) -> None:
+    # two top-level folders
+    folder_new = tmp_path / "new"
+    folder_old = tmp_path / "old"
+
+    # second level inside each folder
+    sub_new = folder_new / "sub"
+    sub_old = folder_old / "sub"
+
+    sub_new.mkdir(parents=True)
+    sub_old.mkdir(parents=True)
+
+    f_sub_new = sub_new / "file.txt"
+    f_sub_old = sub_old / "file.txt"
+
+    f_sub_new.write_text("new")
+    f_sub_old.write_text("old")
+
+    now = SCRIPT_START
+    os.utime(f_sub_new, (now - 20, now - 20))
+    os.utime(f_sub_old, (now - 4 * 86400, now - 4 * 86400))
+
+    args = _make_args(days=1, folder_mode=True, folder_mode_time_src="youngest-file", verbose=LogLevel.DEBUG)
+    cache = FileStats("mtime", folder_mode=True, folder_mode_time_src="youngest-file")
+    logger = Logger(args, cache)
+
+    # IMPORTANT: only top-level folders are retention objects
+    logic = RetentionLogic([folder_new, folder_old], args, logger, cache)
+    result = logic.process_retention_logic()
+
+    assert folder_new in result.keep
+    assert folder_old in result.prune
+
+
+def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Path) -> None:
+    """
+    Folder-mode retention with:
+    - multiple top-level folders
+    - recursive file structure
+    - weeks + months retention
+    - at least two folders kept by weeks
+    - at least two folders pruned
+    """
+
+    # --- Top-level folders (retention objects)
+    week_1 = tmp_path / "week_1"
+    week_2 = tmp_path / "week_2"
+    month_1 = tmp_path / "month_1"
+    old_1 = tmp_path / "old_1"
+    old_2 = tmp_path / "old_2"
+
+    folders = [week_1, week_2, month_1, old_1, old_2]
+
+    # --- Create second-level structure
+    for folder in folders:
+        (folder / "sub").mkdir(parents=True)
+
+    # --- Files inside subfolders
+    (week_1 / "sub" / "file.txt").write_text("w1")
+    (week_2 / "sub" / "file.txt").write_text("w2")
+    (month_1 / "sub" / "file.txt").write_text("m1")
+    (month_1 / "sub" / "file2.txt").write_text("m2")
+    (old_1 / "sub" / "file.txt").write_text("o1")
+    (old_2 / "sub" / "file.txt").write_text("o2")
+
+    one_week = 7 * 24 * 60 * 60
+    one_month = 30 * 24 * 60 * 60
+
+    # --- Assign mtimes (youngest-file semantics)
+    os.utime(week_1 / "sub" / "file.txt", (SCRIPT_START - one_week, SCRIPT_START - one_week))
+    os.utime(week_2 / "sub" / "file.txt", (SCRIPT_START - 2 * one_week, SCRIPT_START - 2 * one_week))
+    os.utime(month_1 / "sub" / "file.txt", (SCRIPT_START - one_month, SCRIPT_START - one_month))
+    os.utime(month_1 / "sub" / "file2.txt", (SCRIPT_START - one_month + 10, SCRIPT_START - one_month + 10))
+    os.utime(old_1 / "sub" / "file.txt", (SCRIPT_START - 3 * one_month, SCRIPT_START - 3 * one_month))
+    os.utime(old_2 / "sub" / "file.txt", (SCRIPT_START - 4 * one_month, SCRIPT_START - 4 * one_month))
+
+    # --- Retention rules:
+    # keep 2 per week, keep 1 per month
+    args = _make_args(
+        weeks=2,
+        months=1,
+        folder_mode=True,
+        verbose=LogLevel.DEBUG,
+    )
+
+    cache = FileStats(
+        "mtime",
+        folder_mode=True,
+        folder_mode_time_src="youngest-file",
+    )
+    logger = Logger(args, cache)
+
+    logic = RetentionLogic(folders, args, logger, cache)
+    result = logic.process_retention_logic()
+
+    # --- Expectations
+    # kept by weeks
+    assert week_1 in result.keep
+    assert week_2 in result.keep
+
+    # kept by months
+    assert month_1 in result.keep
+
+    # pruned
+    assert old_1 in result.prune
+    assert old_2 in result.prune
+
+    # sanity checks
+    assert len(result.keep) == 3
+    assert len(result.prune) == 2
+
+    # ensure only top-level folders are retention objects
+    assert all(p.parent == tmp_path for p in result.keep | result.prune)
