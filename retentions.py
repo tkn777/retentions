@@ -69,6 +69,8 @@ class FileStats:
         return int(getattr(self.__file_stats_cache.setdefault(file, file.stat()), f"st_{self._age_type}"))
 
     def get_file_bytes(self, file: Path) -> int:
+        if self._folder_mode:
+            return sum(self.__file_stats_cache.setdefault(f, f.stat()).st_size for f in file.rglob("*") if f.is_file() and not f.is_symlink())
         return self.__file_stats_cache.setdefault(file, file.stat()).st_size
 
 
