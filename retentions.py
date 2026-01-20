@@ -689,7 +689,7 @@ class RetentionLogic:
             threshold = SCRIPT_START - self._args.max_age_seconds
             for file in sorted_keep:
                 file_time = self._file_stats.get_file_seconds(file)
-                if file_time < threshold:
+                if file_time <= threshold:
                     self._filter_file(file, f"Filtering: max total age exceeded: {ModernStrictArgumentParser.format_time(int(SCRIPT_START - file_time))} > {self._args.max_age}")
 
     def process_retention_logic(self) -> RetentionsResult:
