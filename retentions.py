@@ -51,6 +51,14 @@ class FileCouldNotBeDeleteError(OSError):
 class ConfigNamespace(SimpleNamespace):
     pass
 
+def split_escaped(delim: str, text: str, type: str, value: str, expected_length: Optional[int] = None) -> list[str]:
+    if not text:
+        raise ValueError(f"Invalid {type} definition: {value} - Missing value")
+    pattern = rf"(?<!\\){re.escape(delim)}"
+    parts = [p.replace(f"\\{delim}", delim) for p in re.split(pattern, text)]
+    if expected_length is not None and expected_length > 0 and len(parts) != expected_length:
+        raise ValueError(f"Invalid companion definition: {type} - Expect {expected_length} values, got {len(parts)} values by splitting on '{delim}'")
+    return parts
 
 @dataclass
 class FileStats:
@@ -268,19 +276,9 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
     def _parse_delete_companions(self, companion_rule_strings: list[str]) -> set[CompanionRule]:
         companion_rule_set: set[CompanionRule] = set()
-
-        def split_escaped(delim: str, text: str, expected_length: Optional[int] = None) -> list[str]:
-            if not text:
-                raise ValueError(f"Invalid companion definition: {companion_rule_string} - Missing value")
-            pattern = rf"(?<!\\){re.escape(delim)}"
-            parts = [p.replace(f"\\{delim}", delim) for p in re.split(pattern, text)]
-            if expected_length is not None and expected_length > 0 and len(parts) != expected_length:
-                raise ValueError(f"Invalid companion definition: {companion_rule_string} - Expect {expected_length} values, got {len(parts)} values by splitting on '{delim}'")
-            return parts
-
         for companion_rule_string in companion_rule_strings:
-            (type, match, companions_string) = tuple(split_escaped(":", companion_rule_string, 3))
-            companion_rule_set.update(CompanionRule(CompanionType.by_name(type), match.strip(), companion.strip(), companion_rule_string) for companion in split_escaped(",", companions_string))
+            (type, match, companions_string) = tuple(split_escaped(":", companion_rule_string, "companion", companion_rule_string, expected_length=3))
+            companion_rule_set.update(CompanionRule(CompanionType.by_name(type), match.strip(), companion.strip(), companion_rule_string) for companion in split_escaped(",", companions_string, "companion", companion_rule_string))
         return companion_rule_set
 
     def _parse_positive_size_argument(self, size_str: str) -> float:
