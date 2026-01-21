@@ -327,6 +327,9 @@ The age of a directory is determined by one of the following time references:
 - `folder`:  
   Uses the directory’s own timestamp (`mtime`, `ctime`, etc.).
 
+- `path=<path>`:
+  Uses the given file's timestamp
+
 Empty directories are ignored (with a warning).
 Recursive traversal is used only to determine a directory’s age.
 
