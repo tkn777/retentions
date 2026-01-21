@@ -60,6 +60,7 @@ def split_escaped(delim: str, text: str, type: str, value: str, expected_length:
         raise ValueError(f"Invalid {type} definition: {value} - Expect {expected_length} values, got {len(parts)} values by splitting on '{delim}'")
     return parts
 
+
 @dataclass
 class FileStats:
     _folder_mode: bool
