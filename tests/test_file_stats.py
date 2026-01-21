@@ -228,3 +228,17 @@ def test_filestats_folder_mode_path_time_source_outside_folder(tmp_path: Path) -
 
     with pytest.raises(ValueError, match="must be inside the folder"):
         stats.get_file_seconds(folder)
+
+
+def test_filestats_folder_mode_youngest_file_empty_folder_raises(tmp_path: Path) -> None:
+    folder = tmp_path / "empty_folder"
+    folder.mkdir()
+
+    stats = FileStats(
+        age_type="mtime",
+        folder_mode=True,
+        folder_mode_time_src="youngest-file",  # explicit, but also default
+    )
+
+    with pytest.raises(ValueError, match="contains no files"):
+        stats.get_file_seconds(folder)
