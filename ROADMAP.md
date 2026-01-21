@@ -1,7 +1,7 @@
 ## LATER (may be)
 
-- Implement `--folder / -f`: `age-type` (of folder, default), latest (by `age-type`), oldest (`by age-type`)
-    - Implement `--file` (current default to co-existent with folder)
+- Implement Inline retention intervals
+
 - Implement weighted dynamic retention based on max-size
 
 - Use colors
