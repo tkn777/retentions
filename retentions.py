@@ -691,7 +691,7 @@ class RetentionLogic:
         if self._args.max_files is not None and self._keep:
             sorted_keep = sort_files(self._keep, self._file_stats)  # Must be sorted by xtime before applying filters, because set is unfiltered
             for idx, file in enumerate(sorted_keep[self._args.max_files :], start=self._args.max_files + 1):
-                self._filter_file(file, f"Filtering: max total count of {self._args.entity_name} exceeded: {idx:02d} > {self._args.max_files:02d}")
+                self._filter_file(file, f"Filtering: max total count of {self._args.entity_name}s exceeded: {idx:02d} > {self._args.max_files:02d}")
 
         # max-size
         if self._args.max_size is not None and self._keep:
