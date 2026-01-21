@@ -705,7 +705,7 @@ class RetentionLogic:
         # max-age
         if self._args.max_age is not None and self._keep:
             sorted_keep = sort_files(self._keep, self._file_stats)  # Must be sorted by xtime before applying filters, because set is unfiltered
-            threshold = SCRIPT_START - self._args.max_age_seconds
+            threshold = SCRIPT_START - int(self._args.max_age_seconds)
             for file in sorted_keep:
                 file_time = self._file_stats.get_file_seconds(file)
                 if file_time <= threshold:
