@@ -376,10 +376,11 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 self.add_error(f"Your system (OS or FS) does not support age-type '{ns.age_type}'.")
 
             # Folder mode
-            ns.folder_mode_time_src = None
-            if ns.folder_mode:
+            if ns.folder_mode in ("folder", "youngest-file", "oldest-file") or (ns.folder_mode.startswith("path=") and len(ns.folder_mode) > 5):
                 ns.folder_mode_time_src = ns.folder_mode
                 ns.folder_mode = True
+            else:
+                self.add_error(f"Invalid folder time source: {ns.folder_mode}.")
 
             # dry-run implies verbose
             if ns.dry_run and not ns.list_only and ns.verbose is None:
