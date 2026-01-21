@@ -156,6 +156,7 @@ def test_parse_folder_mode_folder_time_src(monkeypatch):
     assert args.folder_mode is True
     assert args.folder_mode_time_src == "folder"
 
+
 def test_parse_folder_mode_invalid_value(monkeypatch, capsys):
     monkeypatch.setattr(
         sys,
@@ -169,4 +170,4 @@ def test_parse_folder_mode_invalid_value(monkeypatch, capsys):
     assert exc.value.code == 2
 
     err = capsys.readouterr().err
-    assert "folder-mode" in err
+    assert "Invalid folder time source: foobar." in err
