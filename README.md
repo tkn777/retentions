@@ -332,7 +332,7 @@ Recursive traversal is used only to determine a directory’s age.
 
 ---
 
-### 🔗 Delete Companions (`--delete-companions)
+### 🔗 Delete Companions (`--delete-companions`)
 
 Deletes *companion files* together with a file being removed (e.g. checksum or metadata files).
 
