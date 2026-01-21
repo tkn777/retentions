@@ -389,8 +389,10 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                     ns.folder_mode = True
                 else:
                     self.add_error(f"Invalid folder time source: {ns.folder_mode}.")
+                ns.entity_name = "folder"
             else:
                 ns.folder_mode_time_src = None
+                ns.entity_name = "file"
 
             # dry-run implies verbose
             if ns.dry_run and not ns.list_only and ns.verbose is None:
@@ -427,6 +429,10 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             if ns.max_age is not None:
                 ns.max_age = "".join(token.strip() for token in ns.max_age)
                 ns.max_age_seconds = self._parse_positive_time_argument(ns.max_age)
+
+            # incompatible options folder-mode and delete_companions
+            if ns.folder_mode and ns.delete_companions:
+                self.add_error("--folder-mode and --delete-companions must not be combined")
 
             # companion deletes
             ns.delete_companion_set = self._parse_delete_companions(ns.delete_companions) if ns.delete_companions is not None else set()
@@ -481,7 +487,7 @@ def create_parser() -> ModernStrictArgumentParser:
 
     # positional arguments
     g_main.add_argument("path", help="base directory to scan (recursion is not supported)")
-    g_main.add_argument("file_pattern", help="glob pattern for matching files (use quotes to prevent shell expansion)")
+    g_main.add_argument("file_pattern", help="glob pattern for matching {args.entity_name}s (use quotes to prevent shell expansion)")
 
     # argument flags
     # fmt: off
@@ -497,27 +503,27 @@ def create_parser() -> ModernStrictArgumentParser:
 
     # retention options
     g_ret.add_argument("--minutes", type=parser.positive_int_argument, metavar="N", help=argparse.SUPPRESS)
-    g_ret.add_argument("--hours", "-h", type=parser.positive_int_argument, metavar="N", help="Retain one file per hour from the last N hours")
-    g_ret.add_argument("--days", "-d", type=parser.positive_int_argument, metavar="N", help="Retain one file per day from the last N days")
-    g_ret.add_argument("--weeks", "-w", type=parser.positive_int_argument, metavar="N", help="Retain one file per week from the last N weeks")
-    g_ret.add_argument("--months", "-m", type=parser.positive_int_argument, metavar="N", help="Retain one file per month from the last N months")
-    g_ret.add_argument("--quarters", "-q", type=parser.positive_int_argument, metavar="N", help="Retain one file per quarter from the last N quarters (quarter by months)")
-    g_ret.add_argument("--week13", type=parser.positive_int_argument, metavar="N", help="Retain one file per 13-week block from the last N 13-week blocks (quarter by weeks)")
-    g_ret.add_argument("--years", "-y", type=parser.positive_int_argument, metavar="N", help="Retain one file per year from the last N years")
-    g_ret.add_argument("--last", "-l", type=parser.positive_int_argument, metavar="N", help="Always retain the N most recently modified files")
+    g_ret.add_argument("--hours", "-h", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per hour from the last N hours")
+    g_ret.add_argument("--days", "-d", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per day from the last N days")
+    g_ret.add_argument("--weeks", "-w", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per week from the last N weeks")
+    g_ret.add_argument("--months", "-m", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per month from the last N months")
+    g_ret.add_argument("--quarters", "-q", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per quarter from the last N quarters (quarter by months)")
+    g_ret.add_argument("--week13", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per 13-week block from the last N 13-week blocks (quarter by weeks)")
+    g_ret.add_argument("--years", "-y", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per year from the last N years")
+    g_ret.add_argument("--last", "-l", type=parser.positive_int_argument, metavar="N", help="Always retain the N most recently modified files/folders")
 
     # filter options
     g_filter.add_argument("--max-size", "-s", type=str, metavar="N", nargs="+", help="Keep maximum within total size N (e.g. 12, 10.5M, 500 G, 3E)")
-    g_filter.add_argument("--max-files", "-f", type=parser.positive_int_argument, metavar="N", help="Keep maximum total files N")
+    g_filter.add_argument("--max-files", "-f", type=parser.positive_int_argument, metavar="N", help="Keep maximum total files/folders N")
     g_filter.add_argument("--max-age", "-a", type=str, metavar="N", nargs="+", help="Keep maximum within time span N from script start (e.g. 3600, 1h, 1 d, 1w, 1m, 1q, 1y - with 1 month = 30 days)")
 
     # behavior options
-    g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files")
+    g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files/folders")
     g_behavior.add_argument("--no-lock-file", action="store_false", dest="use_lock_file", default=True, help="Omit lock file (default: enabled)")
-    g_behavior.add_argument("--fail-on-delete-error", action="store_true", default=False, help="Fails and exits if a file could not be deleted (default: disabled and print warning)")
+    g_behavior.add_argument("--fail-on-delete-error", action="store_true", default=False, help="Fails and exits if a file/folder could not be deleted (default: disabled and print warning)")
     # fmt: off
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep",
-        help="Output only file paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
+        help="Output only file/folder paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
     g_behavior.add_argument("--verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
         help="Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)")
     # fmt: on
@@ -558,13 +564,13 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
         matches = [file for file in iterator if file.is_file() and (not args.regex_mode or args.regex_compiled.match(file.name))]
 
     if not matches:
-        logger.verbose(LogLevel.WARN, f"No files found in '{base}' using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
+        logger.verbose(LogLevel.WARN, f"No {args.entity_name}s found in '{base}' using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
         return []
 
     # Check, if child of base directory
     for file in matches:
         if not Path(file).parent.resolve() == base.resolve():
-            raise ValueError(f"File '{file}' is not a child of base directory '{base}'")
+            raise ValueError(f"{args.entity_name.capitalize()} '{file}' is not a child of base directory '{base}'")
 
     # Check for protection
     if args.protect:
@@ -681,7 +687,7 @@ class RetentionLogic:
         if self._args.max_files is not None and self._keep:
             sorted_keep = sort_files(self._keep, self._file_stats)  # Must be sorted by xtime before applying filters, because set is unfiltered
             for idx, file in enumerate(sorted_keep[self._args.max_files :], start=self._args.max_files + 1):
-                self._filter_file(file, f"Filtering: max total files exceeded: {idx:02d} > {self._args.max_files:02d}")
+                self._filter_file(file, f"Filtering: max total count of {self._args.entity_name} exceeded: {idx:02d} > {self._args.max_files:02d}")
 
         # max-size
         if self._args.max_size is not None and self._keep:
@@ -724,7 +730,7 @@ class RetentionLogic:
                 self._logger.add_decision(LogLevel.INFO, file, "Pruning: not matched by any retention rule")
                 self._prune.add(file)
         else:
-            self._logger.verbose(LogLevel.DEBUG, "No retention rules specified, keeping all files")
+            self._logger.verbose(LogLevel.DEBUG, f"No retention rules specified, keeping all {self._args.entity_name}s")
             self._keep.update(self._matches)
             for file in self._matches:
                 self._logger.add_decision(LogLevel.INFO, file, "Keeping: no retention rules specified")
@@ -734,9 +740,9 @@ class RetentionLogic:
 
         # Simple integrity checks
         if not len(self._matches) == len(self._keep) + len(self._prune):
-            raise IntegrityCheckFailedError(f"File count mismatch: some files are neither to retain nor to delete (all: {len(self._matches)}, keep: {len(self._keep)}, prune: {len(self._prune)}!!)")
+            raise IntegrityCheckFailedError(f"{self._args.entity_name.capitalize()} count mismatch: some files are neither to retain nor to delete (all: {len(self._matches)}, keep: {len(self._keep)}, prune: {len(self._prune)}!!)")
         if not len(self._prune) == sum(1 for file in self._matches if is_file_to_delete(self._keep, self._prune, file)):
-            raise IntegrityCheckFailedError("File deletion count mismatch!!")
+            raise IntegrityCheckFailedError(f"{self._args.entity_name.capitalize()} deletion count mismatch!!")
 
         return RetentionsResult(self._keep, self._prune, self._logger)
 
@@ -747,7 +753,7 @@ def is_file_to_delete(keep: set[Path], prune: set[Path], file: Path) -> bool:
 
 def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion: bool = False) -> int:
     if file.parent.resolve() != Path(args.path).resolve():
-        raise IntegrityCheckFailedError(f"{'(Companion) ' if is_companion else ''}File '{file}' is not a child of parent directory '{file.parent}'")
+        raise IntegrityCheckFailedError(f"{'(Companion) ' if is_companion else ''}{args.entity_name.capitalize()} '{file}' is not a child of parent directory '{file.parent}'")
     if args.dry_run:
         logger.verbose(LogLevel.INFO, f"DRY-RUN DELETE{' (COMPANION)' if is_companion else ''}: {file.name}")  # Just simulate deletion
     else:
@@ -755,7 +761,7 @@ def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion:
         try:
             file.unlink()
         except OSError as e:
-            error_message = f"Error while deleting {'(companion) ' if is_companion else ''}file '{file.name}': {e}"
+            error_message = f"Error while deleting {'(companion) ' if is_companion else ''}{args.entity_name} '{file.name}': {e}"
             if args.fail_on_delete_error:
                 raise FileCouldNotBeDeleteError(error_message)
             logger.verbose(LogLevel.WARN, error_message, file=sys.stderr)
@@ -811,18 +817,18 @@ def main() -> None:
             logger.verbose(LogLevel.WARN, "age-type 'ctime' has platform-dependent semantics")
 
         matches = read_filelist(args, logger, file_stats)
-        logger.verbose(LogLevel.INFO, f"Found {len(matches)} files using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
+        logger.verbose(LogLevel.INFO, f"Found {len(matches)} {args.entity_name}s using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
         if len(matches) > 0:
-            logger.verbose(LogLevel.DEBUG, "Found files : " + ", ".join(f'"{p.name}"' for p in matches))
+            logger.verbose(LogLevel.DEBUG, "Found {args.entity_name}s : " + ", ".join(f'"{p.name}"' for p in matches))
 
         retentions_result = RetentionLogic(matches, args, logger, file_stats).process_retention_logic()
 
         logger.print_decisions()
 
-        logger.verbose(LogLevel.INFO, f"Total files found:     {len(matches):03d}")
-        logger.verbose(LogLevel.INFO, f"Total files protected: {len(args.protected_files):03d}")
-        logger.verbose(LogLevel.INFO, f"Total files to retain: {len(retentions_result.keep):03d}")
-        logger.verbose(LogLevel.INFO, f"Total files to delete: {len(retentions_result.prune):03d}")
+        logger.verbose(LogLevel.INFO, f"Total {args.entity_name}s found:     {len(matches):03d}")
+        logger.verbose(LogLevel.INFO, f"Total {args.entity_name}s protected: {len(args.protected_files):03d}")
+        logger.verbose(LogLevel.INFO, f"Total {args.entity_name}s to retain: {len(retentions_result.keep):03d}")
+        logger.verbose(LogLevel.INFO, f"Total {args.entity_name}s to delete: {len(retentions_result.prune):03d}")
 
         deletion_started = False
         deletion_count = 0
@@ -836,7 +842,7 @@ def main() -> None:
 
         if deletion_started:
             logger.verbose(LogLevel.INFO, "Deletion phase completed")
-            logger.verbose(LogLevel.INFO, f"Total files deleted:   {len(retentions_result.prune):03d}")
+            logger.verbose(LogLevel.INFO, f"Total {args.entity_name}s deleted:   {len(retentions_result.prune):03d}")
 
     except OSError as e:
         handle_exception(e, 1, args.stacktrace if args is not None else True)
