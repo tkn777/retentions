@@ -57,7 +57,7 @@ def split_escaped(delim: str, text: str, type: str, value: str, expected_length:
     pattern = rf"(?<!\\){re.escape(delim)}"
     parts = [p.replace(f"\\{delim}", delim) for p in re.split(pattern, text)]
     if expected_length is not None and expected_length > 0 and len(parts) != expected_length:
-        raise ValueError(f"Invalid companion definition: {type} - Expect {expected_length} values, got {len(parts)} values by splitting on '{delim}'")
+        raise ValueError(f"Invalid {type} definition: {value} - Expect {expected_length} values, got {len(parts)} values by splitting on '{delim}'")
     return parts
 
 @dataclass
