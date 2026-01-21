@@ -1,4 +1,5 @@
 ### 1.2.0 - NOT RELEASED YET
+- Added `--folder-mode` with tests
 - Added `birthtime` as `--age-type` and added `--age-type` availability check
 - More consistent use of terms like `keep`/`retain`, `prune`/`delete`
 - Removed short options from shell completions
