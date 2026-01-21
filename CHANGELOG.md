@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 ### 1.2.0 - NOT RELEASED YET
-=======
-### 1.1.3 - NOT RELEASED YET
 - Fixed bug regarding `--max-age` (edge case)
->>>>>>> 4393ccb (Add various test to)
 - Added `--folder-mode` with tests
 - Added `birthtime` as `--age-type` and added `--age-type` availability check
 - More consistent use of terms like `keep`/`retain`, `prune`/`delete`
