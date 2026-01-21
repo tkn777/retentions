@@ -82,7 +82,12 @@ class FileStats:
             return int(max(getattr(self.__file_stats_cache.setdefault(f, f.stat()), f"st_{self._age_type}") for f in file.rglob("*") if f.is_file() and not f.is_symlink()))
         if self._folder_mode_time_src == "oldest-file":
             return int(min(getattr(self.__file_stats_cache.setdefault(f, f.stat()), f"st_{self._age_type}") for f in file.rglob("*") if f.is_file() and not f.is_symlink()))
-        raise ValueError(f"Invalid or missing time source for folder mode: {self._folder_mode_time_src}))")
+        if str(self._folder_mode_time_src).startswith("path=") and self._folder_mode_time_src is not None:
+            time_file = Path(split_escaped("=", self._folder_mode_time_src, "folder time source", self._folder_mode_time_src, expected_length=2)[0]).resolve()
+            if not time_file.is_file():
+                raise ValueError(f"The path of the folder time source must be a file: {time_file}")
+            return int(getattr(self.__file_stats_cache.setdefault(time_file, time_file.stat()), f"st_{self._age_type}"))
+        raise ValueError(f"Invalid or missing time source for folder mode: {self._folder_mode_time_src}")
 
     def get_file_bytes(self, file: Path) -> int:
         if self._folder_mode:
