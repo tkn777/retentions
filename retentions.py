@@ -823,7 +823,7 @@ def main() -> None:
         matches = read_filelist(args, logger, file_stats)
         logger.verbose(LogLevel.INFO, f"Found {len(matches)} {args.entity_name}s using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
         if len(matches) > 0:
-            logger.verbose(LogLevel.DEBUG, "Found {args.entity_name}s : " + ", ".join(f'"{p.name}"' for p in matches))
+            logger.verbose(LogLevel.DEBUG, f"Found {args.entity_name}s : " + ", ".join(f'"{p.name}"' for p in matches))
 
         retentions_result = RetentionLogic(matches, args, logger, file_stats).process_retention_logic()
 
