@@ -37,6 +37,7 @@ def _make_args(**overrides) -> ConfigNamespace:  # noqa: F821
         max_age=None,
         max_age_seconds=None,
         dry_run=False,
+        entity_name="file",
     )
     defaults.update(overrides)
     return ConfigNamespace(**defaults)
@@ -199,7 +200,7 @@ def test_filter_max_files(tmp_path: Path) -> None:
     assert len(result.prune) == 1
     assert len(logger._decisions[files[0]]) == 1
     assert len(logger._decisions[files[2]]) == 2
-    assert "Filtering: max total files exceeded" in Logger._decisions[files[2]][0][0]
+    assert "Filtering: max total count of file exceeded" in Logger._decisions[files[2]][0][0]
 
 
 @no_type_check
@@ -275,7 +276,7 @@ def test_retention_folder_mode_days_two_levels(tmp_path: Path) -> None:
     os.utime(f_sub_new, (now - 20, now - 20))
     os.utime(f_sub_old, (now - 4 * 86400, now - 4 * 86400))
 
-    args = _make_args(days=1, folder_mode=True, folder_mode_time_src="youngest-file", verbose=LogLevel.DEBUG)
+    args = _make_args(days=1, folder_mode=True, folder_mode_time_src="youngest-file", verbose=LogLevel.DEBUG, entity_name="folder")
     cache = FileStats("mtime", folder_mode=True, folder_mode_time_src="youngest-file")
     logger = Logger(args, cache)
 
@@ -336,6 +337,7 @@ def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Pa
         months=1,
         folder_mode=True,
         verbose=LogLevel.DEBUG,
+        entity_name="folder",
     )
 
     cache = FileStats(

@@ -28,6 +28,7 @@ def _make_args(**overrides):
         fail_on_delete_error=False,
         protected_files=set(),
         delete_companion_set=set(),
+        entity_name="file",
     )
     defaults.update(overrides)
     return ConfigNamespace(**defaults)

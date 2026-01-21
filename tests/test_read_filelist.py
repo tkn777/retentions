@@ -43,6 +43,7 @@ def _make_args(**overrides):
         max_age_seconds=None,
         dry_run=False,
         folder_mode=None,
+        entity_name="file",
     )
     defaults.update(overrides)
     return ConfigNamespace(**defaults)
@@ -145,6 +146,7 @@ def test_read_filelist_folder_mode_top_level_only(tmp_path: Path) -> None:
         file_pattern="*",
         folder_mode=True,
         verbose=LogLevel.INFO,
+        entity_name="folder",
     )
 
     cache = FileStats("mtime", folder_mode=True, folder_mode_time_src="youngest-file")
@@ -169,6 +171,7 @@ def test_read_filelist_folder_mode_ignores_empty_folders(tmp_path: Path, capsys)
         file_pattern="*",
         folder_mode=True,
         verbose=LogLevel.WARN,
+        entity_name="folder",
     )
 
     cache = FileStats("mtime", folder_mode=True, folder_mode_time_src="youngest-file")
