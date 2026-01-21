@@ -23,6 +23,13 @@ Additionally it retains the last N files regardless of age.
 Filters can be used to reduce the retention scope to a subset of files.
 Everything outside your defined retention scope is deleted / not kept (unless \-\-dry-run or \-\-list-only is used).
 
+.SH Folder mode semantics
+
+When `--folder-mode` is enabled (see below), all references to 'files' in this whole documentation refer to 'folders' instead.
+
+In folder mode, retentions operates **exclusively on top-level folders**.
+Individual files are not considered as retention objects.
+
 .SH WARNING
 This tool permanently deletes files outside the defined retention scope.
 Use \-\-dry-run first to verify behavior.
