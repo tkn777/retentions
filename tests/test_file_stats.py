@@ -4,6 +4,8 @@ import os
 import time
 from pathlib import Path
 
+import pytest
+
 from retentions import SCRIPT_START, FileStats, sort_files
 
 
@@ -129,3 +131,58 @@ def test_filestats_folder_mode_size_sum(tmp_path: Path) -> None:
     stats = FileStats("mtime", folder_mode=True, folder_mode_time_src="youngest-file")
 
     assert stats.get_file_bytes(folder) == 50
+
+
+def test_filestats_folder_mode_path_time_source_valid(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+    folder.mkdir()
+
+    data_file = folder / "data.txt"
+    data_file.write_text("x")
+
+    time_file = tmp_path / "time.txt"
+    time_file.write_text("t")
+
+    ts = int(time_file.stat().st_mtime)
+
+    stats = FileStats(
+        age_type="mtime",
+        folder_mode=True,
+        folder_mode_time_src=f"path={time_file}",
+    )
+
+    result = stats.get_file_seconds(folder)
+
+    assert result == ts
+
+
+def test_filestats_folder_mode_path_time_source_is_directory(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+    folder.mkdir()
+
+    time_dir = tmp_path / "time_dir"
+    time_dir.mkdir()
+
+    stats = FileStats(
+        age_type="mtime",
+        folder_mode=True,
+        folder_mode_time_src=f"path={time_dir}",
+    )
+
+    with pytest.raises(ValueError, match="must be a file"):
+        stats.get_file_seconds(folder)
+
+def test_filestats_folder_mode_path_time_source_missing_file(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+    folder.mkdir()
+
+    missing = tmp_path / "does_not_exist.txt"
+
+    stats = FileStats(
+        age_type="mtime",
+        folder_mode=True,
+        folder_mode_time_src=f"path={missing}",
+    )
+
+    with pytest.raises(ValueError, match="must be a file"):
+        stats.get_file_seconds(folder)
