@@ -479,7 +479,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_flags.add_argument("--protect", "-p", type=str, default=None, metavar="protect", help="Protect files from deletion (using regex or glob, like file_pattern)")
     g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime", "birthtime"], metavar="time-attr", default="mtime", nargs="?",
         help="Used time attribute for file age: mtime (default), ctime, atime, birthtime - They are OS and filesystem dependent, see README.md or man page. (mtime is always safe)")
-    g_flags.add_argument("--folder-mode", type=str, choices=["folder", "youngest-file (default)", "oldest-file", "path=<path>"], metavar="time-src", default=None, nargs="?", const="youngest-file",
+    g_flags.add_argument("--folder-mode", type=str, metavar="time-src", default=None, nargs="?", const="youngest-file",
         help="Use folders instead of files in `path`: You need to specify the mode, to get the xtime of the folder: folder, youngest-file (default), oldest-file, path=<path>), youngest-|oldest-file are recursive within the folder")
 
     # fmt: on
