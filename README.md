@@ -52,10 +52,7 @@ It is intended for administrators who understand retention concepts and want det
 
 ## ❕ Folder mode semantics
 
-When `--folder-mode` is enabled (see below), **all references to 'files' in this whole documentation refer to 'folders' instead**.
-
-In folder mode, retentions operates **exclusively on top-level folders**.
-Individual files are not considered as retention objects.
+When `--folder-mode` is enabled (see [Folder Mode](#-folder-mode---folder-mode) ), **all references to 'files' in this whole documentation in this project refer to 'folders' instead**.
 
 ---
 
