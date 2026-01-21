@@ -200,7 +200,7 @@ def test_filter_max_files(tmp_path: Path) -> None:
     assert len(result.prune) == 1
     assert len(logger._decisions[files[0]]) == 1
     assert len(logger._decisions[files[2]]) == 2
-    assert "Filtering: max total count of file exceeded" in Logger._decisions[files[2]][0][0]
+    assert "Filtering: max total count of files exceeded" in Logger._decisions[files[2]][0][0]
 
 
 @no_type_check
