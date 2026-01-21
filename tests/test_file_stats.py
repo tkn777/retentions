@@ -133,17 +133,37 @@ def test_filestats_folder_mode_size_sum(tmp_path: Path) -> None:
     assert stats.get_file_bytes(folder) == 50
 
 
-def test_filestats_folder_mode_path_time_source_valid(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "path_builder",
+    [
+        # absolute path inside folder
+        lambda folder: folder / "time.txt",
+        # relative path inside folder
+        lambda folder: Path("folder") / "time.txt",
+        # relative path with subdir inside folder
+        lambda folder: Path("folder/sub") / "time.txt",
+    ],
+)
+def test_filestats_folder_mode_path_time_source_valid(
+    tmp_path: Path,
+    monkeypatch,
+    path_builder,
+) -> None:
     folder = tmp_path / "folder"
+    sub = folder / "sub"
     folder.mkdir()
+    sub.mkdir()
 
-    data_file = folder / "data.txt"
-    data_file.write_text("x")
+    (folder / "data.txt").write_text("x")
 
-    time_file = tmp_path / "time.txt"
-    time_file.write_text("t")
+    # create time source files
+    (folder / "time.txt").write_text("t")
+    (sub / "time.txt").write_text("t")
 
-    ts = int(time_file.stat().st_mtime)
+    monkeypatch.chdir(tmp_path)
+
+    time_file = path_builder(folder)
+    ts = int(time_file.resolve().stat().st_mtime)
 
     stats = FileStats(
         age_type="mtime",
@@ -172,6 +192,7 @@ def test_filestats_folder_mode_path_time_source_is_directory(tmp_path: Path) -> 
     with pytest.raises(ValueError, match="must be a file"):
         stats.get_file_seconds(folder)
 
+
 def test_filestats_folder_mode_path_time_source_missing_file(tmp_path: Path) -> None:
     folder = tmp_path / "folder"
     folder.mkdir()
@@ -185,4 +206,25 @@ def test_filestats_folder_mode_path_time_source_missing_file(tmp_path: Path) -> 
     )
 
     with pytest.raises(ValueError, match="must be a file"):
+        stats.get_file_seconds(folder)
+
+
+def test_filestats_folder_mode_path_time_source_outside_folder(tmp_path: Path) -> None:
+    # folder under retention
+    folder = tmp_path / "folder"
+    folder.mkdir()
+
+    (folder / "data.txt").write_text("x")
+
+    # time source file OUTSIDE the folder
+    external_time_file = tmp_path / "external_time.txt"
+    external_time_file.write_text("t")
+
+    stats = FileStats(
+        age_type="mtime",
+        folder_mode=True,
+        folder_mode_time_src=f"path={external_time_file}",
+    )
+
+    with pytest.raises(ValueError, match="must be inside the folder"):
         stats.get_file_seconds(folder)
