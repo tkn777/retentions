@@ -50,6 +50,15 @@ It is intended for administrators who understand retention concepts and want det
 
 ---
 
+## ❕ Folder mode semantics
+
+When `--folder-mode` is enabled (see below), **all references to “files” in this whole documentation refer to folders instead**.
+
+In folder mode, retentions operates **exclusively on top-level folders**.
+Individual files are not considered as retention objects.
+
+---
+
 ## ⚙️ Features
 
 - Pure **Python 3**, no external dependencies.  
@@ -186,7 +195,7 @@ python3 retentions.py <path> <file_pattern> [options]
 - `birthtime` may not available on your platform or your filesystem
 - ❗`retentions` checks the availability of the selected `age-type`, but not the semantic
 
-💡 See section [Folder Mode](#-delete-companions---delete-companions) for details about `--folder-mode`
+💡 See section [Folder Mode](#-folder-mode---folder-mode) for details about `--folder-mode`
 &nbsp;
 
 | Retention options | Description |
