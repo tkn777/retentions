@@ -23,7 +23,7 @@ Additionally it retains the last N files regardless of age.
 Filters can be used to reduce the retention scope to a subset of files.
 Everything outside your defined retention scope is deleted / not kept (unless \-\-dry-run or \-\-list-only is used).
 
-.SH Folder mode semantics
+.SH FOLDER MODE SEMANTICS
 
 When `--folder-mode` is enabled (see below), all references to 'files' in this whole documentation refer to 'folders' instead.
 
@@ -241,41 +241,94 @@ Common options can be used without any other arguments.
 
 .SH EXAMPLES
 
-.SS Retentions & Filters
-
+.SS Retentions
 .nf
 # Keep last 7 days, 4 weeks, 6 months
 $> retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6
 .fi
 
-.nf
-# Retain daily/weekly/monthly backups, but keep at most 10 files in total.
-# Older retained files are removed if the limit is exceeded.
-$> retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6 --max-files 10 --dry-run
-.fi
-
+.SS Filters
 .nf
 # Retain up to 12 monthly backups, but limit total retained size to 50 GB.
 # Older retained files are removed once the size limit is exceeded.
-$> retentions /data/backups '*.tar.gz' -m 12 --max-size 50G --dry-run
+$ retentions /data/backups '*.tar.gz' -m 12 --max-size 50G --dry-run
 .fi
 
 .SS Dry run (no deletion)
 .nf
-$> retentions /data/backups '*.tar.gz' -d 10 -w 3 -m 6 --dry-run
+$ retentions /data/backups '*.tar.gz' -d 10 -w 3 -m 6 --dry-run
 .fi
 
 .SS List-only mode (for piping into other tools)
 .nf
-$> retentions /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\\0' | xargs -0 rm
+$ retentions /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\\0' | xargs -0 rm
 .fi
 (This bypasses retentions' own deletion safety mechanisms. Use with care.)
 
 .SS Verbose output
 .nf
 # Detailed logging
-$> retentions /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
+$ retentions /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
 .fi
+
+.SH FOLDER MODE
+applies retention rules to directories instead of files.
+
+Only top-level directories in the base directory are considered.
+Subdirectories are never selected as retention objects.
+
+Directory age is determined by one of the following references:
+.TP
+.B youngest-file
+(default) Uses the most recent file inside the directory (recursive).
+.TP
+.B oldest-file
+Uses the oldest file inside the directory (recursive).
+.TP
+.B folder
+Uses the directory's own timestamp (mtime, ctime, etc.).
+.TP
+.B path=<path>`
+Uses the given file's timestamp
+.P
+Empty directories are ignored with a warning.
+Recursive traversal is used only to determine directory age.
+
+.SH DELETE COMPANIONS
+deletes companion files together with a removed file (e.g. checksums or metadata).
+
+Rule syntax:
+.PP
+TYPE:MATCH:COMPANIONS
+.PP
+Where:
+.TP
+.B TYPE
+suffix or prefix
+.TP
+.B MATCH
+Prefix or suffix to match (may be empty to always match)
+.TP
+.B COMPANIONS
+Comma-separated replacement strings
+.P
+Examples:
+.PP
+--delete-companions "suffix:.tar:.md5,.info"  # Deletes archive.md5 and archive.info when deleting archive.tar.
+.PP
+--delete-companions "suffix::.bak" "suffix::.tmp"  # Deletes file.txt.bak and file.txt.tmp when deleting file.txt.
+.PP
+--delete-companions "prefix:backup-:meta-"  # Deletes meta-data.tar when deleting backup-data.tar.
+
+Notes:
+.IP \(bu 2
+Only existing regular files are deleted.
+.IP \(bu 2
+Companion paths are deduplicated.
+.IP \(bu 2
+Protected or disallowed companions abort deletion.
+.IP \(bu 2
+Rules must be quoted.
 
 .SH QUOTING FILE PATTERNS
 Always quote your file patterns when calling retentions.
