@@ -24,7 +24,7 @@ from fnmatch import fnmatch
 from os import stat_result
 from pathlib import Path
 from types import SimpleNamespace
-from typing import NoReturn, Optional, TextIO, no_type_check
+from typing import Callable, Generic, NoReturn, Optional, TextIO, TypeVar, no_type_check
 
 
 VERSION: str = "dev-1.1.0"
@@ -62,26 +62,42 @@ def split_escaped(delim: str, text: str, type: str, value: str, expected_length:
     return parts
 
 
-@dataclass
+T = TypeVar("T")
+
+
+class Cache(Generic[T]):
+    def __init__(self) -> None:
+        self._cache: dict[Path, T] = {}
+
+    def compute_if_absent(self, key: Path, factory: Callable[[Path], T]) -> T:
+        if key not in self._cache:
+            self._cache[key] = factory(key)
+        return self._cache[key]
+
+
+file_count: int = 0
+
+
 class FileStats:
     _folder_mode: bool
     _folder_mode_time_src: Optional[str]
     _age_type: str
-    __file_stats_cache: dict[Path, stat_result]
+    __file_stats_cache: Cache[stat_result]
+    __file_seconds_cache: Cache[int]
 
     def __init__(self, age_type: str, folder_mode: bool = False, folder_mode_time_src: Optional[str] = None) -> None:
         self._age_type = age_type
         self._folder_mode = folder_mode
         self._folder_mode_time_src = folder_mode_time_src
-        self.__file_stats_cache: dict[Path, stat_result] = {}
+        self.__file_stats_cache: Cache[stat_result] = Cache()
+        self.__file_seconds_cache: Cache[int] = Cache()
 
     def get_file_seconds(self, file: Path) -> int:
-        if not self._folder_mode or (self._folder_mode and self._folder_mode_time_src == "folder"):
-            return int(getattr(self.__file_stats_cache.setdefault(file, file.stat()), f"st_{self._age_type}"))
-        if self._folder_mode_time_src == "youngest-file":
-            return int(max(getattr(self.__file_stats_cache.setdefault(f, f.stat()), f"st_{self._age_type}") for f in file.rglob("*") if f.is_file() and not f.is_symlink()))
-        if self._folder_mode_time_src == "oldest-file":
-            return int(min(getattr(self.__file_stats_cache.setdefault(f, f.stat()), f"st_{self._age_type}") for f in file.rglob("*") if f.is_file() and not f.is_symlink()))
+        return self.__file_seconds_cache.compute_if_absent(file, lambda f: self._get_file_seconds_internal(f))
+
+    def _get_file_seconds_internal(self, file: Path) -> int:
+        if not self._folder_mode or self._folder_mode_time_src == "folder":
+            return int(getattr(self.__file_stats_cache.compute_if_absent(file, Path.stat), f"st_{self._age_type}"))
         if self._folder_mode_time_src is not None and self._folder_mode_time_src.startswith("path="):
             time_file = Path(split_escaped("=", self._folder_mode_time_src, "folder time source", self._folder_mode_time_src, expected_length=2)[1]).resolve()
             if not time_file.is_file():
@@ -90,13 +106,20 @@ class FileStats:
                 time_file.relative_to(file)  # file is the folder
             except ValueError:
                 raise ValueError(f"The path value for the folder time source must be inside the folder: {time_file}")
-            return int(getattr(self.__file_stats_cache.setdefault(time_file, time_file.stat()), f"st_{self._age_type}"))
+            return int(getattr(self.__file_stats_cache.compute_if_absent(time_file, Path.stat), f"st_{self._age_type}"))
+        files = [f for f in file.rglob("*") if f.is_file() and not f.is_symlink()]
+        if not files:
+            raise ValueError(f"Folder '{file}' contains no files, cannot compute time source for folder with mode: {self._age_type}")
+        if self._folder_mode_time_src == "youngest-file":
+            return int(max(getattr(self.__file_stats_cache.compute_if_absent(f, Path.stat), f"st_{self._age_type}") for f in files))
+        if self._folder_mode_time_src == "oldest-file":
+            return int(min(getattr(self.__file_stats_cache.compute_if_absent(f, Path.stat), f"st_{self._age_type}") for f in files))
         raise ValueError(f"Invalid or missing time source for folder mode: {self._folder_mode_time_src}")
 
     def get_file_bytes(self, file: Path) -> int:
         if self._folder_mode:
-            return sum(self.__file_stats_cache.setdefault(f, f.stat()).st_size for f in file.rglob("*") if f.is_file() and not f.is_symlink())
-        return int(self.__file_stats_cache.setdefault(file, file.stat()).st_size)
+            return sum(self.__file_stats_cache.compute_if_absent(f, Path.stat).st_size for f in file.rglob("*") if f.is_file() and not f.is_symlink())
+        return int(self.__file_stats_cache.compute_if_absent(file, Path.stat).st_size)
 
 
 def sort_files(files: Iterable[Path], file_stats: FileStats) -> list[Path]:
