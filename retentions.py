@@ -51,6 +51,7 @@ class FileCouldNotBeDeleteError(OSError):
 class ConfigNamespace(SimpleNamespace):
     pass
 
+
 def split_escaped(delim: str, text: str, type: str, value: str, expected_length: Optional[int] = None) -> list[str]:
     if not text:
         raise ValueError(f"Invalid {type} definition: {value} - Missing value")
