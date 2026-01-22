@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 
 import pytest
+from conftest import symlinks_supported
 
 from retentions import SCRIPT_START, FileStats, sort_files
 
@@ -242,3 +243,22 @@ def test_filestats_folder_mode_youngest_file_empty_folder_raises(tmp_path: Path)
 
     with pytest.raises(ValueError, match="contains no files"):
         stats.get_file_seconds(folder)
+
+
+def test_filestats_rglob_does_not_follow_symlink_dirs(tmp_path: Path) -> None:
+    if not symlinks_supported(tmp_path):
+        pytest.skip("Symlinks not supported on this platform")
+
+    base = tmp_path / "base"
+    base.mkdir()
+
+    real = tmp_path / "real"
+    real.mkdir()
+    (real / "inside.txt").write_text("x")
+
+    link = base / "link"
+    link.symlink_to(real)
+
+    stats = FileStats("mtime")
+
+    assert stats.get_file_bytes(base) == 0

@@ -4,6 +4,7 @@
 from pathlib import Path
 
 import pytest
+from conftest import symlinks_supported
 
 import retentions
 from retentions import ConfigNamespace, FileCouldNotBeDeleteError, FileStats, IntegrityCheckFailedError, Logger, LogLevel, handle_exception, run_deletion
@@ -328,3 +329,24 @@ def test_folder_mode_deletes_directories(tmp_path: Path) -> None:
 
     # this is the actual regression assertion
     assert not folder.exists()
+
+
+def test_run_deletion_refuses_symlink(tmp_path: Path) -> None:
+    if not symlinks_supported(tmp_path):
+        pytest.skip("Symlinks not supported on this platform")
+
+    real = tmp_path / "real.txt"
+    real.write_text("x")
+
+    link = tmp_path / "link.txt"
+    link.symlink_to(real)
+
+    cache = FileStats("mtime")
+    args = _make_args(path=str(tmp_path))
+    logger = Logger(args, cache)
+
+    with pytest.raises(IntegrityCheckFailedError):
+        run_deletion(link, args, logger, set())
+
+    assert link.exists()
+    assert real.exists()
