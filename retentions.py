@@ -76,9 +76,6 @@ class Cache(Generic[T]):
         return self._cache[key]
 
 
-file_count: int = 0
-
-
 class FileStats:
     _folder_mode: bool
     _folder_mode_time_src: Optional[str]
@@ -579,32 +576,21 @@ def parse_arguments() -> ConfigNamespace:
 
 def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) -> list[Path]:
     base: Path = Path(args.path).resolve()
-    if not base.exists():
-        raise FileNotFoundError(f"Path not found: {base}")
-    if not base.is_dir():
-        raise NotADirectoryError(f"Path is not a directory: {base}")
-    if base.is_symlink():
-        raise NotADirectoryError(f"Path is a symbolic link: {base}")
+    if not base.exists() or not base.is_dir() or base.is_symlink():
+        raise NotADirectoryError(f"Path is not found or not a directory or a symlink: {base}")
 
     iterator = base.iterdir() if args.regex_mode else base.glob(args.file_pattern)
-    if args.folder_mode:
-        matches = [file for file in iterator if file.is_dir() and (not args.regex_mode or args.regex_compiled.match(file.name))]
-        # iterating over a copy on purpose; safe to remove from matches here
-        for folder in [f for f in matches]:
-            if folder.is_symlink():
-                logger.verbose(LogLevel.WARN, f"Folder '{folder}' is a symlink -> It is ignored")
-                matches.remove(folder)  # Using a copy of matches in for-loop
-                continue
-            if next(folder.iterdir(), None) is None:
-                logger.verbose(LogLevel.WARN, f"Folder '{folder}' is empty -> It is ignored")
-                matches.remove(folder)
-    else:
-        matches = [file for file in iterator if file.is_file() and (not args.regex_mode or args.regex_compiled.match(file.name))]
-        # iterating over a copy on purpose; safe to remove from matches here
-        for file in [f for f in matches]:
-            if file.is_symlink():
-                logger.verbose(LogLevel.WARN, f"File '{file}' is a symlink -> It is ignored")
-                matches.remove(file)  # Using a copy of matches in for-loop
+    matches: list[Path] = []
+    for path in iterator:
+        if not (((args.folder_mode and path.is_dir()) or (not args.folder_mode and path.is_file())) and (not args.regex_mode or args.regex_compiled.match(path.name))):
+            continue
+        if path.is_symlink():
+            logger.verbose(LogLevel.WARN, f"{args.entity_name.capitalize()} '{path}' is a symlink -> It is ignored")
+            continue
+        if args.folder_mode and next(path.iterdir(), None) is None:
+            logger.verbose(LogLevel.WARN, f"Folder '{path}' is empty -> It is ignored")
+            continue
+        matches.append(path)
 
     if not matches:
         logger.verbose(LogLevel.WARN, f"No {args.entity_name}s found in '{base}' using " + f"{'regex (' + args.regex_mode + ')' if args.regex_mode else 'glob'} " + f"pattern '{args.file_pattern}'")
@@ -615,16 +601,14 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
         if not Path(file).parent.resolve() == base.resolve():
             raise ValueError(f"{args.entity_name.capitalize()} '{file}' is not a child of base directory '{base}'")
 
-    # Check for protection
     if args.protect:
+        protected: set[Path] = set()
         for file in matches:
-            if args.regex_mode and args.protect_compiled.match(file.name):
-                logger.add_decision(LogLevel.INFO, file, f"Protected by regex: '{args.protect}'")
-                args.protected_files.add(file)
-            elif fnmatch(file.name, args.protect):
-                logger.add_decision(LogLevel.INFO, file, f"Protected by glob: '{args.protect}'")
-                args.protected_files.add(file)
-        matches = [file for file in matches if file not in args.protected_files]
+            if (args.regex_mode and args.protect_compiled.match(file.name)) or fnmatch(file.name, args.protect):
+                logger.add_decision(LogLevel.INFO, file, f"Protected by {'regex' if args.regex_mode else 'glob'}: '{args.protect}'")
+                protected.add(file)
+        args.protected_files |= protected
+        matches = [file for file in matches if file not in protected]
 
     # Ignore lock file (in any case, even if it is is disabled by user)
     matches = [m for m in matches if m.name != LOCK_FILE_NAME]
@@ -815,7 +799,7 @@ def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion:
 
 
 def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_companions: set[Path]) -> int:
-    if file.is_symlink(): # Should never happen
+    if file.is_symlink():  # Should never happen
         raise IntegrityCheckFailedError(f"Refusing to delete symlink: {file}")
     deletion_count = 0
     if args.list_only:

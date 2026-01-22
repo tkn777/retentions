@@ -100,7 +100,7 @@ def test_read_filelist_errors(tmp_path, capsys) -> None:
     # Path does not exist
     args = _make_args(path=str(tmp_path / "nonexistent"), file_pattern="*.txt")
     logger = Logger(args, cache)
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(NotADirectoryError):
         read_filelist(args, logger, cache)
     # Path is not a directory
     file_path = tmp_path / "file"
