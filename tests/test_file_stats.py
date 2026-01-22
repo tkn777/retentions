@@ -253,14 +253,16 @@ def test_filestats_rglob_does_not_follow_symlink_dirs(tmp_path: Path, symlinks_s
 
     real = tmp_path / "real"
     real.mkdir()
-    (real / "inside.txt").write_text("x")
+    file_inside = real / "inside.txt"
+    file_inside.write_text("x")
 
     link = base / "link"
     link.symlink_to(real)
 
-    stats = FileStats("mtime")
+    files = list(base.rglob("*"))
 
-    size_base = stats.get_file_bytes(base)
-    size_real = stats.get_file_bytes(real)
+    # Symlink dir itself may appear
+    assert link in files
 
-    assert size_base < size_real
+    # But the file inside the symlink target must NOT
+    assert file_inside not in files

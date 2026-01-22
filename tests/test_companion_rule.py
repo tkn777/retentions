@@ -106,7 +106,7 @@ def test_companion_symlink_is_ignored(tmp_path: Path, symlinks_supported: bool) 
     companion_link.symlink_to(companion_real)
 
     # use the same construction style as existing tests
-    rule = CompanionRule("*.log", ["*.log.*"])
+    rule = CompanionRule(".log", [".tmp"])
 
     companions = rule.get_companions(main)
 

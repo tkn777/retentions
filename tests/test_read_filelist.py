@@ -191,13 +191,14 @@ def test_read_filelist_folder_mode_ignores_empty_folders(tmp_path: Path, capsys)
 def test_read_filelist_base_is_symlink(tmp_path: Path, symlinks_supported: bool) -> None:
     if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
-    real = tmp_path / "real"
+
+    real = tmp_path / "real_dir"
     real.mkdir()
 
-    link = tmp_path / "link"
-    link.symlink_to(real)
+    base_link = tmp_path / "base_link"
+    base_link.symlink_to(real)
 
-    args = _make_args(path=str(link), file_pattern="*")
+    args = _make_args(path=str(base_link), file_pattern="*")
 
     cache = FileStats("mtime")
     logger = Logger(args, cache)
