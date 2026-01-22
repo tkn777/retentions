@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-from conftest import symlinks_supported
 
 from retentions import (
     ConfigNamespace,
@@ -189,10 +188,9 @@ def test_read_filelist_folder_mode_ignores_empty_folders(tmp_path: Path, capsys)
     assert "[WARN] " in out
 
 
-def test_read_filelist_base_is_symlink(tmp_path: Path) -> None:
-    if not symlinks_supported(tmp_path):
+def test_read_filelist_base_is_symlink(tmp_path: Path, symlinks_supported: bool) -> None:
+    if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
-
     real = tmp_path / "real"
     real.mkdir()
 
@@ -208,8 +206,8 @@ def test_read_filelist_base_is_symlink(tmp_path: Path) -> None:
         read_filelist(args, logger, cache)
 
 
-def test_read_filelist_ignores_symlink_files(tmp_path: Path) -> None:
-    if not symlinks_supported(tmp_path):
+def test_read_filelist_ignores_symlink_files(tmp_path: Path, symlinks_supported: bool) -> None:
+    if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
 
     real = tmp_path / "real.txt"
@@ -230,8 +228,8 @@ def test_read_filelist_ignores_symlink_files(tmp_path: Path) -> None:
     assert "link.txt" not in names
 
 
-def test_read_filelist_folder_mode_ignores_symlink_folders(tmp_path: Path) -> None:
-    if not symlinks_supported(tmp_path):
+def test_read_filelist_folder_mode_ignores_symlink_folders(tmp_path: Path, symlinks_supported: bool) -> None:
+    if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
 
     real = tmp_path / "real"

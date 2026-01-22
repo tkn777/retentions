@@ -103,6 +103,8 @@ class FileStats:
             time_file = Path(split_escaped("=", self._folder_mode_time_src, "folder time source", self._folder_mode_time_src, expected_length=2)[1]).resolve()
             if not time_file.is_file():
                 raise ValueError(f"The path value for the folder time source must be a file: {time_file}")
+            if time_file.is_symlink():
+                raise ValueError(f"The path value for the folder time source must not be a symlink: {time_file}")
             try:
                 time_file.relative_to(file)  # file is the folder
             except ValueError:

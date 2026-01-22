@@ -1,6 +1,9 @@
 from pathlib import Path
 
+import pytest
 
+
+@pytest.fixture
 def symlinks_supported(tmp_path: Path) -> bool:
     try:
         target = tmp_path / "target"

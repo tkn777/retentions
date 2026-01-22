@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-from conftest import symlinks_supported
 
 from retentions import CompanionRule, CompanionType
 
@@ -93,8 +92,8 @@ def test_companionrule_replace_suffix_empty_match(tmp_path):
     assert result.parent == file.parent
 
 
-def test_companion_symlink_is_ignored(tmp_path: Path) -> None:
-    if not symlinks_supported(tmp_path):
+def test_companion_symlink_is_ignored(tmp_path: Path, symlinks_supported: bool) -> None:
+    if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
 
     main = tmp_path / "main.log"
@@ -106,11 +105,10 @@ def test_companion_symlink_is_ignored(tmp_path: Path) -> None:
     companion_link = tmp_path / "main.log.link"
     companion_link.symlink_to(companion_real)
 
-    rule = CompanionRule.from_string("*.log -> *.log.*")
+    # use the same construction style as existing tests
+    rule = CompanionRule("*.log", ["*.log.*"])
 
     companions = rule.get_companions(main)
 
-    # real companion included
     assert companion_real in companions
-    # symlink companion excluded
     assert companion_link not in companions
