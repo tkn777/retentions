@@ -235,10 +235,9 @@ python3 retentions.py <path> <file_pattern> [options]
 | `-X, --dry-run` | Show planned actions but do not delete any files |
 | `--no-lock-file` | Omit lock file (default: enabled) |
 | `--fail-on-delete-error` | Fails and exits if a file could not be deleted (default: disabled and print warning) |
-| `--allow-symlinks` | Treat symbolic links as regular filesystem objects (no recursive traversal) |
 
 💡 Using `--dry-run` is a good option to start with `retentions` 😏
-&nbsp;
+&nbsp; 
 
 | Expert options | Description |
 |--------|--------------|
@@ -333,18 +332,6 @@ Recursive traversal is used only to determine a directory’s age.
 
 ---
 
-### ➡️ Symbolic links
-
-By default, symbolic links are ignored.
-
-With `--allow-symlinks`, symbolic links are treated as regular filesystem objects.
-This applies to retention objects, companions, time source paths and the base path.
-
-Subfolder symlinks are never traversed recursively.
-This prevents unintentional scope expansion while still allowing symlinked folders as explicit retention targets.
-
----
-
 ### 🔗 Delete Companions (`--delete-companions`)
 
 Deletes *companion files* together with a file being removed (e.g. checksum or metadata files).
@@ -378,6 +365,15 @@ TYPE:MATCH:COMPANIONS
 - Companion paths are deduplicated.
 - Protected or otherwise disallowed companions abort deletion (e.g. files marked as kept or pruned).
 - Rules must be quoted.
+
+---
+
+### ➡️ Symbolic links
+
+Symbolic links are intentionally **not supported**.
+
+All paths must refer to real filesystem objects.  
+This restriction ensures a strict, predictable retention scope and avoids ambiguous or hard-to-reason-about filesystem behavior.
 
 ---
 

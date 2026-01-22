@@ -26,7 +26,6 @@ _retentions() {
     '--no-lock-file'[disable lock file] \
     '--fail-on-delete-error'[fail and exit on delete error] \
     '--delete-companions'[delete companion files defined by rules]:pattern:->companions \
-    '--allow-symlinks'[treat symbolic links as regular filesystem objects (no recursive traversal)] \
     '--version'[show version and exit] \
     '--help'[show help and exit]
 

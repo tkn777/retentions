@@ -28,7 +28,6 @@ _retentions() {
         --no-lock-file
         --fail-on-delete-error
         --delete-companions
-        --allow-symlinks
         --version
         --help
     "

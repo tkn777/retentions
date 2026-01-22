@@ -1,6 +1,5 @@
-### 1.3.0 - 22.01.2026
+### 1.2.2 - UNRELEASED
 - Added consistent handling of symlinks
-- Added argument `--allow-symlinks`
 
 ### 1.2.1 - 22.01.2026
 - Fixed bug to delete folders
