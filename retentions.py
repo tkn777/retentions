@@ -815,6 +815,8 @@ def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion:
 
 
 def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_companions: set[Path]) -> int:
+    if file.is_symlink():
+        raise IntegrityCheckFailedError(f"Refusing to delete symlink: {file}")
     deletion_count = 0
     if args.list_only:
         print(file.absolute(), end=args.list_only)  # List mode
@@ -826,6 +828,7 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
                 raise IntegrityCheckFailedError(f"Companion file '{companion_file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
             if companion_file.is_symlink():
                 logger.verbose(LogLevel.WARN, f"Companion file is a symlink -> It is ignored: {companion_file}")
+                continue
             if companion_file.exists() and companion_file.is_file():
                 deletion_count += delete_file(companion_file, args, logger, is_companion=True)
     return deletion_count
