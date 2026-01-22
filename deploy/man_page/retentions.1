@@ -294,20 +294,6 @@ Uses the given file's timestamp
 Empty directories are ignored with a warning.
 Recursive traversal is used only to determine directory age.
 
-.SH SYMBOLIC LINKS
-By default, symbolic links are ignored.
-
-With --allow-symlinks, symbolic links are treated as regular filesystem
-objects. This applies to retention objects, companions, time source paths and
-the base path.
-
-Subfolder symlinks are never traversed recursively. This prevents unintentional
-scope expansion while still allowing symlinked folders as explicit retention
-targets.
-
-On Windows, directory junctions are treated as normal directories. Only actual
-symbolic links are subject to the rules above.
-
 .SH DELETE COMPANIONS
 deletes companion files together with a removed file (e.g. checksums or metadata).
 
@@ -343,6 +329,13 @@ Companion paths are deduplicated.
 Protected or disallowed companions abort deletion.
 .IP \(bu 2
 Rules must be quoted.
+
+.SH SYMBOLIC LINKS
+Symbolic links are intentionally not supported.
+
+All paths must refer to real filesystem objects.
+This restriction ensures a strict and predictable retention scope and avoids ambiguous filesystem behavior.
+
 
 .SH QUOTING FILE PATTERNS
 Always quote your file patterns when calling retentions.
