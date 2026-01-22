@@ -1,4 +1,7 @@
-### 1.2.0 - NOT RELEASED YET
+### 1.2.1 - 22.01.2026
+- Fixed bug to delete folders
+
+### 1.2.0 - 21.01.2026
 - Fixed bug regarding `--max-age` (edge case)
 - Added `--folder-mode` with tests
 - Added `birthtime` as `--age-type` and added `--age-type` availability check
