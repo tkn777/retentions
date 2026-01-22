@@ -302,7 +302,7 @@ def test_filestats_path_time_source_not_a_file(tmp_path: Path) -> None:
         stats.get_file_seconds(folder)
 
 
-def test_filestats_path_time_source_is_symlink(tmp_path: Path, symlinks_supported: bool) -> None:
+def test_filestats_path_time_source_symlink_is_resolved(tmp_path: Path, symlinks_supported: bool) -> None:
     if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
 
@@ -321,8 +321,8 @@ def test_filestats_path_time_source_is_symlink(tmp_path: Path, symlinks_supporte
         folder_mode_time_src=f"path={link}",
     )
 
-    with pytest.raises(ValueError, match="must not be a symlink"):
-        stats.get_file_seconds(folder)
+    ts = stats.get_file_seconds(folder)
+    assert isinstance(ts, int)
 
 
 def test_filestats_path_time_source_outside_folder(tmp_path: Path) -> None:
