@@ -581,7 +581,7 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
         raise FileNotFoundError(f"Path not found: {base}")
     if not base.is_dir():
         raise NotADirectoryError(f"Path is not a directory: {base}")
-    if base.is_symlink() and not args.allow_symlinks:
+    if base.is_symlink():
         raise NotADirectoryError(f"Path is a symbolic link: {base}")
 
     iterator = base.iterdir() if args.regex_mode else base.glob(args.file_pattern)
@@ -589,19 +589,18 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
         matches = [file for file in iterator if file.is_dir() and (not args.regex_mode or args.regex_compiled.match(file.name))]
         # iterating over a copy on purpose; safe to remove from matches here
         for folder in [f for f in matches]:
-            if folder.is_symlink() and not args.allow_symlinks:
+            if folder.is_symlink():
                 logger.verbose(LogLevel.WARN, f"Folder '{folder}' is a symlink -> It is ignored")
                 matches.remove(folder)  # Using a copy of matches in for-loop
                 continue
             if next(folder.iterdir(), None) is None:
                 logger.verbose(LogLevel.WARN, f"Folder '{folder}' is empty -> It is ignored")
                 matches.remove(folder)
-
     else:
         matches = [file for file in iterator if file.is_file() and (not args.regex_mode or args.regex_compiled.match(file.name))]
         # iterating over a copy on purpose; safe to remove from matches here
         for file in [f for f in matches]:
-            if file.is_symlink() and not args.allow_symlinks:
+            if file.is_symlink():
                 logger.verbose(LogLevel.WARN, f"File '{file}' is a symlink -> It is ignored")
                 matches.remove(file)  # Using a copy of matches in for-loop
 
@@ -823,6 +822,8 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
         for companion_file in {companion_rule.replace(file) for companion_rule in args.delete_companion_set if companion_rule.matches(file)}:
             if companion_file in disallowed_companions:
                 raise IntegrityCheckFailedError(f"Companion file '{companion_file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
+            if companion_file.is_symlink():
+                logger.verbose(LogLevel.WARN, f"Companion file is a symlink -> It is ignored: {companion_file}")
             if companion_file.exists() and companion_file.is_file():
                 deletion_count += delete_file(companion_file, args, logger, is_companion=True)
     return deletion_count
