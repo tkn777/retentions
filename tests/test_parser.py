@@ -171,3 +171,12 @@ def test_parse_folder_mode_invalid_value(monkeypatch, capsys):
 
     err = capsys.readouterr().err
     assert "Invalid folder time source: foobar." in err
+
+
+def test_combine_folder_mode_list_failed(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-d", "3", "--folder-mode", "--delete-companions", "suffix::.bak"])
+    with pytest.raises(SystemExit) as exc:
+        parse_arguments()
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert "--folder-mode and --delete-companions must not be combined" in captured.err
