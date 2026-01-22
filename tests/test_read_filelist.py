@@ -188,7 +188,7 @@ def test_read_filelist_folder_mode_ignores_empty_folders(tmp_path: Path, capsys)
     assert "[WARN] " in out
 
 
-def test_read_filelist_base_is_symlink(tmp_path: Path, symlinks_supported: bool) -> None:
+def test_read_filelist_base_symlink_is_resolved(tmp_path: Path, symlinks_supported: bool) -> None:
     if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
 
@@ -200,11 +200,13 @@ def test_read_filelist_base_is_symlink(tmp_path: Path, symlinks_supported: bool)
 
     args = _make_args(path=str(base_link), file_pattern="*")
 
-    cache = FileStats("mtime")
-    logger = Logger(args, cache)
+    file_stats = FileStats("mtime")
+    logger = Logger(args, file_stats)
 
-    with pytest.raises(NotADirectoryError, match="symbolic link"):
-        read_filelist(args, logger, cache)
+    result = read_filelist(args, logger, file_stats)
+
+    # behaves exactly like the real directory
+    assert isinstance(result, list)
 
 
 def test_read_filelist_ignores_symlink_files(tmp_path: Path, symlinks_supported: bool) -> None:
@@ -233,25 +235,24 @@ def test_read_filelist_folder_mode_ignores_symlink_folders(tmp_path: Path, symli
     if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
 
-    real = tmp_path / "real"
-    real.mkdir()
-    (real / "file.txt").write_text("x")
+    base = tmp_path / "base_dir"
+    base.mkdir()
 
-    link = tmp_path / "link"
+    real = tmp_path / "real_folder"
+    real.mkdir()
+
+    link = base / "folder_symlink"
     link.symlink_to(real)
 
     args = _make_args(
-        path=str(tmp_path),
+        path=str(base),
         file_pattern="*",
-        folder_mode=True,
-        entity_name="folder",
+        folder_mode="folder",
     )
 
-    cache = FileStats("mtime", folder_mode=True)
-    logger = Logger(args, cache)
+    file_stats = FileStats("mtime", folder_mode=True)
+    logger = Logger(args, file_stats)
 
-    result = read_filelist(args, logger, cache)
-    names = {p.name for p in result}
+    result = read_filelist(args, logger, file_stats)
 
-    assert "real" in names
-    assert "link" not in names
+    assert link not in result

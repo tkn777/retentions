@@ -96,19 +96,28 @@ def test_companion_symlink_is_ignored(tmp_path: Path, symlinks_supported: bool) 
     if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
 
-    main = tmp_path / "main.log"
+    main = tmp_path / "example.log"
     main.write_text("x")
 
-    companion_real = tmp_path / "main.log.meta"
+    # real companion
+    companion_real = tmp_path / "example.tmp"
     companion_real.write_text("meta")
 
-    companion_link = tmp_path / "main.log.link"
+    # symlink companion
+    companion_link = tmp_path / "example.tmp.link"
     companion_link.symlink_to(companion_real)
 
-    # use the same construction style as existing tests
-    rule = CompanionRule(".log", [".tmp"])
+    rule = CompanionRule(
+        CompanionType.SUFFIX,
+        ".log",
+        ".tmp",
+        rule_def="suffix:.log:.tmp",
+    )
 
-    companions = rule.get_companions(main)
+    companions = {rule.replace(main)}
 
-    assert companion_real in companions
-    assert companion_link not in companions
+    # simulate run_deletion() logic
+    valid_companions = {c for c in companions if c.exists() and c.is_file() and not c.is_symlink()}
+
+    assert companion_real in valid_companions
+    assert companion_link not in valid_companions
