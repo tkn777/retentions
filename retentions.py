@@ -514,7 +514,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_common = parser.add_argument_group("Common arguments")
 
     # positional arguments
-    g_main.add_argument("path", help="base directory to scan (recursion is not supported)")
+    g_main.add_argument("path", help="base directory to scan (no symlink traversal)")
     g_main.add_argument("file_pattern", help="glob pattern for matching files/folders (use quotes to prevent shell expansion)")
 
     # argument flags
