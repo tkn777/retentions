@@ -815,7 +815,7 @@ def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion:
 
 
 def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_companions: set[Path]) -> int:
-    if file.is_symlink():
+    if file.is_symlink(): # Should never happen
         raise IntegrityCheckFailedError(f"Refusing to delete symlink: {file}")
     deletion_count = 0
     if args.list_only:
