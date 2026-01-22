@@ -53,6 +53,44 @@ retentions **enforces internal consistency checks** before executing destructive
 
 ---
 
+## Symbolic Links
+
+Symbolic links are intentionally handled in a restrictive and explicit manner to preserve a strict, predictable, and auditable execution scope.
+
+### General Policy
+- Symbolic links are never deleted.
+- Symbolic links are never traversed recursively.
+- Symbolic links are treated as distinct filesystem objects and are not followed implicitly.
+
+This applies uniformly across files, folders, companion files, and deletion logic.
+
+### Base Directory Resolution
+User-supplied base paths are resolved before further processing.  
+As a result, a symbolic link used as the base path is treated according to its resolved target.
+
+This behavior is deliberate and consistent with the overall design principle of operating on normalized, real filesystem paths.
+
+### Folder Mode Time Sources (`path=`)
+When using `path=<file>` as a folder time source:
+- the path must refer to a real file
+- the file must reside inside the folder being evaluated
+- the resolved path is used for validation and timestamp extraction
+
+Symbolic links are not deleted, but resolved paths may be used as time references if they point to a valid file within the folder scope.
+
+### Rationale
+Symbolic links introduce ambiguity in scope, traversal, and intent.
+Rather than attempting to interpret or constrain symlink behavior heuristically,
+retentions opts for explicit, conservative rules:
+
+- no implicit scope expansion
+- no filesystem topology inference
+- no special cases during deletion
+
+This keeps retention decisions deterministic and the safety model easy to reason about.
+
+---
+
 ## Parser Design
 
 - **ModernStrictArgumentParser** overrides `error()` to produce clearer, trace-free error messages that behave consistently in CLI environments.
