@@ -6,7 +6,7 @@ _retentions() {
   _arguments -C -s \
     '1:path:base directory:_files -/' \
     '2:file_pattern:glob or regex pattern:->pattern' \
-    '--regex-mode'[treat file_pattern / protect as regex]:mode:(casesensitive ignorecase) \
+    '--regex-mode'[treat file_pattern and protect patterns as regex]:mode:(casesensitive ignorecase) \
     '--age-type'[file/folder age attribute]:time:(ctime mtime atime) \
     '--protect'[protect files from deletion]:pattern:->protect \
     '--hours'[retain one per hour]:N: \
@@ -25,7 +25,8 @@ _retentions() {
     '--dry-run'[dry run, do not delete anything] \
     '--no-lock-file'[disable lock file] \
     '--fail-on-delete-error'[fail and exit on delete error] \
-    '--delete-companions'[Delete companion files defined by rules]:pattern:->companions \
+    '--delete-companions'[delete companion files defined by rules]:pattern:->companions \
+    '--allow-symlinks'[treat symbolic links as regular filesystem objects (no recursive traversal)] \
     '--version'[show version and exit] \
     '--help'[show help and exit]
 
@@ -35,6 +36,8 @@ _retentions() {
       RBUFFER="'$RBUFFER"
       return 0
       ;;
-  esac}
+  esac
+}
+
 
 _retentions "$@"

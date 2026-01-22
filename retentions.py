@@ -555,6 +555,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_behavior.add_argument("--verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
         help="Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)")
     # fmt: on
+    g_behavior.add_argument("--allow-symlinks", action="store_true", help="Treat symbolic links as regular filesystem objects (no recursive traversal)")
 
     # experts options
     g_expert.add_argument("--delete-companions", type=str, metavar="rule", nargs="+", help="Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5')")

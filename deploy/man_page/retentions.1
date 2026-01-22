@@ -1,4 +1,4 @@
-.TH RETENTIONS 1 "2025-12-29" "retentions VERSION" "User Commands"
+.TH RETENTIONS 1 "2026-01-22" "retentions 1.3.0" "User Commands"
 
 .SH NAME
 retentions \- apply backup-style retention rules to any file set
@@ -214,6 +214,9 @@ Omit lock file (default: enabled)
 .TP
 --fail-on-delete-error
 Fails and exits if a file could not be deleted (default: disabled and print warning)
+.TP
+--allow-symlinks
+Treat symbolic links as regular filesystem objects (no recursive traversal).
 
 .PP
 Using --dry-run is a good option to start with retentions.
@@ -293,6 +296,20 @@ Uses the given file's timestamp
 .P
 Empty directories are ignored with a warning.
 Recursive traversal is used only to determine directory age.
+
+.SH SYMBOLIC LINKS
+By default, symbolic links are ignored.
+
+With --allow-symlinks, symbolic links are treated as regular filesystem
+objects. This applies to retention objects, companions, time source paths and
+the base path.
+
+Subfolder symlinks are never traversed recursively. This prevents unintentional
+scope expansion while still allowing symlinked folders as explicit retention
+targets.
+
+On Windows, directory junctions are treated as normal directories. Only actual
+symbolic links are subject to the rules above.
 
 .SH DELETE COMPANIONS
 deletes companion files together with a removed file (e.g. checksums or metadata).

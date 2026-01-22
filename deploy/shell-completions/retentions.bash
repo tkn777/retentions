@@ -28,12 +28,13 @@ _retentions() {
         --no-lock-file
         --fail-on-delete-error
         --delete-companions
+        --allow-symlinks
         --version
         --help
     "
 
     case "$prev" in
-        --regex-mode|-r)
+        --regex-mode)
             COMPREPLY=( $(compgen -W "casesensitive ignorecase" -- "$cur") )
             return
             ;;
@@ -41,7 +42,7 @@ _retentions() {
             COMPREPLY=( $(compgen -W "ctime mtime atime" -- "$cur") )
             return
             ;;
-        --verbose|-v|-V)
+        --verbose)
             COMPREPLY=( $(compgen -W "ERROR WARN INFO DEBUG 0 1 2 3" -- "$cur") )
             return
             ;;

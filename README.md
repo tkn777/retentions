@@ -235,6 +235,7 @@ python3 retentions.py <path> <file_pattern> [options]
 | `-X, --dry-run` | Show planned actions but do not delete any files |
 | `--no-lock-file` | Omit lock file (default: enabled) |
 | `--fail-on-delete-error` | Fails and exits if a file could not be deleted (default: disabled and print warning) |
+| `--allow-symlinks` | Treat symbolic links as regular filesystem objects (no recursive traversal) |
 
 💡 Using `--dry-run` is a good option to start with `retentions` 😏
 &nbsp;
@@ -329,6 +330,18 @@ The age of a directory is determined by one of the following time references:
 
 Empty directories are ignored (with a warning).
 Recursive traversal is used only to determine a directory’s age.
+
+---
+
+### ➡️ Symbolic links
+
+By default, symbolic links are ignored.
+
+With `--allow-symlinks`, symbolic links are treated as regular filesystem objects.
+This applies to retention objects, companions, time source paths and the base path.
+
+Subfolder symlinks are never traversed recursively.
+This prevents unintentional scope expansion while still allowing symlinked folders as explicit retention targets.
 
 ---
 
