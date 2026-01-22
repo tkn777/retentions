@@ -266,3 +266,77 @@ def test_filestats_rglob_does_not_follow_symlink_dirs(tmp_path: Path, symlinks_s
 
     # But the file inside the symlink target must NOT
     assert file_inside not in files
+
+
+def test_filestats_path_time_source_file_ok(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+    folder.mkdir()
+
+    time_file = folder / "time.txt"
+    time_file.write_text("x")
+
+    stats = FileStats(
+        age_type="mtime",
+        folder_mode=True,
+        folder_mode_time_src=f"path={time_file}",
+    )
+
+    ts = stats.get_file_seconds(folder)
+    assert isinstance(ts, int)
+
+
+def test_filestats_path_time_source_not_a_file(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+    folder.mkdir()
+
+    subdir = folder / "subdir"
+    subdir.mkdir()
+
+    stats = FileStats(
+        age_type="mtime",
+        folder_mode=True,
+        folder_mode_time_src=f"path={subdir}",
+    )
+
+    with pytest.raises(ValueError, match="must be a file"):
+        stats.get_file_seconds(folder)
+
+
+def test_filestats_path_time_source_is_symlink(tmp_path: Path, symlinks_supported: bool) -> None:
+    if not symlinks_supported:
+        pytest.skip("Symlinks not supported on this platform")
+
+    folder = tmp_path / "folder"
+    folder.mkdir()
+
+    real_file = folder / "real.txt"
+    real_file.write_text("x")
+
+    link = folder / "time_link.txt"
+    link.symlink_to(real_file)
+
+    stats = FileStats(
+        age_type="mtime",
+        folder_mode=True,
+        folder_mode_time_src=f"path={link}",
+    )
+
+    with pytest.raises(ValueError, match="must not be a symlink"):
+        stats.get_file_seconds(folder)
+
+
+def test_filestats_path_time_source_outside_folder(tmp_path: Path) -> None:
+    folder = tmp_path / "folder"
+    folder.mkdir()
+
+    external = tmp_path / "external.txt"
+    external.write_text("x")
+
+    stats = FileStats(
+        age_type="mtime",
+        folder_mode=True,
+        folder_mode_time_src=f"path={external}",
+    )
+
+    with pytest.raises(ValueError, match="must be inside the folder"):
+        stats.get_file_seconds(folder)
