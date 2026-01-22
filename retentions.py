@@ -13,6 +13,7 @@
 import argparse
 import re
 import shlex
+import shutil
 import sys
 import traceback
 from collections import defaultdict
@@ -786,7 +787,10 @@ def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion:
     else:
         logger.verbose(LogLevel.INFO, f"DELETING{' (COMPANION)' if is_companion else ''}: {file.name}")
         try:
-            file.unlink()
+            if args.folder_mode:
+                shutil.rmtree(file)
+            else:
+                file.unlink()
         except OSError as e:
             error_message = f"Error while deleting {'(companion) ' if is_companion else ''}{args.entity_name} '{file.name}': {e}"
             if args.fail_on_delete_error:
