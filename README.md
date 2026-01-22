@@ -373,6 +373,7 @@ TYPE:MATCH:COMPANIONS
 Symbolic links are intentionally **not supported**.
 
 All paths must refer to real filesystem objects.  
+
 This restriction ensures a strict, predictable retention scope and avoids ambiguous or hard-to-reason-about filesystem behavior.
 
 ---
