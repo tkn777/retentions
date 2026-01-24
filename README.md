@@ -131,7 +131,6 @@ You can use the Debian repository provided by `thk-systems.net` to receive autom
 
 ```bash
 curl -fsSL https://debian.thk-systems.net/repo-install.sh | sudo sh
-sudo apt update
 sudo apt install retentions
 ```
 
