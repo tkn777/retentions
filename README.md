@@ -130,7 +130,7 @@ This installs:
 You can use the Debian repository of thk-systems.net:
 
 ```bash
-sudo curl -fsSL https://debian.thk-systems.net/repo-install.sh | sh
+curl -fsSL https://debian.thk-systems.net/repo-install.sh | sudo sh
 sudo apt update
 sudo apt install retentions
 ```
