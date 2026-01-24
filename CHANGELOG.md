@@ -1,4 +1,4 @@
-### 1.2.2 - UNRELEASED
+### 1.2.2 - 24.01.2026
 - Added thk-systems debian repo
 - Added consistent handling of symlinks (and add tests for that)
 
