@@ -125,6 +125,16 @@ This installs:
 - documentation in `/usr/share/doc/retentions/`
 - shell completion for `bash` and `zsh`
 
+#### 🗄️ Debian Repository
+
+You can use the Debian repository of thk-systems.net:
+
+```bash
+curl -fsSL https://debian.thk-systems.net/repo-install.sh | sh
+apt update
+apt install retentions
+```
+
 ### 📦 Option 2 – Redhat Package (.rpm)
 
 Download the latest `.rpm` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
