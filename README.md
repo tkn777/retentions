@@ -130,9 +130,9 @@ This installs:
 You can use the Debian repository of thk-systems.net:
 
 ```bash
-curl -fsSL https://debian.thk-systems.net/repo-install.sh | sh
-apt update
-apt install retentions
+sudo curl -fsSL https://debian.thk-systems.net/repo-install.sh | sh
+sudo apt update
+sudo apt install retentions
 ```
 
 ### 📦 Option 2 – Redhat Package (.rpm)
