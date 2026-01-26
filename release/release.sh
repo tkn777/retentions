@@ -67,7 +67,7 @@ cp retentions.py "${PKG_DIR}/${APP}.py"
 # Documentation + Manpage
 # -----------------------------------------------------------------------------
 echo "==> Copying documentation..."
-cp README.md LICENSE SECURITY.md ROADMAP.md "$PKG_DIR/docs/" 2>/dev/null || true
+cp README.md LICENSE SECURITY.md CONTRIBUTING.md DESIGN_DECISONS.md RELEASE_POLICY.md "$PKG_DIR/docs/" 2>/dev/null || true
 
 echo "==> Copying man page..."
 cp deploy/man_page/retentions.1 "$PKG_DIR/docs/${APP}.1"
@@ -106,7 +106,7 @@ echo "==> Creating Debian package..."
 } > "$DEB_DIR/usr/bin/${APP}"
 chmod 755 "$DEB_DIR/usr/bin/${APP}"
 
-cp README.md LICENSE SECURITY.md ROADMAP.md "$DEB_DIR/usr/share/doc/${APP}/" 2>/dev/null || true
+cp README.md LICENSE SECURITY.md CONTRIBUTING.md DESIGN_DECISONS.md RELEASE_POLICY.md "$DEB_DIR/usr/share/doc/${APP}/" 2>/dev/null || true
 
 gzip -9 < deploy/man_page/retentions.1 > "$DEB_DIR/usr/share/man/man1/${APP}.1.gz"
 
