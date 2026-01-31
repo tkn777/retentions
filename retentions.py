@@ -250,7 +250,9 @@ class ModernHelpFormatter(argparse.HelpFormatter):
 
     @no_type_check
     def __init__(self, *a, **kw) -> None:  # noqa: ANN002, ANN003
-        super().__init__(*a, max_help_position=50, width=160, **kw)
+        width = shutil.get_terminal_size(fallback=(80, 24)).columns
+        max_pos = min(50, max(24, width // 2))
+        super().__init__(*a, max_help_position=max_pos, width=width, **kw)
 
     @no_type_check
     def start_section(self, heading) -> None:  # noqa: ANN001
