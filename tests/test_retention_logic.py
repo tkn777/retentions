@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, no_type_check
 
+import retentions
 from retentions import SCRIPT_START, ConfigNamespace, FileStats, Logger, LogLevel, RetentionLogic
 
 
@@ -288,7 +289,8 @@ def test_retention_folder_mode_days_two_levels(tmp_path: Path) -> None:
     assert folder_old in result.prune
 
 
-def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Path) -> None:
+@no_type_check
+def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Path, monkeypatch) -> None:
     """
     Folder-mode retention with:
     - multiple top-level folders
@@ -297,6 +299,9 @@ def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Pa
     - at least two folders kept by weeks
     - at least two folders pruned
     """
+
+    fixed_date = int(datetime(2026, 1, 31, 12, 0, tzinfo=timezone.utc).timestamp())
+    monkeypatch.setattr(retentions, "SCRIPT_START", fixed_date)
 
     # --- Top-level folders (retention objects)
     week_1 = tmp_path / "week_1"
