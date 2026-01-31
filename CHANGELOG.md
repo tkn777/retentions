@@ -1,4 +1,5 @@
 ### 1.2.3 - NOT YET RELEASED
+- Fixed bug: Logger._decisions was a class variable, but should be an instance variable
 - Optimized help output
 
 ### 1.2.2 - 24.01.2026
