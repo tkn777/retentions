@@ -1,4 +1,5 @@
 ### 1.2.2 - 24.01.2026
+- Optimized help output
 - Added thk-systems debian repo
 - Added consistent handling of symlinks (and add tests for that)
 
