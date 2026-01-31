@@ -147,13 +147,14 @@ class LogLevel(IntEnum):
 
 
 class Logger:
-    _decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
+    _decisions: dict[Path, list[tuple[str, Optional[str]]]]
     _args: ConfigNamespace
     _file_stats: FileStats
 
     def __init__(self, args: ConfigNamespace, file_stats: FileStats) -> None:
         self._args = args
         self._file_stats = file_stats
+        self._decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
 
     def _get_file_attributes(self, file: Path, args: ConfigNamespace, file_stats: FileStats) -> str:
         return f"{args.age_type}: {datetime.fromtimestamp(file_stats.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats.get_file_bytes(file))}"

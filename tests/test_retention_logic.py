@@ -200,7 +200,7 @@ def test_filter_max_files(tmp_path: Path) -> None:
     assert len(result.prune) == 1
     assert len(logger._decisions[files[0]]) == 1
     assert len(logger._decisions[files[2]]) == 2
-    assert "Filtering: max total count of files exceeded" in Logger._decisions[files[2]][0][0]
+    assert "Filtering: max total count of files exceeded" in logger._decisions[files[2]][0][0]
 
 
 @no_type_check
@@ -325,7 +325,7 @@ def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Pa
     # --- Assign mtimes (youngest-file semantics)
     os.utime(week_1 / "sub" / "file.txt", (SCRIPT_START - one_week, SCRIPT_START - one_week))
     os.utime(week_2 / "sub" / "file.txt", (SCRIPT_START - 2 * one_week, SCRIPT_START - 2 * one_week))
-    os.utime(month_1 / "sub" / "file.txt", (SCRIPT_START - one_month, SCRIPT_START - one_month))
+    os.utime(month_1 / "sub" / "file.txt", (SCRIPT_START - one_month + 10, SCRIPT_START - one_month + 10))
     os.utime(month_1 / "sub" / "file2.txt", (SCRIPT_START - one_month, SCRIPT_START - one_month))
     os.utime(old_1 / "sub" / "file.txt", (SCRIPT_START - 3 * one_month, SCRIPT_START - 3 * one_month))
     os.utime(old_2 / "sub" / "file.txt", (SCRIPT_START - 4 * one_month, SCRIPT_START - 4 * one_month))
@@ -349,8 +349,6 @@ def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Pa
 
     logic = RetentionLogic(folders, args, logger, cache)
     result = logic.process_retention_logic()
-
-    logger.print_decisions()
 
     # --- Expectations
     # kept by weeks

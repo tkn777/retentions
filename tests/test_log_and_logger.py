@@ -10,9 +10,6 @@ from retentions import FileStats, Logger, LogLevel
 
 def test_logger_add_and_print_decisions(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Logger should accumulate decisions and print them based on the verbosity level."""
-    # Reset the class-level decisions store to avoid interference between tests
-    Logger._decisions.clear()
-
     # Prepare a logger with INFO level
     args = SimpleNamespace(verbose=LogLevel.INFO, age_type="atime")
     cache = FileStats(args.age_type)
@@ -32,7 +29,6 @@ def test_logger_add_and_print_decisions(tmp_path: Path, capsys: pytest.CaptureFi
     assert "Keep for some reason" in captured.out
 
     # Now simulate DEBUG level to see history
-    Logger._decisions.clear()
     args.verbose = LogLevel.DEBUG
     logger_debug = Logger(args, cache)
     file_a = tmp_path / "a.txt"
