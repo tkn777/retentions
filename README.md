@@ -313,6 +313,60 @@ python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\0' | xar
 python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
 ```
 
+#### 🗓️ Hierarchical calendar-based retention example
+
+Retention levels are applied hierarchically by calendar containment, not additively by age.
+
+Each coarser-grained retention level only selects data strictly *outside* the
+calendar range already covered by finer-grained levels.
+
+Example:
+
+```
+-d 1 -w 1 -m 1
+```
+
+Assume the most recent retained day is: `2026-01-31`
+
+This day lies in:
+- calendar week **2026-W05**
+- calendar month **2026-01**
+
+Retention selection therefore proceeds as follows:
+
+- **Days (`-d 1`)**
+  - keep: `2026-01-31`
+
+- **Weeks (`-w 1`)**
+  - select a week *before* calendar week `2026-W05`
+  - the week containing the retained day is excluded
+  - the first eligible week is **2026-W04**
+
+- **Months (`-m 1`)**
+  - select a month *before* calendar month `2026-01`
+  - the month containing the retained week is excluded
+  - the first eligible month is **2025-12**
+
+If no data exists in these older calendar buckets, no additional items are kept.
+
+This hierarchical approach ensures that:
+- finer-grained retention always takes precedence,
+- coarser-grained retention never overlaps with finer levels,
+- and each retention level contributes unique temporal coverage.
+&nbsp;
+
+```text
+Time ─────────────────────────────────────────────────────────▶
+
+Month:   2025-12        |        2026-01
+         [ eligible ]   | [ excluded by weeks ]
+                         ┌───────────────────────────────┐
+Week:                    │   2026-W05  (excluded)         │
+                         │   2026-W04  ← selected (weeks) │
+                         └───────────────────────────────┘
+Day:                                   2026-01-31 ← selected (days)
+```
+
 ---
 
 ### 📁 Folder mode (`--folder-mode`)
