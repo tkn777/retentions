@@ -675,6 +675,8 @@ class RetentionLogic:
         buckets: dict[str, list[Path]] = {}
         for file in self._matches:
             if(self._args.skip_by_filesize and self._file_stats.get_file_bytes(file) < self._args.skip_by_filesize_bytes):
+                self._prune.add(file)
+                self._logger.add_decision(LogLevel.INFO, file, "Skipped (and deleted) because of filesize", f"{ModernStrictArgumentParser.format_size(self._file_stats.get_file_bytes(file))} < {self._args.skip_by_filesize_bytes}")
                 continue
             ts = self._file_stats.get_file_seconds(file)
             key = self._get_bucket_key(retention_mode, ts)
