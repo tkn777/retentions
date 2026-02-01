@@ -17,9 +17,10 @@ _retentions() {
     '--week13'[retain one per 13-week block]:N: \
     '--years'[retain one per year]:N: \
     '--last'[retain last N]:N: \
+    '--skip-by-filesize'[Skip and delete files smaller than size]:size: \
     '--max-size'[maximum total size]:size: \
-    '--max-files'[maximum total files/folders]:N: \
-    '--max-age'[maximum total age]:time: \
+    '--max-files'[maximum total files/folders]:count: \
+    '--max-age'[maximum total age]:age: \
     '--list-only'[list files/folders only, optional separator]:sep: \
     '--verbose'[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3) \
     '--dry-run'[dry run, do not delete anything] \

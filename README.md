@@ -214,6 +214,7 @@ python3 retentions.py <path> <file_pattern> [options]
 | `--week13 <int>` | Retain one file per 13-week block from the last N 13-week blocks (quarter by weeks) |
 | `-y, --years <int>` | Retain one file per year from the last N years |
 | `-l, --last <int>` | Always retains the N most recently modified files |
+| `-i, --skip-by-filesize <size>` | Skip (and delete) files smaller than <size> (e.g. 12, 2K, 1.5M) |
 
 📝 Every retention option can be combined with any (or all) others
 &nbsp;
@@ -227,9 +228,9 @@ python3 retentions.py <path> <file_pattern> [options]
 
 | Filter options | Description |
 |--------|--------------|
-| `-s, --max-size <str>` | Keep maximum within total size (e.g. 12, 10.5M, 500G, 3E) |
-| `-f, --max-files <int>` | Keep maximum total files |
-| `-a, --max-age <str>` | Keep maximum within time span N from script start (e.g. 3600, 1h, 1d, 1w, 1m, 1q, 1y) |
+| `-s, --max-size <size>` | Keep maximum within total size (e.g. 12, 10.5M, 500G, 3E) |
+| `-f, --max-files <count>` | Keep maximum total files |
+| `-a, --max-age <age>` | Keep maximum within time span N from script start (e.g. 3600, 1h, 1d, 1w, 1m, 1q, 1y) |
 
 📝 Every filter option can be combined with any (or all) others
 &nbsp;

@@ -247,7 +247,7 @@ class CompanionRule:
 
 
 class ModernHelpFormatter(argparse.HelpFormatter):
-    JOINED_ARGS = {"max_size", "max_age"}
+    JOINED_ARGS = {"max_size", "max_age", "skip_by_filesize"}
 
     @no_type_check
     def __init__(self, *a, **kw) -> None:  # noqa: ANN002, ANN003
@@ -540,11 +540,12 @@ def create_parser() -> ModernStrictArgumentParser:
     g_ret.add_argument("--week13", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per 13-week block from the last N 13-week blocks (quarter by weeks)")
     g_ret.add_argument("--years", "-y", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per year from the last N years")
     g_ret.add_argument("--last", "-l", type=parser.positive_int_argument, metavar="N", help="Always retain the N most recently modified files/folders")
+    g_ret.add_argument("--skip-by-filesize", "-i", type=str, metavar="size", nargs="+", help="Skip (and delete) files smaller than <size> (e.g. 12, 2K, 1.5M)")
 
     # filter options
-    g_filter.add_argument("--max-size", "-s", type=str, metavar="N", nargs="+", help="Keep maximum within total size N (e.g. 12, 10.5M, 500 G, 3E)")
-    g_filter.add_argument("--max-files", "-f", type=parser.positive_int_argument, metavar="N", help="Keep maximum total files/folders N")
-    g_filter.add_argument("--max-age", "-a", type=str, metavar="N", nargs="+", help="Keep maximum within time span N from script start (e.g. 3600, 1h, 1 d, 1w, 1m, 1q, 1y - with 1 month = 30 days)")
+    g_filter.add_argument("--max-size", "-s", type=str, metavar="size", nargs="+", help="Keep maximum within total size N (e.g. 12, 10.5M, 500 G, 3E)")
+    g_filter.add_argument("--max-files", "-f", type=parser.positive_int_argument, metavar="count", help="Keep maximum total files/folders N")
+    g_filter.add_argument("--max-age", "-a", type=str, metavar="age", nargs="+", help="Keep maximum within time span N from script start (e.g. 3600, 1h, 1 d, 1w, 1m, 1q, 1y - with 1 month = 30 days)")
 
     # behavior options
     g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files/folders")

@@ -162,6 +162,9 @@ Retain one file per year from the last N years
 .TP
 -l, --last <int>
 Always retains the N most recently modified files
+.TP
+-i, --skip-by-filesize <size>
+Skip (and delete) files smaller than <size> (e.g. 12, 2K, 1.5M)
 
 .PP
 Hint:
@@ -178,13 +181,13 @@ If no retention period is specified, all files are retained (and may be filtered
 
 .SS Filter options
 .TP
--s, --max-size <str>
+-s, --max-size <size>
 Keep maximum within total size (e.g. 12, 10.5M, 500G, 3E)
 .TP
--f, --max-files <int>
+-f, --max-files <count>
 Keep maximum total files
 .TP
--a, --max-age <str>
+-a, --max-age <age>
 Keep maximum within time span N from script start (e.g. 3600, 1h, 1d, 1w, 1m, 1q, 1y)
 
 .PP

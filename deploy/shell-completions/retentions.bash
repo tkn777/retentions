@@ -19,6 +19,7 @@ _retentions() {
         --week13
         --years
         --last
+        --skip-by-filesize
         --max-size
         --max-files
         --max-age
