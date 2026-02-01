@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, no_type_check
 
-import retentions
 from retentions import SCRIPT_START, ConfigNamespace, FileStats, Logger, LogLevel, RetentionLogic
 
 
@@ -300,8 +299,7 @@ def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Pa
     - at least two folders pruned
     """
 
-    fixed_date = int(datetime(2026, 1, 31, 12, 0, tzinfo=timezone.utc).timestamp())
-    monkeypatch.setattr(retentions, "SCRIPT_START", fixed_date)
+    now = datetime(2026, 1, 31, 12, 0, 0, tzinfo=timezone.utc).timestamp()
 
     # --- Top-level folders (retention objects)
     week_1 = tmp_path / "week_1"
@@ -328,12 +326,12 @@ def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Pa
     one_month = 31 * 24 * 60 * 60
 
     # --- Assign mtimes (youngest-file semantics)
-    os.utime(week_1 / "sub" / "file.txt", (SCRIPT_START - one_week, SCRIPT_START - one_week))
-    os.utime(week_2 / "sub" / "file.txt", (SCRIPT_START - 2 * one_week, SCRIPT_START - 2 * one_week))
-    os.utime(month_1 / "sub" / "file.txt", (SCRIPT_START - one_month + 10, SCRIPT_START - one_month + 10))
-    os.utime(month_1 / "sub" / "file2.txt", (SCRIPT_START - one_month, SCRIPT_START - one_month))
-    os.utime(old_1 / "sub" / "file.txt", (SCRIPT_START - 3 * one_month, SCRIPT_START - 3 * one_month))
-    os.utime(old_2 / "sub" / "file.txt", (SCRIPT_START - 4 * one_month, SCRIPT_START - 4 * one_month))
+    os.utime(week_1 / "sub" / "file.txt", (now - one_week, now - one_week))
+    os.utime(week_2 / "sub" / "file.txt", (now - 2 * one_week, now - 2 * one_week))
+    os.utime(month_1 / "sub" / "file.txt", (now - one_month + 10, now - one_month + 10))
+    os.utime(month_1 / "sub" / "file2.txt", (now - one_month, now - one_month))
+    os.utime(old_1 / "sub" / "file.txt", (now - 3 * one_month, now - 3 * one_month))
+    os.utime(old_2 / "sub" / "file.txt", (now - 4 * one_month, now - 4 * one_month))
 
     # --- Retention rules:
     # keep 2 per week, keep 1 per month
