@@ -450,6 +450,10 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 if ns.protect is not None:
                     ns.protect_compiled = self._compile_regex(ns.protect, ns.regex_mode)
 
+            # incompatible options (folder-mode and skip-by-filesize)
+            if ns.folder_mode and ns.skip_by_filesize is not None:
+                self.add_error("--folder-mode and --skip-by-filesize must not be combined")
+
             # skip by filesize
             if ns.skip_by_filesize is not None:
                 ns.skip_by_filesize = "".join(token.strip() for token in ns.skip_by_filesize)
