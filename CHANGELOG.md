@@ -1,4 +1,5 @@
-### 1.2.3 - NOT YET RELEASED
+### 1.3.0 - 01.02.2026
+- Added `--skip-by-filesize`
 - Fixed bug: Logger._decisions was a class variable, but should be an instance variable
 - Optimized help output
 
