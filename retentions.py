@@ -674,6 +674,8 @@ class RetentionLogic:
     def _create_retention_buckets(self, retention_mode: str) -> dict[str, list[Path]]:
         buckets: dict[str, list[Path]] = {}
         for file in self._matches:
+            if(self._args.skip_by_filesize and self._file_stats.get_file_bytes(file) < self._args.skip_by_filesize_bytes):
+                continue
             ts = self._file_stats.get_file_seconds(file)
             key = self._get_bucket_key(retention_mode, ts)
             buckets.setdefault(key, []).append(file)
