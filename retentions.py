@@ -450,6 +450,11 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 if ns.protect is not None:
                     ns.protect_compiled = self._compile_regex(ns.protect, ns.regex_mode)
 
+            # skip by filesize
+            if ns.skip_by_filesize is not None:
+                ns.skip_by_filesize = "".join(token.strip() for token in ns.skip_by_filesize)
+                ns.skip_by_filesize_bytes = self._parse_positive_size_argument(ns.skip_by_filesize)
+
             # max-size parsing
             if ns.max_size is not None:
                 ns.max_size = "".join(token.strip() for token in ns.max_size)
