@@ -38,6 +38,7 @@ def _make_args(**overrides) -> ConfigNamespace:  # noqa: F821
         max_age_seconds=None,
         dry_run=False,
         entity_name="file",
+        skip_by_filesize=False,
     )
     defaults.update(overrides)
     return ConfigNamespace(**defaults)
@@ -353,6 +354,8 @@ def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Pa
     logic = RetentionLogic(folders, args, logger, cache)
     result = logic.process_retention_logic()
 
+    logger.print_decisions()
+
     # --- Expectations
     # kept by weeks
     assert week_1 in result.keep
@@ -371,3 +374,72 @@ def test_retention_folder_mode_multiple_weeks_and_months_with_prune(tmp_path: Pa
 
     # ensure only top-level folders are retention objects
     assert all(p.parent == tmp_path for p in result.keep | result.prune)
+
+
+def test_skip_by_filesize_is_pruned_and_logged(tmp_path: Path) -> None:
+    big = tmp_path / "big.txt"
+    small = tmp_path / "small.txt"
+
+    big.write_bytes(b"x" * 100)
+    small.write_bytes(b"x")
+
+    args = _make_args(
+        days=1,
+        skip_by_filesize="10",
+        skip_by_filesize_bytes=10,
+        verbose=LogLevel.INFO,
+    )
+
+    cache = FileStats("mtime")
+    logger = Logger(args, cache)
+
+    result = RetentionLogic([small, big], args, logger, cache).process_retention_logic()
+
+    # functional result
+    assert big in result.keep
+    assert small in result.prune
+
+    # decision log assertions
+    decisions = result.decisions_log._decisions
+
+    assert small in decisions
+    messages = [msg for msg, _ in decisions[small]]
+
+    assert any("Skipped" in msg for msg in messages)
+    assert any("filesize" in msg.lower() for msg in messages)
+    assert logger._decisions[small][0][0].startswith("Skipped (and deleted)")
+
+
+def test_skip_by_filesize_does_not_consume_bucket_and_logs(tmp_path: Path) -> None:
+    broken = tmp_path / "broken.txt"
+    good = tmp_path / "good.txt"
+
+    broken.write_bytes(b"x")
+    good.write_bytes(b"x" * 1_042)
+
+    args = _make_args(
+        days=1,
+        skip_by_filesize="1042",
+        skip_by_filesize_bytes=1_024,
+        verbose=LogLevel.INFO,
+    )
+
+    cache = FileStats("mtime")
+    logger = Logger(args, cache)
+
+    result = RetentionLogic([broken, good], args, logger, cache).process_retention_logic()
+
+    # retention correctness
+    assert good in result.keep
+    assert broken in result.prune
+
+    decisions = result.decisions_log._decisions
+
+    # broken file has skip decision
+    assert broken in decisions
+    assert any("Skipped" in msg for msg, _ in decisions[broken])
+    assert logger._decisions[broken][0][0].startswith("Skipped (and deleted)")
+
+    # good file has keep decision
+    assert good in decisions
+    assert any("Keeping" in msg for msg, _ in decisions[good])
