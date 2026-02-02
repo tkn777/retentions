@@ -443,3 +443,38 @@ def test_skip_by_filesize_does_not_consume_bucket_and_logs(tmp_path: Path) -> No
     # good file has keep decision
     assert good in decisions
     assert any("Keeping" in msg for msg, _ in decisions[good])
+
+
+def test_skip_by_filesize_without_any_retentions(tmp_path: Path) -> None:
+    broken = tmp_path / "broken.txt"
+    good = tmp_path / "good.txt"
+
+    broken.write_bytes(b"x")
+    good.write_bytes(b"x" * 1_042)
+
+    args = _make_args(
+        skip_by_filesize="1042",
+        skip_by_filesize_bytes=1_024,
+        verbose=LogLevel.DEBUG,
+    )
+
+    cache = FileStats("mtime")
+    logger = Logger(args, cache)
+
+    result = RetentionLogic([broken, good], args, logger, cache).process_retention_logic()
+
+    logger.print_decisions()
+
+    # retention correctness
+    assert good in result.keep
+    assert broken in result.keep
+
+    decisions = result.decisions_log._decisions
+
+    # broken file has skip decision
+    assert broken in decisions
+    assert any("Keeping" in msg for msg, _ in decisions[broken])
+
+    # good file has keep decision
+    assert good in decisions
+    assert any("Keeping" in msg for msg, _ in decisions[good])
