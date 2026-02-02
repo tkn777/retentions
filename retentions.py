@@ -719,8 +719,7 @@ class RetentionLogic:
                 continue
             if kept >= self._args.last:
                 break
-            if self._logger.has_log_level(LogLevel.INFO) and file not in self._keep:
-                self._logger.add_decision(LogLevel.INFO, file, f"Keeping last {kept + 1:02d}/{self._args.last:02d}")
+            self._logger.add_decision(LogLevel.INFO, file, f"Keeping last {kept + 1:02d}/{self._args.last:02d}") if file not in self._keep else None
             self._keep.add(file)  # Idempotent
             self._prune.discard(file)  # Idempotent
             kept += 1
