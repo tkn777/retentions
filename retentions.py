@@ -406,8 +406,6 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
     @no_type_check
     def _validate_arguments(self, ns) -> None:  # noqa: ANN001
         try:
-            has_retention_options = ns.minutes or ns.hours or ns.days or ns.weeks or ns.week13 or ns.months or ns.quarters or ns.years
-
             # Check path and availability of age-type
             if not Path(ns.path).resolve().is_dir():
                 self.add_error(f"Path {ns.path} is not a valid directory")
@@ -466,6 +464,8 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             def validate(check: bool, msg: str) -> None:
                 if check():
                     self.add_error(msg)
+
+            has_retention_options = ns.minutes or ns.hours or ns.days or ns.weeks or ns.week13 or ns.months or ns.quarters or ns.years
 
             validate(lambda: ns.list_only and ns.verbose > LogLevel.ERROR, "--list-only and --verbose (> ERROR) cannot be used together")
             validate(lambda: ns.list_only and ns.delete_companions, "--list-only and --delete-companions must not be combined, because list-only is not for companions")

@@ -1,3 +1,8 @@
+### 1.3.1 - 02.02.2026
+- Added check: `--skip-by-size` must be combined with some retention option
+- Optimized validation of arguments
+- Add some tests
+
 ### 1.3.0 - 01.02.2026
 - Added `--skip-by-filesize`
 - Fixed bug: Logger._decisions was a class variable, but should be an instance variable
