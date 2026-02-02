@@ -461,8 +461,8 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             ns.delete_companion_set = self._parse_delete_companions(ns.delete_companions) if ns.delete_companions is not None else set()
 
             # Validate options
-            def validate(check: bool, msg: str) -> None:
-                if check():
+            def validate(failed: Callable[[], bool], msg: str) -> None:
+                if failed():
                     self.add_error(msg)
 
             has_retention_options = ns.minutes or ns.hours or ns.days or ns.weeks or ns.week13 or ns.months or ns.quarters or ns.years
