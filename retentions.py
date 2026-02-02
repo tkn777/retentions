@@ -465,7 +465,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 if failed():
                     self.add_error(msg)
 
-            has_retention_options = ns.minutes or ns.hours or ns.days or ns.weeks or ns.week13 or ns.months or ns.quarters or ns.years
+            has_retention_options = ns.minutes or ns.hours or ns.days or ns.weeks or ns.week13 or ns.months or ns.quarters or ns.years or ns.last
 
             validate(lambda: ns.list_only and ns.verbose > LogLevel.ERROR, "--list-only and --verbose (> ERROR) cannot be used together")
             validate(lambda: ns.list_only and ns.delete_companions, "--list-only and --delete-companions must not be combined, because list-only is not for companions")
@@ -648,6 +648,13 @@ class RetentionLogic:
         self._logger = logger
         self._file_stats = file_stats
 
+    def _skip_by_filesize(self, file: Path) -> bool:
+        if self._args.skip_by_filesize and self._file_stats.get_file_bytes(file) < self._args.skip_by_filesize_bytes:
+            self._prune.add(file)
+            self._logger.add_decision(LogLevel.INFO, file, "Skipped (and deleted) because of filesize", debug=f"{ModernStrictArgumentParser.format_size(self._file_stats.get_file_bytes(file))} < {self._args.skip_by_filesize_bytes}")
+            return True
+        return False
+
     def _get_bucket_key(self, retention_mode: str, timestamp: int) -> str:
         dt = datetime.fromtimestamp(timestamp)
         if retention_mode == "minutes":
@@ -675,9 +682,7 @@ class RetentionLogic:
     def _create_retention_buckets(self, retention_mode: str) -> dict[str, list[Path]]:
         buckets: dict[str, list[Path]] = {}
         for file in self._matches:
-            if self._args.skip_by_filesize and self._file_stats.get_file_bytes(file) < self._args.skip_by_filesize_bytes:
-                self._prune.add(file)
-                self._logger.add_decision(LogLevel.INFO, file, "Skipped (and deleted) because of filesize", f"{ModernStrictArgumentParser.format_size(self._file_stats.get_file_bytes(file))} < {self._args.skip_by_filesize_bytes}")
+            if self._skip_by_filesize(file):
                 continue
             ts = self._file_stats.get_file_seconds(file)
             key = self._get_bucket_key(retention_mode, ts)
@@ -708,13 +713,17 @@ class RetentionLogic:
         return last_keep_time
 
     def _process_last_n(self) -> None:
-        last_files = self._matches[: self._args.last]  # Get the N most recently modified files regardless from any retention rule (newest first)
-        if self._logger.has_log_level(LogLevel.INFO):
-            for index, file in enumerate(last_files, start=1):
-                if file not in self._keep:  # Retention rules may have already kept this file, their message takes precedence
-                    self._logger.add_decision(LogLevel.INFO, file, f"Keeping last {index:02d}/{self._args.last:02d}")
-        self._keep.update(last_files)
-        self._prune.difference_update(last_files)  # ensure last N files are not pruned
+        kept = 0
+        for file in self._matches:
+            if self._skip_by_filesize(file):
+                continue
+            if kept >= self._args.last:
+                break
+            if self._logger.has_log_level(LogLevel.INFO) and file not in self._keep:
+                self._logger.add_decision(LogLevel.INFO, file, f"Keeping last {kept + 1:02d}/{self._args.last:02d}")
+            self._keep.add(file)  # Idempotent
+            self._prune.discard(file)  # Idempotent
+            kept += 1
 
     def _filter_file(self, file: Path, message: str) -> None:
         self._keep.remove(file)

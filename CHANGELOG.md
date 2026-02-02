@@ -1,3 +1,8 @@
+### 1.3.2 - 02.02.2026
+- Fixed validation of incompatible arguments
+- Added check: `--skip-by-size` to last-logic
+- Changed output of verbose of deleting from "DELETE" to "Delete"
+
 ### 1.3.1 - 02.02.2026
 - Added check: `--skip-by-size` must be combined with some retention option
 - Optimized validation of arguments
