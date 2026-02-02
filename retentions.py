@@ -438,27 +438,11 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             if ns.list_only == "\\0":
                 ns.list_only = "\0"
 
-            # incompatible options (list-only and verbose > ERROR)
-            if ns.list_only and ns.verbose > LogLevel.ERROR:
-                self.add_error("--list-only and --verbose (> ERROR) cannot be used together")
-
-            # incompatible options (list-only and delete_companions)
-            if ns.list_only and ns.delete_companions:
-                self.add_error("--list-only and --delete-companions must not be combined, because list-only is not for companions")
-
             # regex validation (and compilation), also for protect
             if ns.regex_mode is not None:
                 ns.regex_compiled = self._compile_regex(ns.file_pattern, ns.regex_mode)
                 if ns.protect is not None:
                     ns.protect_compiled = self._compile_regex(ns.protect, ns.regex_mode)
-
-            # incompatible options (folder-mode and skip-by-filesize)
-            if ns.folder_mode and ns.skip_by_filesize is not None:
-                self.add_error("--folder-mode and --skip-by-filesize must not be combined")
-
-            # skip-by-filesize must be combined with any retention option
-            if ns.skip_by_filesize and not (has_retention_options):
-                self.add_error("--skip-by-filesize must be combined with any retention option(s)")
 
             # skip by filesize
             if ns.skip_by_filesize is not None:
@@ -475,12 +459,19 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 ns.max_age = "".join(token.strip() for token in ns.max_age)
                 ns.max_age_seconds = self._parse_positive_time_argument(ns.max_age)
 
-            # incompatible options folder-mode and delete_companions
-            if ns.folder_mode and ns.delete_companions:
-                self.add_error("--folder-mode and --delete-companions must not be combined")
-
             # companion deletes
             ns.delete_companion_set = self._parse_delete_companions(ns.delete_companions) if ns.delete_companions is not None else set()
+
+            # Validate incompatible options
+            def validate(check: bool, msg: str) -> None:
+                if check():
+                    self.add_error(msg)
+
+            validate(lambda: ns.list_only and ns.verbose > LogLevel.ERROR, "--list-only and --verbose (> ERROR) cannot be used together")
+            validate(lambda: ns.list_only and ns.delete_companions, "--list-only and --delete-companions must not be combined, because list-only is not for companions")
+            validate(lambda: ns.folder_mode and ns.skip_by_filesize, "--folder-mode and --skip-by-filesize must not be combined")
+            validate(lambda: ns.folder_mode and ns.delete_companions, "--folder-mode and --delete-companions must not be combined")
+            validate(lambda: ns.skip_by_filesize and not has_retention_options, "--skip-by-filesize must be combined with any retention option(s)")
 
             # Init some defaults
             ns.protected_files = set()
