@@ -454,6 +454,10 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             if ns.folder_mode and ns.skip_by_filesize is not None:
                 self.add_error("--folder-mode and --skip-by-filesize must not be combined")
 
+            # skip-by-filesize must be combined with any retention option
+            if ns.skip_by_filesize and not (ns.minutes or ns.hours or ns.days or ns.weeks or ns.week13 or ns.months or ns.quarters or ns.years):
+                self.add_error("--skip-by-filesize must be combined with any retention option(s)")
+
             # skip by filesize
             if ns.skip_by_filesize is not None:
                 ns.skip_by_filesize = "".join(token.strip() for token in ns.skip_by_filesize)
@@ -678,7 +682,7 @@ class RetentionLogic:
     def _create_retention_buckets(self, retention_mode: str) -> dict[str, list[Path]]:
         buckets: dict[str, list[Path]] = {}
         for file in self._matches:
-            if(self._args.skip_by_filesize and self._file_stats.get_file_bytes(file) < self._args.skip_by_filesize_bytes):
+            if self._args.skip_by_filesize and self._file_stats.get_file_bytes(file) < self._args.skip_by_filesize_bytes:
                 self._prune.add(file)
                 self._logger.add_decision(LogLevel.INFO, file, "Skipped (and deleted) because of filesize", f"{ModernStrictArgumentParser.format_size(self._file_stats.get_file_bytes(file))} < {self._args.skip_by_filesize_bytes}")
                 continue
