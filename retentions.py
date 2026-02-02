@@ -794,9 +794,9 @@ def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion:
     if file.parent.resolve() != Path(args.path).resolve():
         raise IntegrityCheckFailedError(f"{'(Companion) ' if is_companion else ''}{args.entity_name.capitalize()} '{file}' is not a child of parent directory '{file.parent}'")
     if args.dry_run:
-        logger.verbose(LogLevel.INFO, f"DRY-RUN DELETE{' (COMPANION)' if is_companion else ''}: {file.name}")  # Just simulate deletion
+        logger.verbose(LogLevel.INFO, f"Dry-run: deleting{' (companion)' if is_companion else ''}: {file.name}")  # Just simulate deletion
     else:
-        logger.verbose(LogLevel.INFO, f"DELETING{' (COMPANION)' if is_companion else ''}: {file.name}")
+        logger.verbose(LogLevel.INFO, f"Deleting{' (companion)' if is_companion else ''}: {file.name}")
         try:
             if args.folder_mode:
                 shutil.rmtree(file)

@@ -38,13 +38,13 @@ def test_run_deletion_dry_run_and_real(tmp_path, capsys) -> None:
     captured = capsys.readouterr()
     # Check that the file still exists and message contains 'DRY-RUN'
     assert file_path.exists()
-    assert "DRY-RUN DELETE" in captured.out
+    assert "Dry-run: deleting" in captured.out
     # Real deletion: should remove the file
     args.dry_run = False
     run_deletion(file_path, args, logger, set())
     captured2 = capsys.readouterr()
     assert not file_path.exists()
-    assert "DELETING" in captured2.out
+    assert "Deleting" in captured2.out
 
 
 def test_run_deletion_list_only(tmp_path, capsys) -> None:
@@ -186,8 +186,8 @@ def test_run_deletion_with_companion_deleted(tmp_path, capsys) -> None:
     assert not companion.exists()
 
     out = capsys.readouterr().out
-    assert "DELETING" in out
-    assert "DELETING (COMPANION)" in out
+    assert "Deleting" in out
+    assert "Deleting (companion)" in out
     assert main.name in out
     assert companion.name in out
 
@@ -293,7 +293,7 @@ def test_run_deletion_multiple_files_multiple_companions(tmp_path, capsys) -> No
     assert not b_info.exists()
 
     out = capsys.readouterr().out
-    assert "DELETING" in out
+    assert "Deleting" in out
 
 
 def test_folder_mode_deletes_directories(tmp_path: Path) -> None:
