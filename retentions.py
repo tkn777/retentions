@@ -462,7 +462,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             # companion deletes
             ns.delete_companion_set = self._parse_delete_companions(ns.delete_companions) if ns.delete_companions is not None else set()
 
-            # Validate incompatible options
+            # Validate options
             def validate(check: bool, msg: str) -> None:
                 if check():
                     self.add_error(msg)
