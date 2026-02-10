@@ -142,6 +142,95 @@ echo "==> Creating RPM via alien..."
 )
 
 # -----------------------------------------------------------------------------
+# Self-extracting Linux installer (.install)
+# -----------------------------------------------------------------------------
+echo "==> Creating self-extracting Linux installer..."
+
+INSTALLER_PAYLOAD_DIR="${BUILD_DIR}/${APP}-${VERSION}-linux-installer"
+INSTALLER_FILE="${BUILD_DIR}/${APP}-${VERSION}-linux.install"
+
+rm -rf "$INSTALLER_PAYLOAD_DIR"
+mkdir -p "$INSTALLER_PAYLOAD_DIR/docs" "$INSTALLER_PAYLOAD_DIR/man"
+
+# Python with shebang
+{
+    echo "#!/usr/bin/python3"
+    cat retentions.py
+} > "$INSTALLER_PAYLOAD_DIR/retentions.py"
+chmod 755 "$INSTALLER_PAYLOAD_DIR/retentions.py"
+
+# Docs
+cp README.md LICENSE SECURITY.md CONTRIBUTING.md DESIGN_DECISONS.md RELEASE_POLICY.md "$INSTALLER_PAYLOAD_DIR/docs/" 2>/dev/null || true
+
+# Man page
+cp deploy/man_page/retentions.1 "$INSTALLER_PAYLOAD_DIR/man/retentions.1"
+
+# Shell completions
+mkdir -p "$INSTALLER_PAYLOAD_DIR/completions/bash"
+mkdir -p "$INSTALLER_PAYLOAD_DIR/completions/zsh"
+
+cp "$COMPL_DIR/${APP}.bash" "$INSTALLER_PAYLOAD_DIR/completions/bash/${APP}"
+cp "$COMPL_DIR/_${APP}"      "$INSTALLER_PAYLOAD_DIR/completions/zsh/_${APP}"
+
+# Build payload archive
+PAYLOAD_TAR="$(mktemp)"
+tar -czf "$PAYLOAD_TAR" -C "$INSTALLER_PAYLOAD_DIR" .
+
+# Installer header
+cat > "$INSTALLER_FILE" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP="retentions"
+PREFIX="/usr/local"
+
+if [[ $EUID -ne 0 ]]; then
+    echo "Run as root (sudo)." >&2
+    exit 1
+fi
+
+ARCHIVE_LINE=$(awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0;}' "$0")
+
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+echo "==> Extracting payload..."
+tail -n +"$ARCHIVE_LINE" "$0" | tar xz -C "$TMPDIR"
+
+echo "==> Installing executable..."
+install -m 755 "$TMPDIR/retentions.py" "${PREFIX}/bin/retentions"
+
+echo "==> Installing documentation..."
+mkdir -p "${PREFIX}/share/doc/${APP}"
+install -m 644 "$TMPDIR/docs/"* "${PREFIX}/share/doc/${APP}/"
+
+echo "==> Installing man page..."
+mkdir -p "${PREFIX}/share/man/man1"
+install -m 644 "$TMPDIR/man/retentions.1" "${PREFIX}/share/man/man1/"
+
+echo "==> Installing shell completions..."
+mkdir -p "${PREFIX}/share/bash-completion/completions"
+install -m 644 "$TMPDIR/completions/bash/${APP}" "${PREFIX}/share/bash-completion/completions/${APP}"
+
+# Zsh
+mkdir -p "${PREFIX}/share/zsh/site-functions"
+install -m 644 "$TMPDIR/completions/zsh/_${APP}" "${PREFIX}/share/zsh/site-functions/_${APP}"
+
+mandb || true
+
+echo "==> ${APP} installed successfully."
+exit 0
+
+__ARCHIVE_BELOW__
+EOF
+
+cat "$PAYLOAD_TAR" >> "$INSTALLER_FILE"
+chmod 755 "$INSTALLER_FILE"
+
+rm -f "$PAYLOAD_TAR"
+rm -rf "$INSTALLER_PAYLOAD_DIR"
+
+# -----------------------------------------------------------------------------
 # Restore retentions.py
 # -----------------------------------------------------------------------------
 echo "==> Restoring original retentions.py..."
