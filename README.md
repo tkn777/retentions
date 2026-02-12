@@ -123,6 +123,7 @@ sudo dpkg -i retentions_x.y.z_all.deb
 This installs:
 - `/usr/bin/retentions`
 - documentation in `/usr/share/doc/retentions/`
+- `man` page
 - shell completion for `bash` and `zsh`
 
 #### 🗄️ Debian Repository
@@ -145,9 +146,22 @@ sudo dnf install retentions-x.y.z-n.noarch.rpm # or with yum
 This installs:
 - `/usr/bin/retentions`
 - documentation in `/usr/share/doc/retentions/`
+- `man` page
 - shell completion for `bash` and `zsh`
 
-### 🗜️ Option 3 – Universal (tar.gz / zip)
+### 📦 Option 3 – Self-installing .tar.gz for linux
+
+Download the latest `.linux-installer` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
+
+```bash
+sudo bash install retentions-x.y.z.linux-installer
+```
+
+This installs:
+- `/usr/local/bin/retentions`
+- documentation, `man` page and shell completion in `/usr/local/share/...`
+
+### 🗜️ Option 4 – Universal (tar.gz / zip)
 
 For non-Debian-based or non-Redhat-based systems:
 

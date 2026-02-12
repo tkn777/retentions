@@ -1,3 +1,6 @@
+### NEXT RELEASE
+- Added common-linux package
+
 ### 1.3.2 - 02.02.2026
 - Fixed validation of incompatible arguments
 - Added check: `--skip-by-size` to last-logic
