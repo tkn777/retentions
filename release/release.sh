@@ -146,8 +146,8 @@ echo "==> Creating RPM via alien..."
 # -----------------------------------------------------------------------------
 echo "==> Creating self-extracting Linux installer..."
 
-INSTALLER_PAYLOAD_DIR="${BUILD_DIR}/${APP}-${VERSION}-linux-installer"
-INSTALLER_FILE="${BUILD_DIR}/${APP}-${VERSION}-linux.install"
+INSTALLER_PAYLOAD_DIR="${BUILD_DIR}/${APP}-${VERSION}.linux-installer"
+INSTALLER_FILE="${BUILD_DIR}/${APP}-${VERSION}.linux.install"
 
 rm -rf "$INSTALLER_PAYLOAD_DIR"
 mkdir -p "$INSTALLER_PAYLOAD_DIR/docs" "$INSTALLER_PAYLOAD_DIR/man"
