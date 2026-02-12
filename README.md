@@ -149,7 +149,7 @@ This installs:
 - `man` page
 - shell completion for `bash` and `zsh`
 
-### 📦 Option 3 – Self-installing .tar.gz for linux
+### 📦 Option 3 – Self-installing installer for linux
 
 Download the latest `.linux-installer` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
 
