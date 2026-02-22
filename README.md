@@ -149,12 +149,12 @@ This installs:
 - `man` page
 - shell completion for `bash` and `zsh`
 
-### 📦 Option 3 – Self-installing installer for linux
+### 📦 Option 3 – Self-installing linux installer
 
 Download the latest `.linux-installer` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
 
 ```bash
-sudo bash install retentions-x.y.z.linux-installer
+sudo bash retentions-x.y.z.linux-installer
 ```
 
 This installs:
