@@ -216,7 +216,7 @@ install -m 644 "$TMPDIR/completions/bash/${APP}" "${PREFIX}/share/bash-completio
 mkdir -p "${PREFIX}/share/zsh/site-functions"
 install -m 644 "$TMPDIR/completions/zsh/_${APP}" "${PREFIX}/share/zsh/site-functions/_${APP}"
 
-mandb || true
+mandb -q || true
 
 echo "==> ${APP} installed successfully."
 exit 0

@@ -87,6 +87,7 @@ jobs:
           RPM=$(ls build/retentions-*.rpm 2>/dev/null || true)
           TAR=$(ls build/retentions-*.tar.gz)
           ZIP=$(ls build/retentions-*.zip)
+          SELFINSTALLER=$(ls build/retentions-*.install)
           SCRIPT=$(ls build/retentions.py 2>/dev/null || true)
 
           add_link() {
@@ -103,7 +104,7 @@ jobs:
             echo
             echo "### Linux"
             echo
-            for f in $DEB $RPM; do
+            for f in $DEB $RPM $SELFINSTALLER; do
               add_link "$f"
             done
             echo
@@ -156,6 +157,7 @@ jobs:
             build/retentions_*.deb \
             build/retentions-*.rpm \
             build/retentions.py \
+            build/retentions-*.linux-installer \
             --title "$TITLE" \
             --notes-file release_body.md \
             "${FLAGS[@]}"
