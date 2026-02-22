@@ -1,5 +1,5 @@
-### NEXT RELEASE
-- Added common-linux package
+### 1.3.3 - 22.02.2026
+- Added common-linux self installer package
 
 ### 1.3.2 - 02.02.2026
 - Fixed validation of incompatible arguments
