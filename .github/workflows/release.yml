@@ -157,7 +157,7 @@ jobs:
             build/retentions_*.deb \
             build/retentions-*.rpm \
             build/retentions.py \
-            build/retentions-*.linux-install \
+            build/retentions-*.linux.install \
             --title "$TITLE" \
             --notes-file release_body.md \
             "${FLAGS[@]}"
