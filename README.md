@@ -151,10 +151,10 @@ This installs:
 
 ### 📦 Option 3 – Self-installing linux installer
 
-Download the latest `.linux-installer` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
+Download the latest `.linux-install` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
 
 ```bash
-sudo bash retentions-x.y.z.linux-installer
+sudo bash retentions-x.y.z.linux-install
 ```
 
 This installs:
@@ -188,7 +188,7 @@ retentions --help
 python3 retentions.py <path> <file_pattern> [options]
 ```
 
-*If you installed via .deb or .rpm or a shebang'ed version from the tar.gz / zip, you can simply run `retentions` instead of `python3 retentions.py`.*
+*If you installed via .deb or .rpm or .install a shebang'ed version from the tar.gz / zip, you can simply run `retentions` instead of `python3 retentions.py`.*
 
 ---
 
