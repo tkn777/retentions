@@ -535,7 +535,7 @@ By default retentions writes a lock file `.retentions.lock` - This can be used b
 
 ---
 
-## 🪨 Project Status
+## 🪨 Project Status (March 2026)
 
 retentions is a deliberately small, complete tool.
 
