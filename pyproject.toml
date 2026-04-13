@@ -12,7 +12,7 @@ requires-python = ">=3.9,<4"
 dev = [
     "ruff>=0.14.0",
     "mypy>=1.11.0",
-    "pytest>=8.3.0",
+    "pytest>=8.4.2",
     "pytest-cov>=5.0.0",
     "debugpy>=1.8.0",
 ]
