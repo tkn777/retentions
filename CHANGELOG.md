@@ -1,3 +1,6 @@
+### 1.3.4 - 04.06.2026
+- Fixed test `test_month_quarter_year_retention`
+
 ### 1.3.3 - 22.02.2026
 - Added common-linux self installer package
 
