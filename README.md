@@ -108,7 +108,8 @@ In this document, "retain" refers to the selection process, while "keep" refers 
 
 You can install **retentions** in several ways, depending on your system and preference.
 
-*All installation methods require **Python 3.9+** *(tested against Python 3.9-3.14)*.\
+*All installation methods require **Python 3.9+** *(tested against Python 3.9-3.15-dev)*.\
+Python 3.9 is still tested for compatibility, but is end-of-life upstream; Python 3.10+ is recommended for security-sensitive use.\
 No dependencies beyond Python 3.*
 
 
