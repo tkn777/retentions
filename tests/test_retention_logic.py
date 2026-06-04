@@ -123,7 +123,7 @@ def test_multiple_retention_modes_and_last(tmp_path: Path) -> None:
 @no_type_check
 def test_month_quarter_year_retention(tmp_path: Path) -> None:
     """RetentionLogic should apply retention rules for months, quarters and years."""
-    files = _create_files_with_times(tmp_path, offsets=[i * 2_592_000 for i in range(60)])  # 1 file per month for 60 months
+    files = _create_files_with_times(tmp_path, offsets=[i * 2_592_000 for i in range(60)], mod_time=int(datetime(2026, 5, 4, tzinfo=timezone.utc).timestamp()))  # 1 file per month for 60 months
     args = _make_args(months=6, quarters=4, years=5, verbose=LogLevel.DEBUG)
     cache = FileStats("mtime")
     logger = Logger(args, cache)
