@@ -1,8 +1,13 @@
+# retentions
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-linux%20|%20macos%20|%20windows-lightgrey)]()
+[![GitHub release](https://img.shields.io/github/v/release/tkn777/retentions)](https://github.com/tkn777/retentions/releases)
+[![coverage](https://codecov.io/gh/tkn777/retentions/branch/master/graph/badge.svg)](https://codecov.io/gh/tkn777/retentions)
+
 <p align="left">
   <img src="resources/retentions-logo.png" alt="retentions – deterministic file retention CLI tool" height=110>
 </p>
-
-## retentions 
 
 A small, feature-rich cross-platform CLI tool to apply backup-style retention rules to any file set. 
 
@@ -14,10 +19,6 @@ retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 week
 
 It is a safe alternative to ad-hoc cleanup scripts for backups, archives, and artifacts.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/tkn777/retentions)](https://github.com/tkn777/retentions/releases)
-[![Platform](https://img.shields.io/badge/platform-linux%20|%20macos%20|%20windows-lightgrey)]()
-[![coverage](https://codecov.io/gh/tkn777/retentions/branch/master/graph/badge.svg)](https://codecov.io/gh/tkn777/retentions)
 
 ---
 
