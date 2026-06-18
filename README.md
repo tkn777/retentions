@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%20|%20macos%20|%20windows-lightgrey)]()
-[![GitHub release](https://img.shields.io/github/v/release/tkn777/retentions)](https://github.com/tkn777/retentions/releases)
+[![GitHub release](https://img.shields.io/github/v/release/tkn777/retentions?color=ff8855)](https://github.com/tkn777/retentions/releases/latest)
 [![coverage](https://codecov.io/gh/tkn777/retentions/branch/master/graph/badge.svg)](https://codecov.io/gh/tkn777/retentions)
 
 <p align="left">
