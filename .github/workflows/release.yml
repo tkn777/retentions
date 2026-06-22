@@ -17,7 +17,7 @@ jobs:
       # Checkout including tags
       # -----------------------------------------------------------
       - name: Checkout source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
