@@ -199,7 +199,7 @@ python3 retentions.py <path> <file_pattern> [options]
 | Arguments | Description |
 |--------|--------------|
 | `path` | base directory to scan |
-| `file_pattern` | glob pattern for matching files (use quotes to prevent shell expansion) |
+| `file_pattern` | glob pattern for matching files (use single quotes to prevent shell expansion) |
 
 ⚠️ `path` and `file_pattern` are mandatory
 &nbsp;
@@ -209,7 +209,7 @@ python3 retentions.py <path> <file_pattern> [options]
 | `-r, --regex [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
 | `--age-type [time]` | Used time attribute for file age - time: ctime, mtime (default), atime, birthtime |
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
-| `--folder-mode` | Use folders instead of files in `path`: You need to specify the mode, to get the xtime of the folder: folder, youngest-file (default), oldest-file, path=<path>), youngest-|oldest-file are recursive within the folder |
+| `--folder-mode` | Use folders instead of files in `path`: You need to specify the mode, to get the xtime of the folder: folder, youngest-file (default), oldest-file, path=<path>, youngest-|oldest-file are recursive within the folder |
 
 ⚠️ `age-type`: 
 - `ctime` is platform-dependent: e.g. Windows => create-time, Linux => change time of meta data
