@@ -2,6 +2,7 @@
 - Updated `RELEASE_POLICY.md` to document the current tag, CI, packaging, and release-checklist workflow
 - Updated `CONTRIBUTING.md` with the development install command and current validation steps
 - Exposed development dependencies through the `dev` package extra used by `pip install ".[dev]"`
+- Lightly expanded the GitHub issue and pull-request templates with current checks and reporting guidance
 
 ### 1.3.6 - 29.09.2026
 - Fixed version and date of man page
