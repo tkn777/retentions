@@ -82,7 +82,7 @@ When `--folder-mode` is enabled (see [Folder Mode](#-folder-mode---folder-mode) 
 ### Logic
 1. Scan all files
 2. Ignore all protected files (for the whole process)
-3. Retain (or not) by time-based buckets (--hours, --days, --weeks, --months, --years, --quarter, --week13)
+3. Retain (or not) by time-based buckets (--hours, --days, --weeks, --months, --years, --quarters, --week13)
 4. Retain by --last (latest N files)
 5. Filtered (everything retained before) by 
     1. --max-age (strict time cutoff)
@@ -206,10 +206,10 @@ python3 retentions.py <path> <file_pattern> [options]
 
 | Flag | Description |
 |--------|--------------|
-| `-r, --regex [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
+| `-r, --regex-mode [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
 | `--age-type [time]` | Used time attribute for file age - time: ctime, mtime (default), atime, birthtime |
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
-| `--folder-mode` | Use folders instead of files in `path`: You need to specify the mode, to get the xtime of the folder: folder, youngest-file (default), oldest-file, path=<path>, youngest-|oldest-file are recursive within the folder |
+| `--folder-mode [time-src]` | Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. youngest-file and oldest-file search recursively within the folder. |
 
 ⚠️ `age-type`: 
 - `ctime` is platform-dependent: e.g. Windows => create-time, Linux => change time of meta data
@@ -236,7 +236,7 @@ python3 retentions.py <path> <file_pattern> [options]
 &nbsp;
 
 🧠 Logic:
-- The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` **cannot** be marked as keep with the retention `--week`.
+- The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` **cannot** be marked as keep with the retention `--weeks`.
 - Retention buckets are hierarchical. Coarser buckets only select data strictly older than all finer-grained selections
 - One exception here is `--last`. It always marks the last `N` files as retained, regardless of all other retentions.
 - If no retention period are specified all files are retained (and may be filtered)
@@ -461,7 +461,7 @@ This restriction ensures a strict, predictable retention scope and avoids ambigu
 
 ### ⚠️ Quoting File Patterns
 
-Always **quote your file patterns** (and companion rules) when calling `retentions`.
+Always use **single quotes** around your file patterns (and companion rules) when calling `retentions`.
 
 If you omit the quotes, your shell (e.g. Bash, Zsh, PowerShell) will expand the pattern **before** it reaches the program, resulting in unexpected arguments or errors.
 
@@ -469,7 +469,7 @@ If you omit the quotes, your shell (e.g. Bash, Zsh, PowerShell) will expand the 
 ```bash
 python3 retentions.py /data/backups '*.tar.gz'
 python3 retentions.py /data/logs 'log-*.txt'
-python3 retentions.py /data/temp '.*\\.bak'
+python3 retentions.py /data/temp '.*\.bak'
 ```
 
 #### ❌ Incorrect

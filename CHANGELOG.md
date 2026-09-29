@@ -1,3 +1,10 @@
+### 1.3.5 - 29.09.2026
+- Corrected CLI documentation for `--regex-mode` and optional `--folder-mode` syntax
+- Corrected shell-quoting guidance and the regex example in the README and man page
+- Corrected `--quarters` and `--weeks` option names in the README
+- Added `--folder-mode` and `birthtime` value completion to Bash and Zsh completions
+- Clarified the historical `--regex` to `--regex-mode` rename
+
 ### 1.3.4 - 04.06.2026
 - Fixed test `test_month_quarter_year_retention`
 

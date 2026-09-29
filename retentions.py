@@ -523,7 +523,7 @@ def create_parser() -> ModernStrictArgumentParser:
 
     # positional arguments
     g_main.add_argument("path", help="base directory to scan (no symlink traversal)")
-    g_main.add_argument("file_pattern", help="glob pattern for matching files/folders (use quotes to prevent shell expansion)")
+    g_main.add_argument("file_pattern", help="glob pattern for matching files/folders (use single quotes to prevent shell expansion)")
 
     # argument flags
     # fmt: off
@@ -533,7 +533,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime", "birthtime"], metavar="time-attr", default="mtime", nargs="?",
         help="Used time attribute for file age: mtime (default), ctime, atime, birthtime - They are OS and filesystem dependent, see README.md or man page (mtime is almost safe).")
     g_flags.add_argument("--folder-mode", type=str, metavar="time-src", default=None, nargs="?", const="youngest-file",
-        help="Use folders instead of files in `path`: You need to specify the mode, to get the xtime of the folder: folder, youngest-file (default), oldest-file, path=<path>), youngest-|oldest-file are recursive within the folder")
+        help="Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. youngest-file and oldest-file search recursively within the folder.")
     # fmt: on
 
     # retention options

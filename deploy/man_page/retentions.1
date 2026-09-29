@@ -4,7 +4,7 @@
 retentions \- apply backup-style retention rules to any file set
 
 .SH SYNOPSIS
-retentions path file_pattern <options>
+retentions path file_pattern [options]
 
 .SH DESCRIPTION
 retentions is a small, feature-rich cross-platform CLI tool to apply backup-style retention rules to any file set.
@@ -106,21 +106,21 @@ path
 Base directory to scan.
 .TP
 file_pattern
-Glob pattern for matching files (use quotes to prevent shell expansion).
+Glob pattern for matching files (use single quotes to prevent shell expansion).
 
 .PP
 path and file_pattern are mandatory.
 
 .SS Flags
 .TP
--r, --regex <mode>
+-r, --regex-mode [mode]
 file_pattern / protect is a regex (otherwise: glob pattern) \- mode: casesensitive (default), ignorecase
 .TP
 --age-type <time>
 Used time attribute for file age \- time: ctime, mtime (default), atime, birthtime
 .TP
---folder-mode <time-src>
-Use folders instead of files in `path`: You need to specify the mode, to get the xtime and of the folder: folder, youngest-file (default), oldest-file, path=<path>), youngest-|oldest-file are recursive within the folder
+--folder-mode [time-src]
+Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. youngest-file and oldest-file search recursively within the folder.
 
 .TP
 --protect <pattern>
@@ -341,7 +341,7 @@ This restriction ensures a strict and predictable retention scope and avoids amb
 
 
 .SH QUOTING FILE PATTERNS
-Always quote your file patterns when calling retentions.
+Always use single quotes around your file patterns when calling retentions.
 
 If you omit the quotes, your shell (e.g. Bash, Zsh, PowerShell) will expand the pattern before it reaches the program, resulting in unexpected arguments or errors.
 

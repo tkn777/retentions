@@ -7,7 +7,8 @@ _retentions() {
     '1:path:base directory:_files -/' \
     '2:file_pattern:glob or regex pattern:->pattern' \
     '--regex-mode'[treat file_pattern and protect patterns as regex]:mode:(casesensitive ignorecase) \
-    '--age-type'[file/folder age attribute]:time:(ctime mtime atime) \
+    '--age-type'[file/folder age attribute]:time:(ctime mtime atime birthtime) \
+    '--folder-mode'[use folders instead of files]:time source:(youngest-file oldest-file folder path=) \
     '--protect'[protect files from deletion]:pattern:->protect \
     '--hours'[retain one per hour]:N: \
     '--days'[retain one per day]:N: \

@@ -10,6 +10,7 @@ _retentions() {
     local opts="
         --regex-mode
         --age-type
+        --folder-mode
         --protect
         --hours
         --days
@@ -39,7 +40,11 @@ _retentions() {
             return
             ;;
         --age-type)
-            COMPREPLY=( $(compgen -W "ctime mtime atime" -- "$cur") )
+            COMPREPLY=( $(compgen -W "ctime mtime atime birthtime" -- "$cur") )
+            return
+            ;;
+        --folder-mode)
+            COMPREPLY=( $(compgen -W "youngest-file oldest-file folder path=" -- "$cur") )
             return
             ;;
         --verbose)
