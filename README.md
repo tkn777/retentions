@@ -109,9 +109,9 @@ In this document, "retain" refers to the selection process, while "keep" refers 
 
 You can install **retentions** in several ways, depending on your system and preference.
 
-All installation methods require **Python 3.9+** (tested against Python 3.9 to 3.15-dev).
+All installation methods require **Python 3.9+** (tested against Python 3.9 to 3.15).
 
-_Python 3.9 has reached upstream end of life, but distribution-provided packages remain maintained in some Linux distributions with long-term support, such as RHEL 9. Use a Python installation that receives security updates from either the Python project or your distribution vendor._
+_Upstream support ended for Python 3.9 in October 2025 and ends for Python 3.10 in October 2026. Both versions remain supported by retentions. Distribution-provided packages may receive security updates beyond upstream end of life, such as Python 3.9 in RHEL 9. Use a Python installation that receives security updates from either the Python project or your distribution vendor._
 
 No dependencies beyond Python 3.
 

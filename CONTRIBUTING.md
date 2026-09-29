@@ -46,8 +46,8 @@ unnecessary work.
 
 ## Code Style and Linting
 
-This project supports Python 3.9 and newer. CI checks Python 3.9 through the
-currently supported development versions.
+This project supports Python 3.9 and newer. CI checks Python 3.9 through 3.15,
+including Python 3.9 and 3.10 for compatibility beyond their upstream support periods.
 
 This project uses **pytest**, **Ruff**, and **mypy** for testing, formatting,
 linting, and type checking.
