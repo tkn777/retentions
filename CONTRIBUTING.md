@@ -99,7 +99,7 @@ Example:
 
 2.  Commit and push your changes.
 
-3.  Open a pull request against the `main` branch.
+3.  Open a pull request against the `master` branch.
 
 4.  Describe **what** the change does and **why** it's needed.
 

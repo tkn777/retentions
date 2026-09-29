@@ -4,7 +4,7 @@ This project follows a deliberately minimal and conservative release model.
 
 ## Branches
 
-* `main` is the only long-lived integration branch.
+* `master` is the only long-lived integration branch.
 * Maintenance branches are created **only when needed**, never by default.
 * Feature branches may exist temporarily alongside maintenance branches.
 
@@ -22,7 +22,7 @@ maint/1.2
 
 A maintenance branch is created only if:
 
-* `main` has diverged with incompatible changes, and
+* `master` has diverged with incompatible changes, and
 * the released minor version still requires bugfixes.
 
 Branches are always created from the latest stable tag of that minor version.
@@ -46,16 +46,16 @@ feature/dynamic-retentions
 
 Rules:
 
-* Feature branches are created from `main`.
+* Feature branches are created from `master`.
 * Feature branches may diverge significantly from released versions.
-* Feature branches are merged back into `main` only.
+* Feature branches are merged back into `master` only.
 * Feature branches must never be merged into `maint/*` branches.
 
 ## Tags
 
 * Every release is tagged.
 * Tags are immutable and authoritative.
-* Tags exist on `main` and on maintenance branches.
+* Tags exist on `master` and on maintenance branches.
 * Release tags use the form `v<major>.<minor>.<patch>` (for example, `v1.3.6`).
 
 Pushing a `v*` tag starts the automated release workflow. The workflow passes the
@@ -79,7 +79,7 @@ v1.1.2
 
 ## Backporting
 
-* Bugfixes committed to `maint/*` must be cherry-picked to `main`.
+* Bugfixes committed to `maint/*` must be cherry-picked to `master`.
 * Fixes flow forward only.
 * Maintenance branches are never merged back wholesale.
 

@@ -3,6 +3,7 @@
 - Updated `CONTRIBUTING.md` with the development install command and current validation steps
 - Exposed development dependencies through the `dev` package extra used by `pip install ".[dev]"`
 - Lightly expanded the GitHub issue and pull-request templates with current checks and reporting guidance
+- Aligned branch references in the contribution and release documentation with `master`
 
 ### 1.3.6 - 29.09.2026
 - Fixed version and date of man page
