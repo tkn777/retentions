@@ -30,10 +30,10 @@ unnecessary work.
     source .venv/bin/activate
     ```
 
-3.  Install dependencies via `pyproject.toml`:
+3.  Install the project and its development dependencies:
 
     ``` bash
-    pip install [dev]
+    python -m pip install ".[dev]"
     ```
 
 4.  Run the CLI:
@@ -46,20 +46,29 @@ unnecessary work.
 
 ## Code Style and Linting
 
-This project uses **Ruff** and **mypy** for style and type checking.
+This project supports Python 3.9 and newer. CI checks Python 3.9 through the
+currently supported development versions.
+
+This project uses **pytest**, **Ruff**, and **mypy** for testing, formatting,
+linting, and type checking.
 
 Run all checks before committing:
 
 ``` bash
+python -m pytest
 ruff check .
+ruff format --check .
 mypy .
 ```
 
-Format automatically:
+Format automatically when needed:
 
 ``` bash
 ruff format .
 ```
+
+Behavior changes and bug fixes should include regression tests where practical.
+Add user-visible changes to the `[Unreleased]` section of `CHANGELOG.md`.
 
 ------------------------------------------------------------------------
 
@@ -95,6 +104,9 @@ Example:
 4.  Describe **what** the change does and **why** it's needed.
 
 Small, focused PRs are preferred over large ones.
+
+See [`RELEASE_POLICY.md`](./RELEASE_POLICY.md) for branch naming and release
+requirements.
 
 ------------------------------------------------------------------------
 
