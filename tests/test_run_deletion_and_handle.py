@@ -17,6 +17,8 @@ def _make_args(**overrides):
         dry_run=False,
         verbose=LogLevel.INFO,
         fail_on_delete_error=False,
+        protect=None,
+        regex_mode=None,
         protected_files=set(),
         delete_companion_set=set(),
         entity_name="file",
@@ -163,7 +165,8 @@ class _DummyCompanionRule:
         return self._companion
 
 
-def test_run_deletion_with_companion_deleted(tmp_path, capsys) -> None:
+@pytest.mark.parametrize("protect", [None, "*.keep"])
+def test_run_deletion_with_companion_deleted(tmp_path, capsys, protect) -> None:
     main = tmp_path / "data.tar"
     companion = tmp_path / "data.tar.md5"
 
@@ -175,6 +178,7 @@ def test_run_deletion_with_companion_deleted(tmp_path, capsys) -> None:
         path=str(tmp_path),
         dry_run=False,
         delete_companion_set={_DummyCompanionRule(companion)},
+        protect=protect,
     )
     logger = Logger(args, cache)
 

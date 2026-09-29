@@ -1,5 +1,6 @@
 ### 1.3.6 - 29.09.2026
 - Fixed version and date of man page
+- Fixed protected companion files being deleted when they are outside the selected file pattern
 
 ### 1.3.5 - 29.09.2026
 - Corrected optional argument syntax for `--age-type`, `--list-only`, and `--verbose` in the man page

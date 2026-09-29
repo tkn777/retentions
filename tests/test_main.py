@@ -99,6 +99,37 @@ def test_output_help(tmp_path, monkeypatch, capsys):
 
 
 @pytest.mark.parametrize(
+    "file_pattern,protect,regex_mode",
+    [
+        ("*.tar", "*.sha256", None),
+        (r"^.*\.tar$", r"^archive\.sha256$", "casesensitive"),
+        (r"^.*\.tar$", r"^ARCHIVE\.SHA256$", "ignorecase"),
+    ],
+)
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_protected_companion_outside_file_pattern(tmp_path, monkeypatch, capsys, file_pattern, protect, regex_mode, dry_run):
+    archive = tmp_path / "archive.tar"
+    companion = tmp_path / "archive.sha256"
+    archive.write_text("backup")
+    companion.write_text("protected checksum")
+    argv = ["retentions.py", str(tmp_path), file_pattern, "--max-size", "1", "--protect", protect, "--delete-companions", "suffix:.tar:.sha256"]
+    if regex_mode:
+        argv.extend(["--regex-mode", regex_mode])
+    if dry_run:
+        argv.append("--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 7
+    assert companion.read_text() == "protected checksum"
+    assert archive.exists() == dry_run
+    assert not (tmp_path / LOCK_FILE_NAME).exists()
+    assert "must not be deleted" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
     "exception, exit_code",
     [
         (OSError, 1),

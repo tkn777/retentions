@@ -828,7 +828,7 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
         deletion_count += delete_file(file, args, logger)
         # delete companion files (if any)
         for companion_file in {companion_rule.replace(file) for companion_rule in args.delete_companion_set if companion_rule.matches(file)}:
-            if companion_file in disallowed_companions:
+            if companion_file in disallowed_companions or (args.protect and ((args.regex_mode and args.protect_compiled.match(companion_file.name)) or fnmatch(companion_file.name, args.protect))):
                 raise IntegrityCheckFailedError(f"Companion file '{companion_file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
             if companion_file.is_symlink():
                 logger.verbose(LogLevel.WARN, f"Companion file is a symlink -> It is ignored: {companion_file}")
