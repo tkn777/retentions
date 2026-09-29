@@ -1,4 +1,5 @@
 ### [Unreleased]
+- Clarified Python 3.9 support in the README, distinguishing upstream end of life from continued maintenance by some distribution vendors and recommending a Python installation that receives security updates
 - Updated `RELEASE_POLICY.md` to document the current tag, CI, packaging, and release-checklist workflow
 - Updated `CONTRIBUTING.md` with the development install command and current validation steps
 - Exposed development dependencies through the `dev` package extra used by `pip install ".[dev]"`
