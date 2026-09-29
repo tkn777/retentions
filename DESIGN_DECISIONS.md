@@ -3,7 +3,7 @@
 - **Zero runtime dependencies**: the CLI follows a strict one-file policy to keep distribution simple and robust.
 - **No configuration files:** all behavior is controlled via explicit CLI arguments.
 - **No silent magic:** every action must be understandable and reproducible; no hidden heuristics.
-- **No implicit recursion:** directory traversal is intentionally shallow to avoid accidental mass deletions.
+- **No implicit recursive selection:** retention targets are selected only from direct children; folder mode may inspect descendants only to calculate age and size.
 - **No implicit interactive mode:** the tool is designed for automation, not conversation.
 - The implementation follows a **parsimonious code style**: every additional line or heuristic must justify its existence. This principle applies not only to code structure, but also to user-facing behavior, error handling, and feature selection.
 - **Conservative defaults**: when behavior is ambiguous or potentially dangerous, the tool prefers safety over convenience.
@@ -25,7 +25,7 @@ The design of the CLI follows a few core principles:
 ## Non-Goals
 retentions intentionally does **not aim** to:
 - manage backups or create snapshots
-- traverse directory trees recursively
+- select retention targets recursively (folder mode may inspect descendants only to calculate age and size)
 - infer retention rules automatically
 - provide interactive confirmation dialogs
 - recover from partially failed deletion runs
@@ -35,12 +35,13 @@ retentions intentionally does **not aim** to:
 ## Execution Model
 
 1. Argument parsing and validation
-2. File discovery (single-directory scope)
-3. Retention decision phase (pure logic, no side effects)
-4. Optional filtering phase
-5. Deletion phase (or simulation / listing)
+2. Optional lock-file creation
+3. File discovery (single-directory scope)
+4. Retention decision phase (pure logic, no destructive side effects)
+5. Optional filtering phase
+6. Deletion phase (or simulation / listing)
 
-**No filesystem modifications** occur before all retention and filtering decisions have been fully computed and validated.
+Apart from creating the optional lock file, no destructive filesystem modifications occur before all retention and filtering decisions have been fully computed and validated.
 
 ---
 
@@ -50,6 +51,8 @@ retentions **enforces internal consistency checks** before executing destructive
 - Every file must end up in exactly one of the sets: **keep or prune**.
 - Mismatches between computed decisions and deletion candidates **abort execution**.
 - A **lock file** prevents concurrent retention runs on the same directory by default.
+- Protected, retained, pruned, and lock files are not allowed to be removed as companion files.
+- `--no-lock-file` disables only the lock file; it does not disable the other companion-file protections.
 
 ---
 
@@ -59,8 +62,8 @@ Symbolic links are intentionally handled in a restrictive and explicit manner to
 
 ### General Policy
 - Symbolic links are never deleted.
-- Symbolic links are never traversed recursively.
-- Symbolic links are treated as distinct filesystem objects and are not followed implicitly.
+- Symbolic-link entries are ignored as retention or deletion targets.
+- Folder age and size calculations skip symbolic-link files; the base directory itself is resolved deliberately.
 
 This applies uniformly across files, folders, companion files, and deletion logic.
 
@@ -98,17 +101,18 @@ This keeps retention decisions deterministic and the safety model easy to reason
 - **Prohibit duplicate flags** to avoid ambiguous behavior.
 - **Argument groups** structure the CLI help output into logically human-readable sections.
 - **No error recovery**: invalid or ambiguous CLI input is rejected immediately instead of being interpreted heuristically.
-- **Validation before execution**: all arguments are fully validated and normalized before any filesystem operation is performed.
+- **Validation before execution**: all arguments are fully validated and normalized before file discovery, retention decisions, or deletion begins. The optional lock file is created afterward to prevent concurrent runs.
 
 ---
 
 ## Retention Logic
 
-- **Retention rules are applied additively**. A file kept by any rule remains kept unless explicitly filtered later. Time-based retention rules are processed in a fixed order, from finer to coarser granularity.
+- **Retention rules are combined hierarchically**. A file kept by any rule remains kept unless explicitly filtered later. Time-based retention rules are processed in a fixed order, from finer to coarser granularity; coarser rules only select buckets outside the ranges already covered by finer rules.
 - **Global filters** such as --max-files, --max-size, and --max-age are applied after retention decisions, not instead of them. Filters may override previous keep decisions.
 - **Decision logging**: for each file, retentions records not only the final action, but also the reasoning behind it. At higher verbosity levels, the full decision chain is preserved.
 - **Single-directory scope**: retention rules are applied only to direct children of the given base directory.
 - **Folder Mode:** In folder mode, retention is always applied to top-level directories only. Recursive traversal is used exclusively to derive a directory's age. Depth-based selection is intentionally not supported.
+- **Companion deletion:** `--delete-companions` is restricted to files in the base directory. Protected, retained, pruned, and lock files are rejected as companions, and symbolic-link companions are skipped.
 
 ---
 
