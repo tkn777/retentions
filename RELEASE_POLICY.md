@@ -115,11 +115,10 @@ Before creating the release tag:
 
 * [ ] all intended changes are merged into the release branch
 * [ ] the version in `CHANGELOG.md`, the man page, and release metadata is correct
-* [ ] the `[Unreleased]` changes have been assigned to the new version
+* [ ] the `[Unreleased]` changes have been assigned to the new version and have to be removed
 * [ ] tests, Ruff, and mypy checks pass in CI, including Python 3.9
 * [ ] argparse options and both shell completions are reviewed
-* [ ] the man page and user-facing documentation are updated
-* [ ] `SECURITY.md`, `DESIGN_DECISIONS.md`, and `RELEASE_POLICY.md` are current
+* [ ] the man page and user-facing documentation are updated (date and new version from CHANGELOG)
 * [ ] the release script includes all intended documentation and artifacts
 
 After creating the tag:
@@ -127,6 +126,4 @@ After creating the tag:
 * [ ] the tag has the form `v<major>.<minor>.<patch>` and points to the intended commit
 * [ ] the release workflow completes successfully
 * [ ] all expected `.deb`, `.rpm`, installer, archive, and script artifacts are attached
-* [ ] the Linux installer is named `retentions-<version>.linux.install`, matching the README
-* [ ] both `.tar.gz` and `.zip` archives contain the Bash and Zsh completions and `docs/DESIGN_DECISIONS.md`
 * [ ] the generated release notes and artifact links are correct
