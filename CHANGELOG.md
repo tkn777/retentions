@@ -1,4 +1,7 @@
 ### 1.3.5 - 29.09.2026
+- Corrected optional argument syntax for `--age-type`, `--list-only`, and `--verbose` in the man page
+- Corrected `-v` and verbosity argument syntax in the README and man page
+- Documented the required rule syntax for `--delete-companions` in the README
 - Corrected CLI documentation for `--regex-mode` and optional `--folder-mode` syntax
 - Corrected shell-quoting guidance and the regex example in the README and man page
 - Corrected `--quarters` and `--weeks` option names in the README

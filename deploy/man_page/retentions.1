@@ -116,7 +116,7 @@ path and file_pattern are mandatory.
 -r, --regex-mode [mode]
 file_pattern / protect is a regex (otherwise: glob pattern) \- mode: casesensitive (default), ignorecase
 .TP
---age-type <time>
+--age-type [time-attr]
 Used time attribute for file age \- time: ctime, mtime (default), atime, birthtime
 .TP
 --folder-mode [time-src]
@@ -203,10 +203,10 @@ Use --verbose debug and --dry-run to see decision history.
 
 .SS Behavior options
 .TP
--L, --list-only <separator>
+-L, --list-only [sep]
 Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\\n')
 .TP
--V, v, --verbose <int>
+-V, -v, --verbose [lev]
 Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)
 .TP
 -X, --dry-run

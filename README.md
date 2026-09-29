@@ -258,7 +258,7 @@ python3 retentions.py <path> <file_pattern> [options]
 | Behavior options | Description |
 |--------|--------------|
 | `-L, --list-only [separator]` | Output only file paths that would be deleted (incompatible with --verbose, separator defaults to '\n') |
-| `-V, v, --verbose <int>` | Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names) |
+| `-V, -v, --verbose [lev]` | Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names) |
 | `-X, --dry-run` | Show planned actions but do not delete any files |
 | `--no-lock-file` | Omit lock file (default: enabled) |
 | `--fail-on-delete-error` | Fails and exits if a file could not be deleted (default: disabled and print warning) |
@@ -268,7 +268,7 @@ python3 retentions.py <path> <file_pattern> [options]
 
 | Expert options | Description |
 |--------|--------------|
-| `--delete-companions [rules]` | Delete companion files defined by the rules (prefix\|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5') |
+| `--delete-companions rule [rule ...]` | Delete companion files defined by the rules (prefix\|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5') |
 
 💡 See section [Delete Companions](#-delete-companions---delete-companions) for details
 &nbsp;
