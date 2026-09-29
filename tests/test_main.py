@@ -129,6 +129,34 @@ def test_protected_companion_outside_file_pattern(tmp_path, monkeypatch, capsys,
     assert "must not be deleted" in capsys.readouterr().err
 
 
+def test_no_lock_file_keeps_disallowed_companion_protection(tmp_path, monkeypatch, capsys):
+    archive = tmp_path / "archive.tar"
+    companion = tmp_path / "archive.keep"
+    archive.write_text("old archive")
+    companion.write_text("kept companion")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "retentions.py",
+            str(tmp_path),
+            "*",
+            "--last",
+            "1",
+            "--no-lock-file",
+            "--delete-companions",
+            "suffix:.tar:.keep",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 7
+    assert companion.exists()
+    assert "must not be deleted" in capsys.readouterr().err
+
+
 @pytest.mark.parametrize(
     "exception, exit_code",
     [

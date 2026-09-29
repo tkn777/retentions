@@ -1,6 +1,7 @@
 ### 1.3.6 - 29.09.2026
 - Fixed version and date of man page
 - Fixed protected companion files being deleted when they are outside the selected file pattern
+- Fixed `--no-lock-file` clearing the protection list for companion files
 
 ### 1.3.5 - 29.09.2026
 - Corrected optional argument syntax for `--age-type`, `--list-only`, and `--verbose` in the man page

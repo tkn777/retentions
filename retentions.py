@@ -887,7 +887,9 @@ def main() -> None:
 
         deletion_started = False
         deletion_count = 0
-        disallowed_companions = retentions_result.keep | retentions_result.prune | args.protected_files | {lock_file} if lock_file is not None else set[Path]()
+        disallowed_companions = retentions_result.keep | retentions_result.prune | args.protected_files
+        if lock_file is not None:
+            disallowed_companions.add(lock_file)
         for file in matches:
             if is_file_to_delete(retentions_result.keep, retentions_result.prune, file):
                 if not deletion_started:
