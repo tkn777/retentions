@@ -49,13 +49,19 @@ Rules:
 * Feature branches are created from `main`.
 * Feature branches may diverge significantly from released versions.
 * Feature branches are merged back into `main` only.
-* Feature branches must never be merged into `maint-*` branches.
+* Feature branches must never be merged into `maint/*` branches.
 
 ## Tags
 
 * Every release is tagged.
 * Tags are immutable and authoritative.
 * Tags exist on `main` and on maintenance branches.
+* Release tags use the form `v<major>.<minor>.<patch>` (for example, `v1.3.6`).
+
+Pushing a `v*` tag starts the automated release workflow. The workflow passes the
+version without the leading `v` to `release/release.sh`, builds the supported
+artifacts, and creates the GitHub release with links to those artifacts and the
+commits since the previous tag.
 
 Examples:
 
@@ -73,7 +79,7 @@ v1.1.2
 
 ## Backporting
 
-* Bugfixes committed to `maint-*` must be cherry-picked to `main`.
+* Bugfixes committed to `maint/*` must be cherry-picked to `main`.
 * Fixes flow forward only.
 * Maintenance branches are never merged back wholesale.
 
@@ -105,7 +111,20 @@ Branch categories are expressed via namespaces for clarity and consistency.
 
 ## Release Checklist
 
-* [ ] argparse options reviewed
-* [ ] bash completion updated
-* [ ] zsh completion updated
-* [ ] man page updated
+Before creating the release tag:
+
+* [ ] all intended changes are merged into the release branch
+* [ ] the version in `CHANGELOG.md`, the man page, and release metadata is correct
+* [ ] the `[Unreleased]` changes have been assigned to the new version
+* [ ] tests, Ruff, and mypy checks pass in CI, including Python 3.9
+* [ ] argparse options and both shell completions are reviewed
+* [ ] the man page and user-facing documentation are updated
+* [ ] `SECURITY.md`, `DESIGN_DECISIONS.md`, and `RELEASE_POLICY.md` are current
+* [ ] the release script includes all intended documentation and artifacts
+
+After creating the tag:
+
+* [ ] the tag has the form `v<major>.<minor>.<patch>` and points to the intended commit
+* [ ] the release workflow completes successfully
+* [ ] all expected `.deb`, `.rpm`, installer, archive, and script artifacts are attached
+* [ ] the generated release notes and artifact links are correct

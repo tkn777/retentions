@@ -1,3 +1,6 @@
+### [Unreleased]
+- Updated `RELEASE_POLICY.md` to document the current tag, CI, packaging, and release-checklist workflow
+
 ### 1.3.6 - 29.09.2026
 - Fixed version and date of man page
 - Fixed protected companion files being deleted when they are outside the selected file pattern
