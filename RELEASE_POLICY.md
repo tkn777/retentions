@@ -127,4 +127,6 @@ After creating the tag:
 * [ ] the tag has the form `v<major>.<minor>.<patch>` and points to the intended commit
 * [ ] the release workflow completes successfully
 * [ ] all expected `.deb`, `.rpm`, installer, archive, and script artifacts are attached
+* [ ] the Linux installer is named `retentions-<version>.linux.install`, matching the README
+* [ ] both `.tar.gz` and `.zip` archives contain the Bash and Zsh completions and `docs/DESIGN_DECISIONS.md`
 * [ ] the generated release notes and artifact links are correct

@@ -155,10 +155,10 @@ This installs:
 
 ### 📦 Option 3 – Self-installing linux installer
 
-Download the latest `.linux-install` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
+Download the latest `.linux.install` package from the [Releases](https://github.com/tkn777/retentions/releases) page and install it manually:
 
 ```bash
-sudo bash retentions-x.y.z.linux-install
+sudo bash retentions-x.y.z.linux.install
 ```
 
 This installs:
@@ -176,7 +176,8 @@ The archive includes:
 - a common linux variant with shebang: `linux/retentions`
 - a macOS variant with shebang: `macos/retentions`
 - and all the docs: `docs`
-- and the shell completions for `bash` and `zsh`
+- Bash completion: `completions/bash/retentions`
+- Zsh completion: `completions/zsh/_retentions`
 
 ### 🔍 To verify installation:
 

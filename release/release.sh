@@ -73,6 +73,14 @@ echo "==> Copying man page..."
 cp deploy/man_page/retentions.1 "$PKG_DIR/docs/${APP}.1"
 
 # -----------------------------------------------------------------------------
+# Shell completions for both archives
+# -----------------------------------------------------------------------------
+echo "==> Copying shell completions..."
+mkdir -p "$PKG_DIR/completions/bash" "$PKG_DIR/completions/zsh"
+cp "$COMPL_DIR/${APP}.bash" "$PKG_DIR/completions/bash/${APP}"
+cp "$COMPL_DIR/_${APP}" "$PKG_DIR/completions/zsh/_${APP}"
+
+# -----------------------------------------------------------------------------
 # Create tar.gz archive
 # -----------------------------------------------------------------------------
 echo "==> Creating tar.gz archive..."
