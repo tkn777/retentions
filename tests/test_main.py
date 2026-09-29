@@ -2,6 +2,7 @@
 """Tests main function (only specific logic there, no function calls)."""
 
 import argparse
+import os
 import sys
 
 import pytest
@@ -134,6 +135,8 @@ def test_no_lock_file_keeps_disallowed_companion_protection(tmp_path, monkeypatc
     companion = tmp_path / "archive.keep"
     archive.write_text("old archive")
     companion.write_text("kept companion")
+    os.utime(archive, (1_000_000_000, 1_000_000_000))
+    os.utime(companion, (1_700_000_000, 1_700_000_000))
     monkeypatch.setattr(
         sys,
         "argv",
