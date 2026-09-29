@@ -1,3 +1,6 @@
+### 1.3.6 - 29.09.2026
+- Fixed version and date of man page
+
 ### 1.3.5 - 29.09.2026
 - Corrected optional argument syntax for `--age-type`, `--list-only`, and `--verbose` in the man page
 - Corrected `-v` and verbosity argument syntax in the README and man page
