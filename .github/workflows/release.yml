@@ -87,7 +87,7 @@ jobs:
           RPM=$(ls build/retentions-*.rpm 2>/dev/null || true)
           TAR=$(ls build/retentions-*.tar.gz)
           ZIP=$(ls build/retentions-*.zip)
-          SELFINSTALLER=$(ls build/retentions-*.install)
+          SELFINSTALLER=$(ls build/retentions-*.linux.install)
           SCRIPT=$(ls build/retentions.py 2>/dev/null || true)
 
           add_link() {
