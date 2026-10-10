@@ -1,8 +1,10 @@
-### [Unreleased]
+### 1.3.7 - 11.10.2026
+- Update to support the official released Python 3.15
 - Included Bash and Zsh completion files in the tar.gz and ZIP release archives
 - Corrected the Linux installer filename in the README to `retentions-<version>.linux.install`
 - Corrected the man-page usage line to require `path` and `file_pattern` and the year conversion to 365 days
 - Switched CI to stable Python 3.15 and moved the Codecov upload to the Python 3.15 job
+- Run lint and tests before building a release
 - Updated the documented Python test range to 3.9 through 3.15 and noted Python 3.10's upstream end of life in October 2026 while retaining Python 3.9+ compatibility
 - Clarified Python 3.9 support in the README, distinguishing upstream end of life from continued maintenance by some distribution vendors and recommending a Python installation that receives security updates
 - Updated `RELEASE_POLICY.md` to document the current tag, CI, packaging, and release-checklist workflow
