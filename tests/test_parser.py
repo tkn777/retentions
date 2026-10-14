@@ -190,6 +190,7 @@ def test_combine_folder_mode_skip_by_file_size_failed(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "--folder-mode and --skip-by-filesize must not be combined" in captured.err
 
+
 def test_by_file_size_without_retention_options_failed(monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "--skip-by-filesize", "1k"])
     with pytest.raises(SystemExit) as exc:
