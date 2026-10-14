@@ -1,6 +1,7 @@
 ### [Unreleased]
 - Run `ruff check .` in CI and fail the lint job when lint checks find errors
 - Make `ruff format --check .` fail the lint job when files are not formatted
+- Fix formatting in `tests/test_parser.py` so the strict Ruff format check passes
 
 ### 1.3.7 - 11.10.2026
 - Update to support the official released Python 3.15
