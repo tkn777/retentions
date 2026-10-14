@@ -30,11 +30,8 @@ jobs:
       - name: Run Ruff Lint
         run: ruff check .
 
-      - name: Ruff Format (non-fatal, show issues but don't fail CI)
-        run: |
-          ruff format --check . || (
-            echo "::warning::Ruff found unformatted files (non-fatal)."
-          )
+      - name: Check Ruff Formatting
+        run: ruff format --check .
 
       - name: Run Type Checking
         run: mypy .
