@@ -27,6 +27,9 @@ jobs:
         run: |
           pip install ruff mypy
 
+      - name: Run Ruff Lint
+        run: ruff check .
+
       - name: Ruff Format (non-fatal, show issues but don't fail CI)
         run: |
           ruff format --check . || (
