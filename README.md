@@ -532,6 +532,19 @@ By default retentions writes a lock file `.retentions.lock` - This can be used b
 
 ---
 
+## 🛡️ Quality Assurance
+
+Reliability is especially important for a tool that deletes backup files. `retentions` is therefore backed by several layers of quality assurance:
+
+- **Automated tests** with approximately 95% code coverage, including extensive testing of retention and deletion logic.
+- **Automated linting and formatting checks** using Ruff, enforced through GitHub Actions.
+- **Manual regression testing** using dry-run mode to verify behavior across various scenarios.
+- **Real-world validation** through extensive use across multiple backup locations, with no known issues.
+
+Together, these measures provide a high level of confidence in the tool's correctness and reliability.
+
+---
+
 ## 🛠️ Troubleshooting
 
 - No files are deleted: Check retention options and filters, and use `--verbose debug --dry-run`.
