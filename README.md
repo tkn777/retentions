@@ -539,6 +539,7 @@ Reliability is especially important for a tool that deletes backup files. `reten
 - **Automated tests** with approximately 95% code coverage, including extensive testing of retention and deletion logic.
 - **Automated code quality checks** using Ruff for linting and formatting, and mypy for static type checking, executed through GitHub Actions across Python 3.9–3.15.
 - **Manual regression testing** using dry-run mode to verify behavior across various scenarios.
+- **AI-assisted security review** performed using ChatGPT 6 Sol with Ultimate reasoning.
 - **Real-world validation** through extensive use across multiple backup locations, with no known issues.
 
 Together, these measures provide a high level of confidence in the tool's correctness and reliability.
