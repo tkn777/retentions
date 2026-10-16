@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytest pytest pytest-cov
+          pip install pytest pytest-cov
 
       - name: Run Unit Tests with Coverage
         run: |
