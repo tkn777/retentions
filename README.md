@@ -205,7 +205,8 @@ python3 retentions.py <path> <file_pattern> [options]
 | `file_pattern` | glob pattern for matching files (use single quotes to prevent shell expansion) |
 
 ⚠️ `path` and `file_pattern` are mandatory
-&nbsp;
+<br>
+<br>
 
 | Flag | Description |
 |--------|--------------|
@@ -221,7 +222,8 @@ python3 retentions.py <path> <file_pattern> [options]
 - ❗`retentions` checks the availability of the selected `age-type`, but not the semantic
 
 💡 See section [Folder Mode](#-folder-mode---folder-mode) for details about `--folder-mode`
-&nbsp;
+<br>
+<br>
 
 | Retention options | Description |
 |--------|--------------|
@@ -236,14 +238,16 @@ python3 retentions.py <path> <file_pattern> [options]
 | `-i, --skip-by-filesize <size>` | Skip (and delete) files smaller than <size> (e.g. 12, 2K, 1.5M) |
 
 📝 Every retention option can be combined with any (or all) others
-&nbsp;
+<br>
 
 🧠 Logic:
 - The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` **cannot** be marked as keep with the retention `--weeks`.
 - Retention buckets are hierarchical. Coarser buckets only select data strictly older than all finer-grained selections
 - One exception here is `--last`. It always marks the last `N` files as retained, regardless of all other retentions.
 - If no retention period are specified all files are retained (and may be filtered)
-&nbsp;
+<br>
+<br>
+
 
 | Filter options | Description |
 |--------|--------------|
@@ -252,11 +256,12 @@ python3 retentions.py <path> <file_pattern> [options]
 | `-a, --max-age <age>` | Keep maximum within time span N from script start (e.g. 3600, 1h, 1d, 1w, 1m, 1q, 1y) |
 
 📝 Every filter option can be combined with any (or all) others
-&nbsp;
+<br>
 
 🧠 Logic:
 - Filters apply after retention and may delete files previously marked to keep. (Use `--verbose debug` and `--dry-run` to see decision history.)
-&nbsp;
+<br>
+<br>
 
 | Behavior options | Description |
 |--------|--------------|
@@ -267,7 +272,8 @@ python3 retentions.py <path> <file_pattern> [options]
 | `--fail-on-delete-error` | Fails and exits if a file could not be deleted (default: disabled and print warning) |
 
 💡 Using `--dry-run` is a good option to start with `retentions` 😏
-&nbsp; 
+<br>
+<br>
 
 | Expert options | Description |
 |--------|--------------|
@@ -281,7 +287,8 @@ python3 retentions.py <path> <file_pattern> [options]
 | `--stacktrace` | Add output of stacktrace in case of errors |
 
 📝 For developers only
-&nbsp;
+<br>
+<br>
 
 | Common arguments | Description |
 |--------|--------------|
