@@ -28,7 +28,7 @@ from types import SimpleNamespace
 from typing import Callable, Generic, NoReturn, Optional, TextIO, TypeVar, no_type_check
 
 
-VERSION: str = "dev-1.3.0"
+VERSION: str = "dev-1.4.0"
 
 SCRIPT_START = int(datetime.now().timestamp())
 
