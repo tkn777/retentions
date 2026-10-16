@@ -280,7 +280,8 @@ python3 retentions.py <path> <file_pattern> [options]
 | `--delete-companions rule [rule ...]` | Delete companion files defined by the rules (prefix\|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5') |
 
 💡 See section [Delete Companions](#-delete-companions---delete-companions) for details
-&nbsp;
+<br>
+<br>
 
 | Developer options | Description |
 |--------|--------------|
