@@ -31,7 +31,7 @@ jobs:
           fetch-tags: true
 
       # -----------------------------------------------------------
-      # Install system tools + Python deps + gh
+      # Install system tools + gh
       # -----------------------------------------------------------
       - name: Install build tools
         run: |
