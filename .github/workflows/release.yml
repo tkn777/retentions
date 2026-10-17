@@ -38,11 +38,6 @@ jobs:
           sudo apt update
           sudo apt install -y alien dpkg-dev python3-pip gh
 
-      - name: Install Python dependencies
-        run: |
-          PYVER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-          echo "PYTHONPATH=$HOME/.local/lib/python${PYVER}/site-packages" >> $GITHUB_ENV
-
       # -----------------------------------------------------------
       # Build artifacts via release script
       # -----------------------------------------------------------
