@@ -36,7 +36,7 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt update
-          sudo apt install -y alien dpkg-dev python3-pip gh
+          sudo apt install -y alien dpkg-dev gh
 
       # -----------------------------------------------------------
       # Build artifacts via release script
