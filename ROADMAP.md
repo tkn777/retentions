@@ -2,7 +2,9 @@
 
 ## 1.4
 
-### Inline retention intervalls
+Planned features, not yet implemented.
+
+### Inline retention intervals
 
 Support arbitrary calendar interval widths for `hours`, `days`, `weeks`, and `months`, such as `--days2`, `--days3`, or `--weeks3`. The suffix specifies the bucket width; the argument specifies how many occupied buckets to retain, keeping the newest item in each bucket.
 

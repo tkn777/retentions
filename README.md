@@ -11,7 +11,7 @@
 
 A small, feature-rich cross-platform CLI tool to apply backup-style retention rules to any file set. 
 
-It remains only the most recent or representative files according to simple time-based rules and deletes the rest.
+It retains only the most recent or representative files according to simple time-based rules and deletes the rest.
 
 ```bash
 retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 weeks and 6 months
@@ -567,7 +567,7 @@ Together, these measures provide a high level of confidence in the tool's correc
 retentions is a deliberately small, complete tool.
 
 Its feature set is stable and sufficient for its intended purpose.
-Future changes will primarily consist of bug fixes, portability improvements, or documentation updates.
+Future changes will primarily consist of bug fixes, portability improvements, documentation updates, and selected feature enhancements.
 
 A low commit frequency is therefore a sign of maturity, not abandonment.
 
