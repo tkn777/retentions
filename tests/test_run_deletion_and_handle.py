@@ -89,7 +89,9 @@ def test_handle_exception_exits_and_outputs(capsys) -> None:
     assert "boom" in captured.err
 
 
-def test_warning_for_file_not_deleted(tmp_path, capsys, monkeypatch):
+@pytest.mark.parametrize("verbose", [LogLevel.ERROR, LogLevel.INFO])
+@pytest.mark.parametrize("is_companion", [False, True])
+def test_error_for_file_not_deleted(tmp_path, capsys, monkeypatch, verbose, is_companion):
     protected = tmp_path / "protected.txt"
     normal = tmp_path / "normal.txt"
 
@@ -106,16 +108,23 @@ def test_warning_for_file_not_deleted(tmp_path, capsys, monkeypatch):
     monkeypatch.setattr(retentions.Path, "unlink", unlink_with_permission_error)
 
     cache = FileStats("mtime")
-    args = _make_args(path=str(tmp_path), dry_run=False)
+    args = _make_args(path=str(tmp_path), dry_run=False, verbose=verbose)
+    if is_companion:
+        main = tmp_path / "main.txt"
+        main.write_text("main")
+        args.delete_companion_set = {_DummyCompanionRule(protected)}
     logger = Logger(args, cache)
 
-    # protected file triggers warning
-    run_deletion(protected, args, logger, set())
+    # Failed deletion is logged as an error, including for companions.
+    run_deletion(main if is_companion else protected, args, logger, set())
     assert protected.exists()
+    if is_companion:
+        assert not main.exists()
+        args.delete_companion_set = set()
 
     err = capsys.readouterr().err
-    assert "[WARN]" in err
-    assert "Error while deleting file" in err
+    assert "[ERROR]" in err
+    assert f"Error while deleting {'(companion) ' if is_companion else ''}file" in err
     assert protected.name in err
 
     # normal file is deleted

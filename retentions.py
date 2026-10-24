@@ -556,7 +556,7 @@ def create_parser() -> ModernStrictArgumentParser:
     # behavior options
     g_behavior.add_argument("--dry-run", "-X", action="store_true", help="Show planned actions but do not delete any files/folders")
     g_behavior.add_argument("--no-lock-file", action="store_false", dest="use_lock_file", default=True, help="Omit lock file (default: enabled)")
-    g_behavior.add_argument("--fail-on-delete-error", action="store_true", default=False, help="Fails and exits if a file/folder could not be deleted (default: disabled and print warning)")
+    g_behavior.add_argument("--fail-on-delete-error", action="store_true", default=False, help="Fails and exits if a file/folder could not be deleted (default: disabled and log error)")
     # fmt: off
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep", help="Output only file/folder paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
     g_behavior.add_argument("--verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
@@ -814,7 +814,7 @@ def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion:
             error_message = f"Error while deleting {'(companion) ' if is_companion else ''}{args.entity_name} '{file.name}': {e}"
             if args.fail_on_delete_error:
                 raise FileCouldNotBeDeleteError(error_message)
-            logger.verbose(LogLevel.WARN, error_message, file=sys.stderr)
+            logger.verbose(LogLevel.ERROR, error_message, file=sys.stderr)
     return 1
 
 
