@@ -123,7 +123,7 @@ class FileStats:
 
 
 def sort_files(files: Iterable[Path], file_stats: FileStats) -> list[Path]:
-    return sorted(files, key=file_stats.get_file_seconds, reverse=True)
+    return sorted(files, key=lambda f: (-file_stats.get_file_seconds(f), f.name))
 
 
 class LogLevel(IntEnum):

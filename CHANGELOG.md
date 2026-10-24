@@ -1,4 +1,5 @@
 ### [Unreleased]
+- Sort files with equal timestamps by filename in ascending order for deterministic retention and limit selection
 - Added `ROADMAP.md` with the planned inline retention intervals
 - Documented quality assurance practices and clarified the real-world validation guidance
 - Run `ruff check .` in CI and fail the lint job when lint checks find errors

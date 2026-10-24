@@ -33,6 +33,19 @@ def test_file_stats_cache_and_sort_files(tmp_path: Path) -> None:
     assert sorted_files == [file_new, file_old]
 
 
+@pytest.mark.parametrize("names", [("b.txt", "a.txt"), ("a.txt", "b.txt")])
+def test_sort_files_equal_timestamps_use_filename(tmp_path: Path, names: tuple[str, str]) -> None:
+    files = [tmp_path / name for name in names]
+    for file in files:
+        file.write_text("x")
+        os.utime(file, (SCRIPT_START, SCRIPT_START))
+
+    stats = FileStats("mtime")
+    expected = [tmp_path / "a.txt", tmp_path / "b.txt"]
+    assert sort_files(files, stats) == expected
+    assert sort_files(set(files), stats) == expected
+
+
 def test_filestats_folder_mode_youngest_file_two_levels(tmp_path: Path) -> None:
     folder = tmp_path / "folder"
     sub = folder / "sub"

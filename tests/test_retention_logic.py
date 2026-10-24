@@ -5,7 +5,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, no_type_check
 
-from retentions import SCRIPT_START, ConfigNamespace, FileStats, Logger, LogLevel, RetentionLogic
+import pytest
+
+from retentions import SCRIPT_START, ConfigNamespace, FileStats, Logger, LogLevel, RetentionLogic, sort_files
 
 
 @no_type_check
@@ -54,6 +56,31 @@ def _create_files_with_times(tmp_path: Path, offsets: list[int], mod_time: Optio
         os.utime(f, (ts, ts))
         files.append(f)
     return files
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"days": 1},
+        {"last": 1},
+        {"last": 2, "max_files": 1},
+        {"last": 2, "max_size": 1, "max_size_bytes": 1},
+    ],
+)
+def test_equal_timestamps_select_first_filename(tmp_path: Path, options) -> None:
+    files = [tmp_path / "b.txt", tmp_path / "a.txt"]
+    for file in files:
+        file.write_bytes(b"x")
+        os.utime(file, (SCRIPT_START, SCRIPT_START))
+
+    args = _make_args(**options)
+    stats = FileStats("mtime")
+    logger = Logger(args, stats)
+    matches = sort_files(files, stats)
+    result = RetentionLogic(matches, args, logger, stats).process_retention_logic()
+
+    assert result.keep == {tmp_path / "a.txt"}
+    assert result.prune == {tmp_path / "b.txt"}
 
 
 @no_type_check
