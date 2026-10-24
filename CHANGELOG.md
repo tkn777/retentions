@@ -2,10 +2,9 @@
 - Log deletion failures as ERROR instead of WARN, including companion files
 - Sort files with equal timestamps by filename in ascending order for deterministic retention and limit selection
 - Added `ROADMAP.md` with the planned inline retention intervals
-- Documented quality assurance practices and clarified the real-world validation guidance
-- Run `ruff check .` in CI and fail the lint job when lint checks find errors
-- Make `ruff format --check .` fail the lint job when files are not formatted
-- Fix formatting in `tests/test_parser.py` so the strict Ruff format check passes
+- Improved README wording, option-table spacing, and quality assurance documentation, including AI-assisted security and code review
+- Enforce Ruff lint and formatting checks in CI and fix parser-test formatting
+- Cleaned up duplicate and unused dependencies and setup steps in the test and release workflows
 
 ### 1.3.7 - 11.10.2026
 - Update to support the official released Python 3.15
