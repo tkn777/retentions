@@ -41,6 +41,7 @@ mkdir -p "$DEB_DIR/usr/bin" \
 # -----------------------------------------------------------------------------
 echo "==> Injecting version into retentions.py..."
 cd "$ROOT_DIR"
+trap 'if [[ -f retentions.py.bak ]]; then mv -f retentions.py.bak retentions.py; fi' EXIT
 sed -i.bak -E "s/^(VERSION\s*(:\s*str)?\s*=\s*\")[^\"]*(\")/\1${VERSION}\3/" retentions.py
 
 # -----------------------------------------------------------------------------
@@ -241,7 +242,4 @@ rm -rf "$INSTALLER_PAYLOAD_DIR"
 # -----------------------------------------------------------------------------
 # Restore retentions.py
 # -----------------------------------------------------------------------------
-echo "==> Restoring original retentions.py..."
-mv retentions.py.bak retentions.py
-
 echo "==> Done."
