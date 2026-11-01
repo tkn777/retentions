@@ -1,5 +1,7 @@
-### 1.3.8 - 25.10.2026
+### [Unreleased]
 - Pinned GitHub Actions lint, test, and release workflows to Ubuntu 24.04 to preserve Python 3.9 CI compatibility
+
+### 1.3.8 - 25.10.2026
 - Log deletion failures as ERROR instead of WARN, including companion files
 - Sort files with equal timestamps by filename in ascending order for deterministic retention and limit selection
 - Added `ROADMAP.md` with the planned inline retention intervals
