@@ -562,7 +562,7 @@ Together, these measures provide a high level of confidence in the tool's correc
 
 ---
 
-## 🪨 Project Status (October 2026)
+## 🪨 Project Status (November 2026)
 
 retentions is a deliberately small, complete tool.
 
