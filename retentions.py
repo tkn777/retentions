@@ -22,13 +22,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, IntEnum
 from fnmatch import fnmatch
+from functools import lru_cache
 from os import stat_result
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Callable, Generic, NoReturn, Optional, TextIO, TypeVar, no_type_check
 
 
-VERSION: str = "dev-1.4.0"
+VERSION: str = "dev-1.3.9"
 
 SCRIPT_START = int(datetime.now().timestamp())
 
@@ -83,19 +84,62 @@ class FileStats:
     __file_stats_cache: Cache[stat_result]
     __file_seconds_cache: Cache[int]
 
-    def __init__(self, age_type: str, folder_mode: bool = False, folder_mode_time_src: Optional[str] = None) -> None:
+    def __init__(self, age_type: str, folder_mode: bool = False, folder_mode_time_src: Optional[str] = None, filename_format: Optional[str] = None) -> None:
         self._age_type = age_type
         self._folder_mode = folder_mode
         self._folder_mode_time_src = folder_mode_time_src
         self.__file_stats_cache: Cache[stat_result] = Cache()
         self.__file_seconds_cache: Cache[int] = Cache()
+        self._filename_extractor = self.make_cached_extractor(filename_format or "")
+        self.logger: Optional[Logger] = None
+
+    def make_cached_extractor(self, date_format: str) -> Callable[[str], int]:
+        edge = {f"%{code}": r"[ \d]" for code in "dmHIMSfjUWVwu"}
+        edge.update({"%Y": r"\d{4}", "%G": r"\d{4}"})
+        edge.update({"%y": r"\d{2}", "%w": r"\d", "%u": r"\d"})
+        tokens = re.findall(r"%.|.", date_format, re.S) or [""]
+        starts = re.compile(f"(?={edge.get(tokens[0], '')})")
+        stops = re.compile(f"(?<={edge.get(tokens[-1], '')})")
+
+        @lru_cache(maxsize=32)
+        def positions(shape: str) -> tuple[tuple[int, ...], tuple[int, ...]]:
+            # Never split a contiguous run of digits.
+            boundaries = [i for i in range(len(shape) + 1) if not (0 < i < len(shape) and shape[i - 1] == shape[i] == "0")]
+            return (
+                tuple(i for i in boundaries if starts.match(shape, i)),
+                tuple(i for i in reversed(boundaries) if stops.match(shape, i)),
+            )
+
+        def extract(filename: str) -> int:
+            shape = "".join("0" if char.isdecimal() else char for char in filename)
+            beginnings, endings = positions(shape)
+            # Preserve the same selection order on cache hits and misses.
+            for start in beginnings:
+                for end in endings:
+                    if end <= start:
+                        break
+                    try:
+                        return int(datetime.strptime(filename[start:end], date_format).timestamp())
+                    except (ValueError, OverflowError, OSError):
+                        continue
+            if self.logger is None:
+                raise RuntimeError(f"Cannot report an invalid filename timestamp without a logger: {filename}")
+            self.logger.verbose(LogLevel.WARN, f"No valid filename timestamp found -> It is ignored: {filename}")
+            return -1
+
+        return extract
 
     def get_file_seconds(self, file: Path) -> int:
         return self.__file_seconds_cache.compute_if_absent(file, lambda f: self._get_file_seconds_internal(f))
 
     def _get_file_seconds_internal(self, file: Path) -> int:
+        extractor = self._filename_extractor
+        # Use the file itself, or the folder itself with the "folder" time source.
         if not self._folder_mode or self._folder_mode_time_src == "folder":
+            if self._age_type == "filename":
+                return extractor(file.name)
             return int(getattr(self.__file_stats_cache.compute_if_absent(file, Path.stat), f"st_{self._age_type}"))
+        # Validate the explicitly selected time-source file before evaluating its age.
         if self._folder_mode_time_src is not None and self._folder_mode_time_src.startswith("path="):
             time_file = Path(split_escaped("=", self._folder_mode_time_src, "folder time source", self._folder_mode_time_src, expected_length=2)[1]).resolve()
             if not time_file.is_file():
@@ -106,14 +150,30 @@ class FileStats:
                 time_file.relative_to(file)  # file is the folder
             except ValueError:
                 raise ValueError(f"The path value for the folder time source must be inside the folder: {time_file}")
+            if self._age_type == "filename":
+                return self.__file_seconds_cache.compute_if_absent(time_file, lambda f: extractor(f.name))
             return int(getattr(self.__file_stats_cache.compute_if_absent(time_file, Path.stat), f"st_{self._age_type}"))
+        # Both youngest-file and oldest-file inspect contained files recursively.
         files = [f for f in file.rglob("*") if f.is_file() and not f.is_symlink()]
-        if not files:
-            raise ValueError(f"Folder '{file}' contains no files, cannot compute time source for folder with mode: {self._age_type}")
+        seconds: list[int] = []
+        if self._age_type == "filename":
+            # Filename source: cache parsed timestamps and exclude unrecognized names (-1).
+            seconds = [timestamp for time_file in files if (timestamp := self.__file_seconds_cache.compute_if_absent(time_file, lambda f: extractor(f.name))) != -1]
+            if not seconds:
+                if self.logger is None:
+                    raise RuntimeError(f"Cannot report missing filename timestamps without a logger: {file}")
+                self.logger.verbose(LogLevel.WARN, f"Folder '{file}' contains no valid filename timestamps -> It is ignored")
+                return -1  # Let sort_files exclude a folder without a usable timestamp.
+        else:
+            # Filesystem source: read the configured mtime, ctime, atime or birthtime attribute.
+            if not files:
+                raise ValueError(f"Folder '{file}' contains no files, cannot compute time source for folder with mode: {self._age_type}")
+            seconds = [int(getattr(self.__file_stats_cache.compute_if_absent(f, Path.stat), f"st_{self._age_type}")) for f in files]
+        # Both branches continue here with a non-empty timestamp list to determine the folder's age.
         if self._folder_mode_time_src == "youngest-file":
-            return int(max(getattr(self.__file_stats_cache.compute_if_absent(f, Path.stat), f"st_{self._age_type}") for f in files))
+            return max(seconds)
         if self._folder_mode_time_src == "oldest-file":
-            return int(min(getattr(self.__file_stats_cache.compute_if_absent(f, Path.stat), f"st_{self._age_type}") for f in files))
+            return min(seconds)
         raise ValueError(f"Invalid or missing time source for folder mode: {self._folder_mode_time_src}")
 
     def get_file_bytes(self, file: Path) -> int:
@@ -123,7 +183,7 @@ class FileStats:
 
 
 def sort_files(files: Iterable[Path], file_stats: FileStats) -> list[Path]:
-    return sorted(files, key=lambda f: (-file_stats.get_file_seconds(f), f.name))
+    return sorted((f for f in files if file_stats.get_file_seconds(f) != -1), key=lambda f: (-file_stats.get_file_seconds(f), f.name))
 
 
 class LogLevel(IntEnum):
@@ -172,6 +232,8 @@ class Logger:
             self._raw_verbose(level, message, file, prefix)
 
     def add_decision(self, level: LogLevel, file: Path, message: str, debug: Optional[str] = None, append: bool = False) -> None:
+        if self._args.age_type == "filename" and self._file_stats.get_file_seconds(file) == -1:
+            return
         if self.has_log_level(LogLevel.DEBUG):  # Decision history and debug message and file details only with debug log level
             if append:
                 self._decisions[file].append((message, f"{(f'{debug}, ' if debug else '')}{self._get_file_attributes(file, self._args, self._file_stats)})"))
@@ -406,10 +468,12 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
     @no_type_check
     def _validate_arguments(self, ns) -> None:  # noqa: ANN001
         try:
-            # Check path and availability of age-type
+            ns.filename_format = None
+            if ns.age_type and ns.age_type.startswith("filename="):
+                ns.age_type, ns.filename_format = ns.age_type.split("=", 1)
             if not Path(ns.path).resolve().is_dir():
                 self.add_error(f"Path {ns.path} is not a valid directory")
-            elif not hasattr(Path(ns.path).stat(), "st_" + ns.age_type):
+            elif ns.filename_format is None and (ns.age_type not in ("ctime", "mtime", "atime", "birthtime") or not hasattr(Path(ns.path).stat(), "st_" + ns.age_type)):
                 self.add_error(f"Your system (OS or FS) does not support age-type '{ns.age_type}'.")
 
             # Folder mode
@@ -530,8 +594,8 @@ def create_parser() -> ModernStrictArgumentParser:
     g_flags.add_argument("--regex-mode", "-r", type=str, choices=["casesensitive", "ignorecase"], metavar="mode", const="casesensitive", nargs="?", default=None,
         help="file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive, ignorecase, default: casesensitive")
     g_flags.add_argument("--protect", "-p", type=str, default=None, metavar="protect", help="Protect files from deletion (using regex or glob, like file_pattern)")
-    g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime", "birthtime"], metavar="time-attr", default="mtime", nargs="?",
-        help="Used time attribute for file age: mtime (default), ctime, atime, birthtime - They are OS and filesystem dependent, see README.md or man page (mtime is almost safe).")
+    g_flags.add_argument("--age-type", type=str, metavar="time-attr", default="mtime", nargs="?",
+        help="Used age source: mtime (default), ctime, atime, birthtime, or 'filename=<format>' (Python date/time format). File attributes are OS and filesystem dependent; see README.md or man page.")
     g_flags.add_argument("--folder-mode", type=str, metavar="time-src", default=None, nargs="?", const="youngest-file",
         help="Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. youngest-file and oldest-file search recursively within the folder.")
     # fmt: on
@@ -853,8 +917,9 @@ def main() -> None:
     try:
         args = parse_arguments()
 
-        file_stats = FileStats(args.age_type, args.folder_mode, args.folder_mode_time_src)
+        file_stats = FileStats(args.age_type, args.folder_mode, args.folder_mode_time_src, args.filename_format)
         logger = Logger(args, file_stats)
+        file_stats.logger = logger
 
         logger.verbose(LogLevel.INFO, "Command line: " + " ".join(shlex.quote(arg) for arg in sys.argv))
         logger.verbose(LogLevel.DEBUG, f"Parsed arguments: {args}")

@@ -1,4 +1,4 @@
-.TH RETENTIONS 1 "2026-10-25" "retentions 1.3.8" "User Commands"
+.TH RETENTIONS 1 "2026-11-02" "retentions 1.3.9" "User Commands"
 
 .SH NAME
 retentions \- apply backup-style retention rules to any file set
@@ -117,7 +117,8 @@ path and file_pattern are mandatory.
 file_pattern / protect is a regex (otherwise: glob pattern) \- mode: casesensitive (default), ignorecase
 .TP
 --age-type [time-attr]
-Used time attribute for file age \- time: ctime, mtime (default), atime, birthtime
+File age source: ctime, mtime (default), atime, birthtime, or 'filename=<format>'.
+See FILENAME TIMESTAMPS for details.
 .TP
 --folder-mode [time-src]
 Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. youngest-file and oldest-file search recursively within the folder.
@@ -274,6 +275,11 @@ $ retentions /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\\0' | xargs -0 rm
 $ retentions /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
 .fi
 
+.SS Filename timestamps
+.nf
+retentions /data/backups 'backup-*.tar.gz' --age-type 'filename=%Y-%m-%d' --days 7 --dry-run
+.fi
+
 .SH FOLDER MODE
 applies retention rules to directories instead of files.
 
@@ -296,6 +302,21 @@ Uses the given file's timestamp
 .P
 Empty directories are ignored with a warning.
 Recursive traversal is used only to determine directory age.
+
+.SH FILENAME TIMESTAMPS
+Use 'filename=<format>' to extract the timestamp from the selected file or folder name instead of its filesystem attributes.
+.PP
+Always enclose the entire argument in single quotes, for example --age-type 'filename=%Y-%m-%d', so the shell passes the format unchanged, including any spaces.
+.PP
+The filename format uses Python date/time format codes:
+.UR https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
+Python documentation
+.UE
+Prefixes and extensions belong in file_pattern.
+.PP
+The earliest valid timestamp wins; at the same start position, the longest valid substring wins. Contiguous digit runs are never split. Dates without a timezone use local time; dates without a time of day use midnight. Formats are not validated in advance. Names without a valid timestamp are ignored, with a warning at verbosity WARN or higher. Ignored files can still be deleted by an explicit companion rule.
+.PP
+With 'filename=<format>', folder uses the directory name, path= uses the specified file name, and youngest-file or oldest-file selects by timestamps in the recursively contained file names. Unrecognized names are skipped; a folder without a usable time source is ignored with a warning.
 
 .SH DELETE COMPANIONS
 deletes companion files together with a removed file (e.g. checksums or metadata).
