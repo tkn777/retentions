@@ -440,7 +440,7 @@ Use `'filename=<format>'` to extract the timestamp from the selected file or fol
 
 Always enclose the entire argument in single quotes, for example `--age-type 'filename=%Y-%m-%d'`, so the shell passes the format unchanged, including any spaces.
 
-The format uses Python's <a href="https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes" target="_blank" rel="noopener noreferrer">date/time format codes</a>, such as `%Y`, `%m`, and `%d`. Prefixes and extensions belong in `file_pattern`. Dates without a timezone use local time; dates without a time of day use midnight.
+The format uses Python's [date/time format codes ↗](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes), such as `%Y`, `%m`, and `%d`. Prefixes and extensions belong in `file_pattern`. Dates without a timezone use local time; dates without a time of day use midnight.
 
 If multiple valid timestamps occur, the match with the earliest start position wins; at that position, the longest valid substring wins. Contiguous runs of digits are never split. The format is not validated in advance. Names without a valid timestamp are ignored, with a warning at verbosity WARN or higher (`--verbose WARN`, or the default verbosity of `--dry-run`). Ignored files can still be deleted by an explicit companion rule.
 
