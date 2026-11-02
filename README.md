@@ -193,11 +193,11 @@ retentions --help
 python3 retentions.py <path> <file_pattern> [options]
 ```
 
-<sub>If you installed via `.deb`, `.rpm`, or `.linux.install`, you can simply run `retentions` instead of `python3 retentions.py`.</sub>
+*If you installed via `.deb`, `.rpm`, or `.linux.install`, you can simply run `retentions` instead of `python3 retentions.py`.*
 
-<sub>The `linux/retentions` and `macos/retentions` variants included in the `.tar.gz` and `.zip` archives also have a shebang and can be run directly, provided they have executable permissions. Install the appropriate variant in a directory listed in your `PATH` to invoke it as `retentions`.</sub>
+*The `linux/retentions` and `macos/retentions` variants included in the `.tar.gz` and `.zip` archives also have a shebang and can be run directly, provided they have executable permissions. Install the appropriate variant in a directory listed in your `PATH` to invoke it as `retentions`.*
 
-<sub>The standalone `retentions.py` has no shebang and should be run with `python3 retentions.py`.</sub>
+*The standalone `retentions.py` has no shebang and should be run with `python3 retentions.py`.*
 
 ---
 
