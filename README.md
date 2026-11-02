@@ -442,7 +442,13 @@ Always enclose the entire argument in single quotes, for example `--age-type 'fi
 
 The format uses Python's [date/time format codes ↗](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes), such as `%Y`, `%m`, and `%d`. Prefixes and extensions belong in `file_pattern`. Dates without a timezone use local time; dates without a time of day use midnight.
 
-If multiple valid timestamps occur, the match with the earliest start position wins; at that position, the longest valid substring wins. Contiguous runs of digits are never split. The format is not validated in advance. Names without a valid timestamp are ignored, with a warning at verbosity WARN or higher (`--verbose WARN`, or the default verbosity of `--dry-run`). Ignored files can still be deleted by an explicit companion rule.
+- **Incomplete formats:** Missing date components can receive unexpected Python defaults. For example, `%b` alone can interpret `Jan` as `1900-01-01`. Use a format that identifies a meaningful backup date, including a year; an accepted format may still be unsuitable for retention.
+
+- **Performance:** Textual fields at the start or end of the format, such as `%b`, can require many parsing attempts and make extraction significantly slower, especially for long filenames. Formats such as `%Y-%m-%d` narrow the search. The position cache does not eliminate the parsing attempts for each filename.
+
+- **Language:** Textual fields such as `%b` and `%B` depend on Python's current `LC_TIME` locale. `retentions` does not change this locale or translate names. A normal standalone run uses the default `C` locale and expects English month names, regardless of the operating system's display language. Numeric fields such as `%m` avoid language dependence.
+
+- **Matching rules:** If multiple valid timestamps occur, the match with the earliest start position wins; at that position, the longest valid substring wins. Contiguous runs of digits are never split. The format is not validated in advance. Names without a valid timestamp are ignored, with a warning at verbosity WARN or higher (`--verbose WARN`, or the default verbosity of `--dry-run`). Ignored files can still be deleted by an explicit companion rule.
 
 ---
 
