@@ -97,6 +97,25 @@ def test_extractor_selection_is_independent_of_cache_history(history, filename, 
     assert extract(filename) == FileStats("filename").make_cached_extractor("%Y-%m-%d")(filename) == int(expected.timestamp())
 
 
+@pytest.mark.parametrize("warm_cache", [False, True])
+@pytest.mark.parametrize(
+    "offset,full_offset,short_offset",
+    [
+        ("+01:00:30", timedelta(hours=1, seconds=30), timedelta(hours=1)),
+        ("-02:00:45", -timedelta(hours=2, seconds=45), -timedelta(hours=2)),
+        ("+01:00:30.5", timedelta(hours=1, seconds=30, microseconds=500000), timedelta(hours=1, seconds=30)),
+    ],
+)
+def test_extractor_prefers_longest_valid_match_at_same_start(offset, full_offset, short_offset, warm_cache):
+    extract = FileStats("filename").make_cached_extractor("%Y-%m-%dT%H-%M-%S%z")
+    if warm_cache:
+        extract(f"backup-2025-11-12T11-22-33{offset}.tgz")
+    expected = int(datetime(2026, 1, 2, 12, 34, 56, tzinfo=timezone(full_offset)).timestamp())
+    shorter = int(datetime(2026, 1, 2, 12, 34, 56, tzinfo=timezone(short_offset)).timestamp())
+    assert expected != shorter
+    assert extract(f"backup-2026-01-02T12-34-56{offset}.tgz") == expected
+
+
 @pytest.mark.parametrize("date_format", ["%Y-%m-%d", "%Y-%m-%d %H-%M-%S", "%Y%m%d", "%Q", "%", "", "prefix=%Y"])
 @pytest.mark.parametrize("inline", [False, True])
 def test_parser_stores_filename_format_without_validation(tmp_path, date_format, inline):
@@ -282,6 +301,61 @@ def test_filename_retention_matrix(tmp_path, monkeypatch, capsys, regex, verbose
     assert output.count("[WARN]") == (2 if verbose >= LogLevel.WARN else 0)
     for name in names[2:]:
         assert not any(name in line and any(word in line for word in ["Keeping", "Pruning", "Filtering"]) for line in output.splitlines())
+
+
+@pytest.mark.parametrize("mode", ["folder", "path", "youngest-file", "oldest-file"])
+@pytest.mark.parametrize("source_state", ["old", "new", "invalid"])
+@pytest.mark.parametrize("dry_run", [False, True])
+@pytest.mark.parametrize("regex", [False, True])
+def test_filename_folder_cli_matrix(tmp_path, monkeypatch, capsys, mode, source_state, dry_run, regex):
+    date = {"old": "2026-01-02", "new": "2026-01-03", "invalid": "no-date"}[source_state]
+    folder = tmp_path / (f"backup-{date}" if mode == "folder" else "backup-2026-01-03")
+    sub = folder / "nested"
+    sub.mkdir(parents=True)
+    time_file = sub / f"time-{date}.txt"
+    if mode in ("youngest-file", "oldest-file"):
+        other_date = "no-date" if source_state == "invalid" else "2026-01-01" if mode == "youngest-file" else "2026-01-04"
+    else:
+        other_date = "2026-01-03"
+    other_file = folder / f"other-{other_date}.txt"
+    for file in [time_file, other_file]:
+        file.write_text("data")
+    # Filesystem times deliberately disagree with the dates in the names.
+    mtime = int(datetime(2026, 1, 4).timestamp()) if source_state == "old" else int(datetime(2026, 1, 1).timestamp())
+    for file in [time_file, other_file, folder]:
+        os.utime(file, (mtime, mtime))
+    monkeypatch.setattr(retentions, "SCRIPT_START", int(datetime(2026, 1, 3, 12).timestamp()))
+    argv = [
+        "retentions.py",
+        str(tmp_path),
+        r"^backup-.*$" if regex else "backup-*",
+        "--age-type",
+        "filename=%Y-%m-%d",
+        "--folder-mode",
+        f"path={time_file}" if mode == "path" else mode,
+        "--max-age",
+        "1d",
+        "--verbose",
+        "DEBUG",
+    ]
+    if regex:
+        argv.extend(["--regex-mode", "casesensitive"])
+    if dry_run:
+        argv.append("--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+    main()
+    exists = source_state != "old" or dry_run
+    assert folder.exists() == exists
+    assert time_file.exists() == other_file.exists() == exists
+    assert not (tmp_path / retentions.LOCK_FILE_NAME).exists()
+    output = capsys.readouterr().out
+    assert f"Found {0 if source_state == 'invalid' else 1} folders" in output
+    if source_state == "invalid":
+        assert "[WARN]" in output
+        assert "Keeping:" not in output
+        assert "Filtering:" not in output
+    else:
+        assert "[WARN]" not in output
 
 
 @pytest.mark.parametrize("verbose", list(LogLevel))
