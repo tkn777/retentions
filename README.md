@@ -215,7 +215,7 @@ python3 retentions.py <path> <file_pattern> [options]
 | Flag | Description |
 |--------|--------------|
 | `-r, --regex-mode [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
-| `--age-type [time]` | File age source: ctime, mtime (default), atime, birthtime, or 'filename=<format>' |
+| `--age-type [time]` | File age source: ctime, mtime (default), atime, birthtime, or `'filename=<format>'` |
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
 | `--folder-mode [time-src]` | Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. path= must be relative to and stay inside each folder. youngest-file and oldest-file search recursively within the folder. |
 
