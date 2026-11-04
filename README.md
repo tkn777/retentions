@@ -617,6 +617,18 @@ Copyright © 2025-2026 Thomas Kuhlmann
 
 ---
 
+## ⚖️ Ethical Statement
+
+This project is released under the MIT License because I believe in free and open-source software and the freedom to use, study, modify, and share it.
+
+However, granting these freedoms does not mean that I endorse every possible use of my work.
+
+I strongly oppose the use of this software, directly or indirectly, for malicious purposes, violations of human rights, or systems designed to harm or kill people.
+
+This statement expresses my personal ethical convictions. It does not impose any additional restrictions on the MIT License.
+
+---
+
 ## 🐈‍⬛ Dedication
 
 This project is dedicated to 'Motzli' - my real-life companion and friend. To that quiet, resilient cat whose presence still lives within me and keeps me standing up, no matter how often life burns everything down to ashes. For the strength, the gentleness, and the stubborn hope that never leaves - and will never be forgotten.
