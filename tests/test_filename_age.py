@@ -78,6 +78,28 @@ def test_extractor_rejects_invalid_candidates(date_format, filename, with_logger
     assert capsys.readouterr().out == ""
 
 
+@pytest.mark.parametrize("date_format", ["%Y-%m-%d_%Y", "%Y-%m-%d_%m", "%Y-%m-%d_%H-%M-%S_%H"])
+@pytest.mark.parametrize("verbose", list(LogLevel))
+def test_regex_format_errors_warn_once_per_file(tmp_path, capsys, date_format, verbose):
+    filename = "backup-" + datetime(2026, 1, 2, 12, 30).strftime(date_format) + ".tar"
+    file = tmp_path / filename
+    file.write_text("backup")
+    stats = FileStats("filename", filename_format=date_format)
+    stats.logger = Logger(ConfigNamespace(verbose=verbose, age_type="filename"), stats)
+
+    assert stats.get_file_seconds(file) == -1
+    assert stats.get_file_seconds(file) == -1
+    assert sort_files([file], stats) == []
+
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert output.out.count("[WARN]") == int(verbose >= LogLevel.WARN)
+    if verbose >= LogLevel.WARN:
+        assert date_format in output.out
+        assert filename in output.out
+        assert "redefinition of group name" in output.out
+
+
 @pytest.mark.parametrize("history", [[], ["backup-2026-02-31.tgz"], ["backup-2026-01-02.tgz", "README.txt"], [f"shape{chr(65 + i)}-2026-01-02.tgz" for i in range(40)]])
 @pytest.mark.parametrize(
     "filename,expected",
@@ -459,3 +481,33 @@ def test_cli_allows_literal_timezone_directives_and_numeric_offsets(tmp_path, mo
     assert not (tmp_path / retentions.LOCK_FILE_NAME).exists()
     output = capsys.readouterr()
     assert output.out == output.err == ""
+
+
+@pytest.mark.parametrize("date_format", ["%Y-%m-%d_%Y", "%Y-%m-%d_%m", "%Y-%m-%d_%H-%M-%S_%H"])
+@pytest.mark.parametrize("mode", [None, "folder", "path", "youngest-file", "oldest-file"])
+def test_cli_continues_after_regex_format_errors(tmp_path, monkeypatch, capsys, date_format, mode):
+    source_name = "time-" + datetime(2026, 1, 2, 12, 30).strftime(date_format) + ".txt"
+    targets = []
+    for day in [2, 3]:
+        name = datetime(2026, 1, day, 12, 30).strftime(date_format)
+        target = tmp_path / f"backup-{name}"
+        if mode is None:
+            target.write_text("backup")
+        else:
+            target.mkdir()
+            (target / source_name).write_text("backup")
+        targets.append(target)
+    argv = ["retentions.py", str(tmp_path), "backup-*", "--age-type", f"filename={date_format}", "--last", "1", "--verbose", "WARN"]
+    if mode is not None:
+        argv.extend(["--folder-mode", f"path={source_name}" if mode == "path" else mode])
+    monkeypatch.setattr(sys, "argv", argv)
+
+    main()
+
+    assert all(target.exists() for target in targets)
+    assert not (tmp_path / retentions.LOCK_FILE_NAME).exists()
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert output.out.count("Invalid filename timestamp format") == 2
+    assert date_format in output.out
+    assert "redefinition of group name" in output.out

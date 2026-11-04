@@ -1,4 +1,5 @@
 ### [Unreleased]
+- Handle regex errors in filename timestamp formats with one WARN per affected file instead of aborting the run
 - Reject filename timestamp formats containing `%Z` with one WARN per run; retain numeric `%z` offsets and escaped `%%Z` literals
 - Add `--age-type 'filename=<format>'` to extract timestamps using Python date/time formats, including folder time sources and shell completions; warn and ignore names without a valid timestamp
 - Resolve folder time-source paths relative to each folder and reject absolute or out-of-folder paths

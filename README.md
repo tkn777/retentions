@@ -451,6 +451,8 @@ The format uses Python's [date/time format codes ↗](https://docs.python.org/3/
 
 - **Incomplete formats:** Missing date components can receive unexpected Python defaults. For example, `%b` alone can interpret `Jan` as `1900-01-01`. Use a format that identifies a meaningful backup date, including a year; an accepted format may still be unsuitable for retention.
 
+- **Invalid formats:** Regex errors in the format, for example from a repeated directive in `%Y-%m-%d_%Y`, cause one warning per affected file at verbosity WARN or higher. The warning includes the format, filename, and error cause. The file is ignored and the run continues.
+
 - **Performance:** Textual fields at the start or end of the format, such as `%b`, can require many parsing attempts and make extraction significantly slower, especially for long filenames. Formats such as `%Y-%m-%d` narrow the search. The position cache does not eliminate the parsing attempts for each filename.
 
 - **Language:** Textual fields such as `%b` and `%B` depend on Python's current `LC_TIME` locale. `retentions` does not change this locale or translate names. A normal standalone run uses the default `C` locale and expects English month names, regardless of the operating system's display language. Numeric fields such as `%m` avoid language dependence.

@@ -122,6 +122,11 @@ class FileStats:
                         return int(datetime.strptime(filename[start:end], date_format).timestamp())
                     except (ValueError, OverflowError, OSError):
                         continue
+                    except re.error as error:
+                        if self.logger is None:
+                            raise
+                        self.logger.verbose(LogLevel.WARN, f"Invalid filename timestamp format '{date_format}': {error} -> File is ignored: {filename}")
+                        return -1
             if self.logger is None:
                 raise RuntimeError(f"Cannot report an invalid filename timestamp without a logger: {filename}")
             self.logger.verbose(LogLevel.WARN, f"No valid filename timestamp found -> It is ignored: {filename}")

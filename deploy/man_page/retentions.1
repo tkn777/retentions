@@ -324,6 +324,9 @@ such as %Y, %m, and %d. Prefixes and extensions belong in file_pattern. Dates wi
 .B "Incomplete formats:"
 Missing date components can receive unexpected Python defaults. For example, %b alone can interpret Jan as 1900-01-01. Use a format that identifies a meaningful backup date, including a year; an accepted format may still be unsuitable for retention.
 .IP \(bu 2
+.B "Invalid formats:"
+Regex errors in the format, for example from a repeated directive in %Y-%m-%d_%Y, cause one warning per affected file at verbosity WARN or higher. The warning includes the format, filename, and error cause. The file is ignored and the run continues.
+.IP \(bu 2
 .B "Performance:"
 Textual fields at the start or end of the format, such as %b, can require many parsing attempts and make extraction significantly slower, especially for long filenames. Formats such as %Y-%m-%d narrow the search. The position cache does not eliminate the parsing attempts for each filename.
 .IP \(bu 2
