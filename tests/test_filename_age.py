@@ -190,7 +190,7 @@ def test_folder_filename_time_source_matrix(tmp_path, capsys, mode, valid_count,
     for index, file in enumerate(files):
         file.write_text("data")
         os.utime(file, (1_700_000_100 - index * 100, 1_700_000_100 - index * 100))
-    source = f"path={files[0]}" if mode == "path" else mode
+    source = f"path={files[0].relative_to(folder)}" if mode == "path" else mode
     stats = FileStats("filename", True, source, date_format)
     stats.logger = Logger(ConfigNamespace(verbose=LogLevel.WARN, age_type="filename"), stats)
     expected = -1 if not valid_count else int(dates[1 if mode == "youngest-file" and valid_count == 2 else 0].timestamp())
@@ -227,7 +227,7 @@ def test_missing_logger_only_fails_when_a_warning_is_needed(tmp_path, mode, inva
     folder.mkdir()
     source = folder / ("README.txt" if invalid else "2026-01-02.txt")
     source.write_text("data")
-    stats = FileStats("filename", mode is not None, f"path={source}" if mode == "path" else mode, "%Y-%m-%d")
+    stats = FileStats("filename", mode is not None, f"path={source.name}" if mode == "path" else mode, "%Y-%m-%d")
     target = source if mode is None else folder
     if invalid:
         with pytest.raises(RuntimeError, match="without a logger"):
@@ -247,7 +247,8 @@ def test_path_source_validation_is_preserved(tmp_path, age_type, source_kind, me
     elif source_kind == "outside":
         source = tmp_path / "2026-01-02"
         source.write_text("data")
-    stats = FileStats(age_type, True, f"path={source}", "%Y-%m-%d" if age_type == "filename" else None)
+    time_path = f"../{source.name}" if source_kind == "outside" else source.name
+    stats = FileStats(age_type, True, f"path={time_path}", "%Y-%m-%d" if age_type == "filename" else None)
     with pytest.raises(ValueError, match=message):
         stats.get_file_seconds(folder)
 
@@ -259,7 +260,7 @@ def test_folder_sources_cache_child_timestamps(tmp_path, capsys, mode, invalid):
     folder.mkdir()
     source = folder / ("README.txt" if invalid else "2026-01-02")
     source.write_text("data")
-    stats = FileStats("filename", True, f"path={source}" if mode == "path" else mode, "%Y-%m-%d")
+    stats = FileStats("filename", True, f"path={source.name}" if mode == "path" else mode, "%Y-%m-%d")
     stats.logger = Logger(ConfigNamespace(verbose=LogLevel.WARN, age_type="filename"), stats)
     original = stats._filename_extractor
     calls = []
@@ -332,7 +333,7 @@ def test_filename_folder_cli_matrix(tmp_path, monkeypatch, capsys, mode, source_
         "--age-type",
         "filename=%Y-%m-%d",
         "--folder-mode",
-        f"path={time_file}" if mode == "path" else mode,
+        f"path={time_file.relative_to(folder)}" if mode == "path" else mode,
         "--max-age",
         "1d",
         "--verbose",

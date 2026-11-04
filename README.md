@@ -193,7 +193,11 @@ retentions --help
 python3 retentions.py <path> <file_pattern> [options]
 ```
 
-*If you installed via .deb or .rpm or .install a shebang'ed version from the tar.gz / zip, you can simply run `retentions` instead of `python3 retentions.py`.*
+*If you installed via `.deb`, `.rpm`, or `.linux.install`, you can simply run `retentions` instead of `python3 retentions.py`.*
+
+*The `linux/retentions` and `macos/retentions` variants included in the `.tar.gz` and `.zip` archives also have a shebang and can be run directly, provided they have executable permissions. Install the appropriate variant in a directory listed in your `PATH` to invoke it as `retentions`.*
+
+*The standalone `retentions.py` has no shebang and should be run with `python3 retentions.py`.*
 
 ---
 
@@ -213,13 +217,14 @@ python3 retentions.py <path> <file_pattern> [options]
 | `-r, --regex-mode [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
 | `--age-type [time]` | File age source: ctime, mtime (default), atime, birthtime, or 'filename=<format>' |
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
-| `--folder-mode [time-src]` | Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. youngest-file and oldest-file search recursively within the folder. |
+| `--folder-mode [time-src]` | Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. path= must be relative to and stay inside each folder. youngest-file and oldest-file search recursively within the folder. |
 
 ⚠️ `age-type`: 
 - `ctime` is platform-dependent: e.g. Windows => create-time, Linux => change time of meta data
 - `atime` may not reliable, check your platform, your filesystem and your mount options
 - `birthtime` may not available on your platform or your filesystem
 - ❗`retentions` checks the availability of the selected `age-type`, but not the semantic
+- Selected timestamps before `1970-01-01 00:00:00 UTC` are not supported.
 
 💡 See section [Folder Mode](#-folder-mode---folder-mode) for details about `--folder-mode`
 
@@ -425,7 +430,7 @@ The age of a directory is determined by one of the following time references:
   Uses the directory’s own timestamp (`mtime`, `ctime`, etc.), or its name with `--age-type 'filename=<format>'`.
 
 - `path=<path>`:
-  Uses the given file's timestamp
+  Uses the timestamp of a file relative to each directory being evaluated, for example `--folder-mode 'path=sub/text.txt'`. Absolute paths and resolved targets outside that directory are rejected. The target must be a file. An invalid time source aborts the entire run with an error and exit code 2 before any deletion.
 
 With `--age-type 'filename=<format>'`, each time source uses the corresponding name: the directory for `folder`, the specified file for `path=`, and the recursively contained files for `youngest-file` or `oldest-file`. Files without a valid timestamp are skipped when finding the youngest or oldest file. A directory with no usable time source is ignored with a warning.
 

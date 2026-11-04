@@ -190,3 +190,95 @@ def test_exception_handling(monkeypatch, tmp_path, exception, exit_code):
 
     with pytest.raises(exception):
         main()
+
+
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_folder_time_source_is_relative_to_each_folder(tmp_path, monkeypatch, dry_run):
+    base = tmp_path / "backups"
+    old = base / "backup-old"
+    new = base / "backup-new"
+    for folder, timestamp in [(old, 1_600_000_000), (new, 1_700_000_000)]:
+        (folder / "sub").mkdir(parents=True)
+        source = folder / "sub" / "text.txt"
+        source.write_text("backup")
+        os.utime(source, (timestamp, timestamp))
+    os.utime(old, (1_700_000_000, 1_700_000_000))
+    os.utime(new, (1_600_000_000, 1_600_000_000))
+    monkeypatch.chdir(tmp_path)
+    argv = ["retentions.py", str(base), "backup-*", "--folder-mode", "path=sub/text.txt", "--last", "1"]
+    if dry_run:
+        argv.append("--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    main()
+
+    assert old.exists() == dry_run
+    assert new.exists()
+    assert not (base / LOCK_FILE_NAME).exists()
+
+
+@pytest.mark.parametrize(
+    "source_kind,message",
+    [("absolute", "must be relative to the folder"), ("outside", "must be inside the folder"), ("missing", "must be a file"), ("directory", "must be a file")],
+)
+def test_invalid_folder_time_source_aborts_before_deletion(tmp_path, monkeypatch, capsys, source_kind, message):
+    good = tmp_path / "backup-good"
+    bad = tmp_path / "backup-bad"
+    for folder in [good, bad]:
+        folder.mkdir()
+        (folder / "data.txt").write_text("backup")
+    source = good / "time.txt"
+    source.write_text("time source")
+    time_path = "time.txt"
+    if source_kind == "absolute":
+        time_path = str(source)
+    elif source_kind == "outside":
+        time_path = "../external.txt"
+        (tmp_path / "external.txt").write_text("external")
+    elif source_kind == "directory":
+        (bad / "time.txt").mkdir()
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "backup-*", "--folder-mode", f"path={time_path}", "--last", "1"])
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 2
+    assert (good / "data.txt").exists()
+    assert (bad / "data.txt").exists()
+    assert not (tmp_path / LOCK_FILE_NAME).exists()
+    output = capsys.readouterr()
+    assert "[ERROR]" in output.err
+    assert message in output.err
+    assert "Traceback" not in output.err
+
+
+@pytest.mark.parametrize("time_source", [None, "folder", "path=time.txt", "youngest-file", "oldest-file"])
+@pytest.mark.parametrize("seconds", [-1, -0.5])
+def test_pre_epoch_timestamp_aborts_before_deletion(tmp_path, monkeypatch, capsys, time_source, seconds):
+    old = tmp_path / "backup-old"
+    new = tmp_path / "backup-new"
+    sources = []
+    for target in [old, new]:
+        if time_source is None:
+            target.write_text("backup")
+            sources.append(target)
+        else:
+            target.mkdir()
+            source = target / "time.txt"
+            source.write_text("backup")
+            sources.append(target if time_source == "folder" else source)
+    os.utime(sources[0], (seconds, seconds))
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "backup-*", "--last", "1", *(["--folder-mode", time_source] if time_source is not None else [])])
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 2
+    assert old.exists()
+    assert new.exists()
+    assert not (tmp_path / LOCK_FILE_NAME).exists()
+    output = capsys.readouterr()
+    assert "[ERROR]" in output.err
+    assert "before 1970-01-01 00:00:00 UTC" in output.err
+    assert str(old) in output.err
+    assert "Traceback" not in output.err

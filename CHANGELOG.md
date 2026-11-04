@@ -1,5 +1,8 @@
 ### [Unreleased]
 - Add `--age-type 'filename=<format>'` to extract timestamps using Python date/time formats, including folder time sources and shell completions; warn and ignore names without a valid timestamp
+- Resolve folder time-source paths relative to each folder and reject absolute or out-of-folder paths
+- Abort before deletion with exit code 2 for invalid time sources or selected timestamps before 1970-01-01 UTC
+- Document short-lived `fix/*` branches from `master` in the release policy
 - Pinned GitHub Actions lint, test, and release workflows to Ubuntu 24.04 to preserve Python 3.9 CI compatibility
 
 ### 1.3.8 - 25.10.2026

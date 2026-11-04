@@ -3,6 +3,7 @@
 import os
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -146,21 +147,11 @@ def test_filestats_folder_mode_size_sum(tmp_path: Path) -> None:
     assert stats.get_file_bytes(folder) == 50
 
 
-@pytest.mark.parametrize(
-    "path_builder",
-    [
-        # absolute path inside folder
-        lambda folder: folder / "time.txt",
-        # relative path inside folder
-        lambda folder: Path("folder") / "time.txt",
-        # relative path with subdir inside folder
-        lambda folder: Path("folder/sub") / "time.txt",
-    ],
-)
+@pytest.mark.parametrize("time_path", ["time.txt", "sub/time.txt", "sub/../time.txt"])
 def test_filestats_folder_mode_path_time_source_valid(
     tmp_path: Path,
     monkeypatch,
-    path_builder,
+    time_path,
 ) -> None:
     folder = tmp_path / "folder"
     sub = folder / "sub"
@@ -175,13 +166,13 @@ def test_filestats_folder_mode_path_time_source_valid(
 
     monkeypatch.chdir(tmp_path)
 
-    time_file = path_builder(folder)
+    time_file = folder / time_path
     ts = int(time_file.resolve().stat().st_mtime)
 
     stats = FileStats(
         age_type="mtime",
         folder_mode=True,
-        folder_mode_time_src=f"path={time_file}",
+        folder_mode_time_src=f"path={time_path}",
     )
 
     result = stats.get_file_seconds(folder)
@@ -193,13 +184,13 @@ def test_filestats_folder_mode_path_time_source_is_directory(tmp_path: Path) -> 
     folder = tmp_path / "folder"
     folder.mkdir()
 
-    time_dir = tmp_path / "time_dir"
+    time_dir = folder / "time_dir"
     time_dir.mkdir()
 
     stats = FileStats(
         age_type="mtime",
         folder_mode=True,
-        folder_mode_time_src=f"path={time_dir}",
+        folder_mode_time_src=f"path={time_dir.name}",
     )
 
     with pytest.raises(ValueError, match="must be a file"):
@@ -210,12 +201,12 @@ def test_filestats_folder_mode_path_time_source_missing_file(tmp_path: Path) -> 
     folder = tmp_path / "folder"
     folder.mkdir()
 
-    missing = tmp_path / "does_not_exist.txt"
+    missing = folder / "does_not_exist.txt"
 
     stats = FileStats(
         age_type="mtime",
         folder_mode=True,
-        folder_mode_time_src=f"path={missing}",
+        folder_mode_time_src=f"path={missing.name}",
     )
 
     with pytest.raises(ValueError, match="must be a file"):
@@ -236,7 +227,7 @@ def test_filestats_folder_mode_path_time_source_outside_folder(tmp_path: Path) -
     stats = FileStats(
         age_type="mtime",
         folder_mode=True,
-        folder_mode_time_src=f"path={external_time_file}",
+        folder_mode_time_src=f"path=../{external_time_file.name}",
     )
 
     with pytest.raises(ValueError, match="must be inside the folder"):
@@ -291,7 +282,7 @@ def test_filestats_path_time_source_file_ok(tmp_path: Path) -> None:
     stats = FileStats(
         age_type="mtime",
         folder_mode=True,
-        folder_mode_time_src=f"path={time_file}",
+        folder_mode_time_src=f"path={time_file.name}",
     )
 
     ts = stats.get_file_seconds(folder)
@@ -308,21 +299,22 @@ def test_filestats_path_time_source_not_a_file(tmp_path: Path) -> None:
     stats = FileStats(
         age_type="mtime",
         folder_mode=True,
-        folder_mode_time_src=f"path={subdir}",
+        folder_mode_time_src=f"path={subdir.name}",
     )
 
     with pytest.raises(ValueError, match="must be a file"):
         stats.get_file_seconds(folder)
 
 
-def test_filestats_path_time_source_symlink_is_resolved(tmp_path: Path, symlinks_supported: bool) -> None:
+@pytest.mark.parametrize("inside", [False, True])
+def test_filestats_path_time_source_symlink_is_resolved(tmp_path: Path, symlinks_supported: bool, inside) -> None:
     if not symlinks_supported:
         pytest.skip("Symlinks not supported on this platform")
 
     folder = tmp_path / "folder"
     folder.mkdir()
 
-    real_file = folder / "real.txt"
+    real_file = (folder if inside else tmp_path) / "real.txt"
     real_file.write_text("x")
 
     link = folder / "time_link.txt"
@@ -331,11 +323,15 @@ def test_filestats_path_time_source_symlink_is_resolved(tmp_path: Path, symlinks
     stats = FileStats(
         age_type="mtime",
         folder_mode=True,
-        folder_mode_time_src=f"path={link}",
+        folder_mode_time_src=f"path={link.name}",
     )
 
-    ts = stats.get_file_seconds(folder)
-    assert isinstance(ts, int)
+    if inside:
+        ts = stats.get_file_seconds(folder)
+        assert isinstance(ts, int)
+    else:
+        with pytest.raises(ValueError, match="must be inside the folder"):
+            stats.get_file_seconds(folder)
 
 
 def test_filestats_path_time_source_outside_folder(tmp_path: Path) -> None:
@@ -348,8 +344,59 @@ def test_filestats_path_time_source_outside_folder(tmp_path: Path) -> None:
     stats = FileStats(
         age_type="mtime",
         folder_mode=True,
-        folder_mode_time_src=f"path={external}",
+        folder_mode_time_src=f"path=../{external.name}",
     )
 
     with pytest.raises(ValueError, match="must be inside the folder"):
         stats.get_file_seconds(folder)
+
+
+@pytest.mark.parametrize("inside", [False, True])
+def test_filestats_path_time_source_rejects_absolute_paths(tmp_path: Path, inside) -> None:
+    folder = tmp_path / "folder"
+    folder.mkdir()
+    source = (folder if inside else tmp_path) / "time.txt"
+    source.write_text("x")
+    stats = FileStats("mtime", folder_mode=True, folder_mode_time_src=f"path={source}")
+
+    with pytest.raises(ValueError, match="must be relative to the folder"):
+        stats.get_file_seconds(folder)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows rooted and drive-relative paths")
+@pytest.mark.parametrize("time_path", [r"\time.txt", "C:time.txt"])
+def test_filestats_path_time_source_rejects_windows_anchored_paths(tmp_path: Path, time_path) -> None:
+    stats = FileStats("mtime", folder_mode=True, folder_mode_time_src=f"path={time_path}")
+
+    with pytest.raises(ValueError, match="must be relative to the folder"):
+        stats.get_file_seconds(tmp_path)
+
+
+@pytest.mark.parametrize("age_type", ["mtime", "atime", "ctime", "birthtime"])
+@pytest.mark.parametrize("time_source", [None, "folder", "path=time.txt", "youngest-file", "oldest-file"])
+@pytest.mark.parametrize("seconds", [-1, -0.5, 0, 0.5])
+def test_filestats_timestamp_epoch_boundary(tmp_path: Path, monkeypatch, age_type, time_source, seconds) -> None:
+    folder = tmp_path / "folder"
+    folder.mkdir()
+    source = folder / "time.txt"
+    source.write_text("x")
+    if time_source == "folder":
+        source = folder
+    original_stat = Path.stat
+
+    def source_stat(path, *args, **kwargs):
+        result = original_stat(path, *args, **kwargs)
+        if path == source:
+            return SimpleNamespace(st_mode=result.st_mode, **{f"st_{age_type}": seconds})
+        return result
+
+    monkeypatch.setattr(Path, "stat", source_stat)
+    stats = FileStats(age_type, folder_mode=time_source is not None, folder_mode_time_src=time_source)
+    target = source if time_source is None else folder
+    if seconds < 0:
+        with pytest.raises(ValueError, match="before 1970-01-01 00:00:00 UTC") as exc:
+            stats.get_file_seconds(target)
+        assert str(target) in str(exc.value)
+        assert age_type in str(exc.value)
+    else:
+        assert stats.get_file_seconds(target) == int(seconds)

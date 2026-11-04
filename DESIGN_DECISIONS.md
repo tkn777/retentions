@@ -53,6 +53,7 @@ retentions **enforces internal consistency checks** before executing destructive
 - A **lock file** prevents concurrent retention runs on the same directory by default.
 - Protected, retained, pruned, and lock files are not allowed to be removed as companion files.
 - `--no-lock-file` disables only the lock file; it does not disable the other companion-file protections.
+- A selected timestamp before `1970-01-01 00:00:00 UTC`, including a folder time source, aborts the run with `ValueError` (exit code 2) before deletion.
 
 ---
 
@@ -75,9 +76,12 @@ This behavior is deliberate and consistent with the overall design principle of 
 
 ### Folder Mode Time Sources (`path=`)
 When using `path=<file>` as a folder time source:
+- the path must be relative to each folder being evaluated; absolute paths are rejected
 - the path must refer to a real file
-- the file must reside inside the folder being evaluated
+- the resolved file must reside inside the folder being evaluated, including after resolving `..` and symbolic links
 - the resolved path is used for validation and timestamp extraction
+
+Invalid time sources raise `ValueError` and abort the run with exit code 2 before deletion.
 
 Symbolic links are not deleted, but resolved paths may be used as time references if they point to a valid file within the folder scope.
 
