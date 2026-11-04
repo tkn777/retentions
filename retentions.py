@@ -95,26 +95,32 @@ class FileStats:
 
     def _get_file_seconds_internal(self, file: Path) -> int:
         if not self._folder_mode or self._folder_mode_time_src == "folder":
-            return int(getattr(self.__file_stats_cache.compute_if_absent(file, Path.stat), f"st_{self._age_type}"))
-        if self._folder_mode_time_src is not None and self._folder_mode_time_src.startswith("path="):
-            time_file = Path(split_escaped("=", self._folder_mode_time_src, "folder time source", self._folder_mode_time_src, expected_length=2)[1]).resolve()
+            seconds = getattr(self.__file_stats_cache.compute_if_absent(file, Path.stat), f"st_{self._age_type}")
+        elif self._folder_mode_time_src is not None and self._folder_mode_time_src.startswith("path="):
+            time_file = Path(split_escaped("=", self._folder_mode_time_src, "folder time source", self._folder_mode_time_src, expected_length=2)[1])
+            if time_file.anchor:
+                raise ValueError(f"The path value for the folder time source must be relative to the folder '{file}': {time_file}")
+            time_file = (file / time_file).resolve()
+            if not time_file.is_relative_to(file.resolve()):
+                raise ValueError(f"The path value for the folder time source must be inside the folder '{file}': {time_file}")
             if not time_file.is_file():
                 raise ValueError(f"The path value for the folder time source must be a file: {time_file}")
             if time_file.is_symlink():
                 raise ValueError(f"The path value for the folder time source must not be a symlink: {time_file}")
-            try:
-                time_file.relative_to(file)  # file is the folder
-            except ValueError:
-                raise ValueError(f"The path value for the folder time source must be inside the folder: {time_file}")
-            return int(getattr(self.__file_stats_cache.compute_if_absent(time_file, Path.stat), f"st_{self._age_type}"))
-        files = [f for f in file.rglob("*") if f.is_file() and not f.is_symlink()]
-        if not files:
-            raise ValueError(f"Folder '{file}' contains no files, cannot compute time source for folder with mode: {self._age_type}")
-        if self._folder_mode_time_src == "youngest-file":
-            return int(max(getattr(self.__file_stats_cache.compute_if_absent(f, Path.stat), f"st_{self._age_type}") for f in files))
-        if self._folder_mode_time_src == "oldest-file":
-            return int(min(getattr(self.__file_stats_cache.compute_if_absent(f, Path.stat), f"st_{self._age_type}") for f in files))
-        raise ValueError(f"Invalid or missing time source for folder mode: {self._folder_mode_time_src}")
+            seconds = getattr(self.__file_stats_cache.compute_if_absent(time_file, Path.stat), f"st_{self._age_type}")
+        else:
+            files = [f for f in file.rglob("*") if f.is_file() and not f.is_symlink()]
+            if not files:
+                raise ValueError(f"Folder '{file}' contains no files, cannot compute time source for folder with mode: {self._age_type}")
+            if self._folder_mode_time_src == "youngest-file":
+                seconds = max(getattr(self.__file_stats_cache.compute_if_absent(f, Path.stat), f"st_{self._age_type}") for f in files)
+            elif self._folder_mode_time_src == "oldest-file":
+                seconds = min(getattr(self.__file_stats_cache.compute_if_absent(f, Path.stat), f"st_{self._age_type}") for f in files)
+            else:
+                raise ValueError(f"Invalid or missing time source for folder mode: {self._folder_mode_time_src}")
+        if seconds < 0:
+            raise ValueError(f"The selected {self._age_type} timestamp for '{file}' is before 1970-01-01 00:00:00 UTC: {seconds}")
+        return int(seconds)
 
     def get_file_bytes(self, file: Path) -> int:
         if self._folder_mode:
@@ -533,7 +539,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_flags.add_argument("--age-type", type=str, choices=["ctime", "mtime", "atime", "birthtime"], metavar="time-attr", default="mtime", nargs="?",
         help="Used time attribute for file age: mtime (default), ctime, atime, birthtime - They are OS and filesystem dependent, see README.md or man page (mtime is almost safe).")
     g_flags.add_argument("--folder-mode", type=str, metavar="time-src", default=None, nargs="?", const="youngest-file",
-        help="Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. youngest-file and oldest-file search recursively within the folder.")
+        help="Use folders instead of files. Time source: youngest-file (default), oldest-file, folder, or path=<path> (relative, inside each folder). youngest-file and oldest-file search recursively.")
     # fmt: on
 
     # retention options

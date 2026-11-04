@@ -217,13 +217,14 @@ python3 retentions.py <path> <file_pattern> [options]
 | `-r, --regex-mode [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
 | `--age-type [time]` | Used time attribute for file age - time: ctime, mtime (default), atime, birthtime |
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
-| `--folder-mode [time-src]` | Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. youngest-file and oldest-file search recursively within the folder. |
+| `--folder-mode [time-src]` | Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. path= must be relative to and stay inside each folder. youngest-file and oldest-file search recursively within the folder. |
 
 ⚠️ `age-type`: 
 - `ctime` is platform-dependent: e.g. Windows => create-time, Linux => change time of meta data
 - `atime` may not reliable, check your platform, your filesystem and your mount options
 - `birthtime` may not available on your platform or your filesystem
 - ❗`retentions` checks the availability of the selected `age-type`, but not the semantic
+- Selected timestamps before `1970-01-01 00:00:00 UTC` are not supported.
 
 💡 See section [Folder Mode](#-folder-mode---folder-mode) for details about `--folder-mode`
 <br>
@@ -421,7 +422,7 @@ The age of a directory is determined by one of the following time references:
   Uses the directory’s own timestamp (`mtime`, `ctime`, etc.).
 
 - `path=<path>`:
-  Uses the given file's timestamp
+  Uses the timestamp of a file relative to each directory being evaluated, for example `--folder-mode 'path=sub/text.txt'`. Absolute paths and resolved targets outside that directory are rejected. The target must be a file. An invalid time source aborts the entire run with an error and exit code 2 before any deletion.
 
 Empty directories are ignored (with a warning).
 Recursive traversal is used only to determine a directory’s age.

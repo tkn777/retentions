@@ -6,7 +6,7 @@ This project follows a deliberately minimal and conservative release model.
 
 * `master` is the only long-lived integration branch.
 * Maintenance branches are created **only when needed**, never by default.
-* Feature branches may exist temporarily alongside maintenance branches.
+* Fix and feature branches may exist temporarily alongside maintenance branches.
 
 ### Maintenance Branch Naming
 
@@ -26,6 +26,16 @@ A maintenance branch is created only if:
 * the released minor version still requires bugfixes.
 
 Branches are always created from the latest stable tag of that minor version.
+
+### Fix Branches
+
+Short-lived bugfix branches use `fix/<short-description>`, for example
+`fix/path-and-timestamp-validation`.
+
+* Fix branches are created from `master`.
+* They contain focused bugfixes with relevant tests, documentation, and changelog updates.
+* They are merged back into `master` after validation and deleted afterward.
+* They do not maintain older release lines; those use `maint/*` under the rules above.
 
 ### Feature Branches
 
@@ -88,6 +98,7 @@ v1.1.2
 Branch categories are expressed via namespaces for clarity and consistency.
 
 * `maint/*` denotes maintenance branches.
+* `fix/*` denotes short-lived bugfix branches for `master`.
 * `feature/*` denotes feature branches.
 
 ## Coexistence Rules
@@ -100,6 +111,7 @@ Branch categories are expressed via namespaces for clarity and consistency.
 ## Lifecycle
 
 * Maintenance branches are temporary.
+* Fix branches are temporary.
 * Feature branches are temporary.
 * Once no longer needed, branches are deleted.
 * Finished branches are not kept for archival purposes.
