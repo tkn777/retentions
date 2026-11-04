@@ -289,35 +289,35 @@ class CompanionType(Enum):
 
 @dataclass(frozen=True)
 class CompanionRule:
-    type: CompanionType
-    match: str
-    companion: str
-    rule_def: Optional[str] = field(default=None, compare=False, hash=False)
+    _type: CompanionType
+    _match: str
+    _companion: str
+    _rule_def: Optional[str] = field(default=None, compare=False, hash=False)
 
     def __post_init__(self) -> None:
-        if self.match == self.companion:
-            raise ValueError(f"CompanionRule \"{self.rule_def if self.rule_def is not None else '<unspecified>'}\": 'match' and 'companion' must be different")
-        if not self.companion:
-            raise ValueError(f"CompanionRule \"{self.rule_def if self.rule_def is not None else '<unspecified>'}\": 'companion' must not be empty")
+        if self._match == self._companion:
+            raise ValueError(f"CompanionRule \"{self._rule_def if self._rule_def is not None else '<unspecified>'}\": 'match' and 'companion' must be different")
+        if not self._companion:
+            raise ValueError(f"CompanionRule \"{self._rule_def if self._rule_def is not None else '<unspecified>'}\": 'companion' must not be empty")
 
     def matches(self, file: Path) -> bool:
-        if len(self.match) == 0:
+        if len(self._match) == 0:
             return True
-        if self.type is CompanionType.PREFIX:
-            return file.name.startswith(self.match)
-        if self.type is CompanionType.SUFFIX:
-            return file.name.endswith(self.match)
-        raise AssertionError(f"Unhandled CompanionType: {self.type}")
+        if self._type is CompanionType.PREFIX:
+            return file.name.startswith(self._match)
+        if self._type is CompanionType.SUFFIX:
+            return file.name.endswith(self._match)
+        raise AssertionError(f"Unhandled CompanionType: {self._type}")
 
     def replace(self, file: Path) -> Path:
-        if self.type is CompanionType.PREFIX:
-            new_name = self.companion + file.name[len(self.match) :]
+        if self._type is CompanionType.PREFIX:
+            new_name = self._companion + file.name[len(self._match) :]
             return file.with_name(new_name)
-        if self.type is CompanionType.SUFFIX:
-            stem = file.name if self.match == "" else file.name[: -len(self.match)]
-            new_name = stem + self.companion
+        if self._type is CompanionType.SUFFIX:
+            stem = file.name if self._match == "" else file.name[: -len(self._match)]
+            new_name = stem + self._companion
             return file.with_name(new_name)
-        raise AssertionError(f"Unhandled CompanionType: {self.type}")
+        raise AssertionError(f"Unhandled CompanionType: {self._type}")
 
 
 class ModernHelpFormatter(argparse.HelpFormatter):

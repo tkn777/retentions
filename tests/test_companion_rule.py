@@ -31,13 +31,13 @@ def test_companionrule_matches_suffix_positive(tmp_path):
 
 
 def test_companionrule_matches_suffix_negative(tmp_path):
-    rule = CompanionRule(CompanionType.SUFFIX, ".tar", ".md5", rule_def=None)
+    rule = CompanionRule(CompanionType.SUFFIX, ".tar", ".md5", _rule_def=None)
     file = tmp_path / "archive.zip"
     assert rule.matches(file) is False
 
 
 def test_companionrule_matches_empty_match_always_true(tmp_path):
-    rule = CompanionRule(CompanionType.SUFFIX, "", ".bak", rule_def=None)
+    rule = CompanionRule(CompanionType.SUFFIX, "", ".bak", _rule_def=None)
     file = tmp_path / "whatever.txt"
     assert rule.matches(file) is True
 
@@ -52,7 +52,7 @@ def test_companionrule_replace_prefix(tmp_path):
         CompanionType.PREFIX,
         "backup-",
         "meta-",
-        rule_def=None,
+        _rule_def=None,
     )
     file = tmp_path / "backup-data.tar"
 
@@ -67,7 +67,7 @@ def test_companionrule_replace_suffix(tmp_path):
         CompanionType.SUFFIX,
         ".tar",
         ".md5",
-        rule_def=None,
+        _rule_def=None,
     )
     file = tmp_path / "archive.tar"
 
@@ -82,7 +82,7 @@ def test_companionrule_replace_suffix_empty_match(tmp_path):
         CompanionType.SUFFIX,
         "",
         ".bak",
-        rule_def=None,
+        _rule_def=None,
     )
     file = tmp_path / "file.txt"
 
@@ -111,7 +111,7 @@ def test_companion_symlink_is_ignored(tmp_path: Path, symlinks_supported: bool) 
         CompanionType.SUFFIX,
         ".log",
         ".tmp",
-        rule_def="suffix:.log:.tmp",
+        _rule_def="suffix:.log:.tmp",
     )
 
     companions = {rule.replace(main)}
