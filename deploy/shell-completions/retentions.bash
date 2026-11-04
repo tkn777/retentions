@@ -40,7 +40,7 @@ _retentions() {
             return
             ;;
         --age-type)
-            COMPREPLY=( $(compgen -W "ctime mtime atime birthtime" -- "$cur") )
+            COMPREPLY=( $(compgen -W "ctime mtime atime birthtime filename=" -- "$cur") )
             return
             ;;
         --folder-mode)

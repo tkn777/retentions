@@ -215,7 +215,7 @@ python3 retentions.py <path> <file_pattern> [options]
 | Flag | Description |
 |--------|--------------|
 | `-r, --regex-mode [mode]` | file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive (default), ignorecase |
-| `--age-type [time]` | Used time attribute for file age - time: ctime, mtime (default), atime, birthtime |
+| `--age-type [time]` | File age source: ctime, mtime (default), atime, birthtime, or 'filename=<format>' |
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
 | `--folder-mode [time-src]` | Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. path= must be relative to and stay inside each folder. youngest-file and oldest-file search recursively within the folder. |
 
@@ -227,6 +227,8 @@ python3 retentions.py <path> <file_pattern> [options]
 - Selected timestamps before `1970-01-01 00:00:00 UTC` are not supported.
 
 💡 See section [Folder Mode](#-folder-mode---folder-mode) for details about `--folder-mode`
+
+💡 See section [Filename timestamps](#-filename-timestamps) for details about `'filename=<format>'`.
 <br>
 <br>
 
@@ -346,6 +348,12 @@ python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\0' | xar
 python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
 ```
 
+#### Filename timestamps
+
+```bash
+retentions /data/backups 'backup-*.tar.gz' --age-type 'filename=%Y-%m-%d' --days 7 --dry-run
+```
+
 #### 🗓️ Hierarchical calendar-based retention example
 
 Retention levels are applied hierarchically by calendar containment, not additively by age.
@@ -419,13 +427,33 @@ The age of a directory is determined by one of the following time references:
   Uses the oldest file inside the directory (recursive).
 
 - `folder`:  
-  Uses the directory’s own timestamp (`mtime`, `ctime`, etc.).
+  Uses the directory’s own timestamp (`mtime`, `ctime`, etc.), or its name with `--age-type 'filename=<format>'`.
 
 - `path=<path>`:
   Uses the timestamp of a file relative to each directory being evaluated, for example `--folder-mode 'path=sub/text.txt'`. Absolute paths and resolved targets outside that directory are rejected. The target must be a file. An invalid time source aborts the entire run with an error and exit code 2 before any deletion.
 
+With `--age-type 'filename=<format>'`, each time source uses the corresponding name: the directory for `folder`, the specified file for `path=`, and the recursively contained files for `youngest-file` or `oldest-file`. Files without a valid timestamp are skipped when finding the youngest or oldest file. A directory with no usable time source is ignored with a warning.
+
 Empty directories are ignored (with a warning).
 Recursive traversal is used only to determine a directory’s age.
+
+---
+
+### 📅 Filename timestamps
+
+Use `'filename=<format>'` to extract the timestamp from the selected file or folder name instead of its filesystem attributes.
+
+Always enclose the entire argument in single quotes, for example `--age-type 'filename=%Y-%m-%d'`, so the shell passes the format unchanged, including any spaces.
+
+The format uses Python's [date/time format codes ↗](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes), such as `%Y`, `%m`, and `%d`. Prefixes and extensions belong in `file_pattern`. Dates without a timezone use local time; dates without a time of day use midnight.
+
+- **Incomplete formats:** Missing date components can receive unexpected Python defaults. For example, `%b` alone can interpret `Jan` as `1900-01-01`. Use a format that identifies a meaningful backup date, including a year; an accepted format may still be unsuitable for retention.
+
+- **Performance:** Textual fields at the start or end of the format, such as `%b`, can require many parsing attempts and make extraction significantly slower, especially for long filenames. Formats such as `%Y-%m-%d` narrow the search. The position cache does not eliminate the parsing attempts for each filename.
+
+- **Language:** Textual fields such as `%b` and `%B` depend on Python's current `LC_TIME` locale. `retentions` does not change this locale or translate names. A normal standalone run uses the default `C` locale and expects English month names, regardless of the operating system's display language. Numeric fields such as `%m` avoid language dependence.
+
+- **Matching rules:** If multiple valid timestamps occur, the match with the earliest start position wins; at that position, the longest valid substring wins. Contiguous runs of digits are never split. The format is not validated in advance. Names without a valid timestamp are ignored, with a warning at verbosity WARN or higher (`--verbose WARN`, or the default verbosity of `--dry-run`). Ignored files can still be deleted by an explicit companion rule.
 
 ---
 
