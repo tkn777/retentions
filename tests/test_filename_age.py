@@ -391,3 +391,71 @@ def test_unrecognized_files_can_still_be_deleted_as_companions(tmp_path, monkeyp
     assert old.exists() == dry_run
     assert checksum.exists() == dry_run
     assert new.exists()
+
+
+@pytest.mark.parametrize("date_format", ["%Y-%m-%d_%Z", "%Y-%m-%d_%%%Z", "%Y-%m-%d_%%Z_%Z"])
+@pytest.mark.parametrize("folder_mode", [False, True])
+@pytest.mark.parametrize("verbose", list(LogLevel))
+def test_cli_rejects_timezone_names_once_without_processing(tmp_path, monkeypatch, capsys, date_format, folder_mode, verbose):
+    targets = []
+    for day in [2, 3]:
+        name = datetime(2026, 1, day, tzinfo=timezone.utc).strftime(date_format)
+        target = tmp_path / f"backup-{name}"
+        if folder_mode:
+            target.mkdir()
+            (target / "data.txt").write_text("backup")
+        else:
+            target.write_text("backup")
+        targets.append(target)
+    argv = ["retentions.py", str(tmp_path), "backup-*", "--age-type", f"filename={date_format}", "--last", "1", "--verbose", verbose.name]
+    if folder_mode:
+        argv.extend(["--folder-mode", "folder"])
+    monkeypatch.setattr(sys, "argv", argv)
+
+    main()
+
+    assert all(target.exists() for target in targets)
+    assert not (tmp_path / retentions.LOCK_FILE_NAME).exists()
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert output.out.count("[WARN]") == int(verbose >= LogLevel.WARN)
+    if verbose >= LogLevel.WARN:
+        assert date_format in output.out
+        assert "Use '%z'" in output.out
+        assert "no files or folders are processed" in output.out
+
+
+def test_cli_warns_about_timezone_names_without_candidates(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*", "--age-type", "filename=%Y-%m-%d_%Z", "--verbose", "WARN"])
+
+    main()
+
+    assert capsys.readouterr().out.count("[WARN]") == 1
+    assert not (tmp_path / retentions.LOCK_FILE_NAME).exists()
+
+
+@pytest.mark.parametrize("date_format", ["%Y-%m-%d_%%Z", "%Y-%m-%d_%%%%Z", "%Y-%m-%d_%H-%M-%S%z"])
+@pytest.mark.parametrize("folder_mode", [False, True])
+def test_cli_allows_literal_timezone_directives_and_numeric_offsets(tmp_path, monkeypatch, capsys, date_format, folder_mode):
+    targets = []
+    for day in [2, 3]:
+        name = datetime(2026, 1, day, tzinfo=timezone.utc).strftime(date_format)
+        target = tmp_path / f"backup-{name}"
+        if folder_mode:
+            target.mkdir()
+            (target / "data.txt").write_text("backup")
+        else:
+            target.write_text("backup")
+        targets.append(target)
+    argv = ["retentions.py", str(tmp_path), "backup-*", "--age-type", f"filename={date_format}", "--last", "1", "--verbose", "WARN"]
+    if folder_mode:
+        argv.extend(["--folder-mode", "folder"])
+    monkeypatch.setattr(sys, "argv", argv)
+
+    main()
+
+    assert not targets[0].exists()
+    assert targets[1].exists()
+    assert not (tmp_path / retentions.LOCK_FILE_NAME).exists()
+    output = capsys.readouterr()
+    assert output.out == output.err == ""

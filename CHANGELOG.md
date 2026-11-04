@@ -1,4 +1,5 @@
 ### [Unreleased]
+- Reject filename timestamp formats containing `%Z` with one WARN per run; retain numeric `%z` offsets and escaped `%%Z` literals
 - Add `--age-type 'filename=<format>'` to extract timestamps using Python date/time formats, including folder time sources and shell completions; warn and ignore names without a valid timestamp
 - Resolve folder time-source paths relative to each folder and reject absolute or out-of-folder paths
 - Abort before deletion with exit code 2 for invalid time sources or selected timestamps before 1970-01-01 UTC

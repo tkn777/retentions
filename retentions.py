@@ -928,6 +928,10 @@ def main() -> None:
         logger = Logger(args, file_stats)
         file_stats.logger = logger
 
+        if args.age_type == "filename" and "%Z" in re.findall(r"%.|.", args.filename_format or "", re.S):
+            logger.verbose(LogLevel.WARN, f"Unsupported '%Z' directive in filename timestamp format '{args.filename_format}' -> Use '%z' with a numeric UTC offset; no files or folders are processed")
+            return
+
         logger.verbose(LogLevel.INFO, "Command line: " + " ".join(shlex.quote(arg) for arg in sys.argv))
         logger.verbose(LogLevel.DEBUG, f"Parsed arguments: {args}")
 
