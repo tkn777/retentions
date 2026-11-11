@@ -73,7 +73,7 @@ When `--folder-mode` is enabled (see [Folder Mode](#-folder-mode---folder-mode) 
   - `--help` (also described below in this document)
 - Version:
   - `--version`
-- Clean, deterministic output - ASCII only, no colors, no locales.
+- Clean, color-free output. Filename timestamp parsing may depend on the current locale.
 
 ---
 
