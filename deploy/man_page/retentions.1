@@ -53,7 +53,7 @@ Supports regex or glob pattern matching.
 .IP \(bu 2
 Safe modes: \-\-dry-run (simulate) and \-\-list-only (output only files that would be deleted).
 .IP \(bu 2
-Clean, deterministic output (ASCII only, no colors, no locales).
+Clean, color-free output. Filename timestamp parsing may depend on the current locale.
 
 .SH LOGIC SUMMARY
 .SS Logic
@@ -436,7 +436,7 @@ Safe by design \- dry-run and list-only modes available.
 .IP \(bu 2
 Cross-platform \- runs anywhere Python 3 does.
 .IP \(bu 2
-Plain ASCII \- no colors, no locale dependencies.
+Color-free output \- filename timestamp parsing may depend on the current locale.
 
 .SH TIP
 Use --list-only to integrate with external scripts or pipelines:
