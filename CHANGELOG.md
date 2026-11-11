@@ -1,11 +1,12 @@
-### [Unreleased]
+### 1.3.9 - 11.11.2026
 - Support negative timestamps, round timestamps to whole seconds, and use `None` for unavailable timestamps excluded from sorting and decision output
 - Handle regex errors in filename timestamp formats with one WARN per affected file instead of aborting the run
 - Reject filename timestamp formats containing `%Z` with one WARN per run; retain numeric `%z` offsets and escaped `%%Z` literals
 - Add `--age-type 'filename=<format>'` to extract timestamps using Python date/time formats, including folder time sources and shell completions; warn and ignore names without a valid timestamp
 - Resolve folder time-source paths relative to each folder and reject absolute or out-of-folder paths
 - Abort before deletion with exit code 2 for invalid time sources
-- Document short-lived `fix/*` branches from `master` in the release policy
+- Restore the original `retentions.py` after release builds, including failed builds
+- Document short-lived `fix/*` branches from `master` and major/minor/patch version selection in the release policy
 - Pinned GitHub Actions lint, test, and release workflows to Ubuntu 24.04 to preserve Python 3.9 CI compatibility
 
 ### 1.3.8 - 25.10.2026
