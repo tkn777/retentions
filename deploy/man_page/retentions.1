@@ -426,16 +426,6 @@ retentions does not operate atomically. Since the underlying filesystem is not a
 
 By default retentions writes a lock file .retentions.lock \- this can be used by other tools.
 
-.SH DESIGN PRINCIPLES
-.IP \(bu 2
-KISS \- no configuration files, no hidden behavior.
-.IP \(bu 2
-Deterministic \- same input, same output.
-.IP \(bu 2
-Safe by design \- dry-run and list-only modes available.
-.IP \(bu 2
-Cross-platform \- runs anywhere Python 3 does.
-
 .SH TIP
 Use --list-only to integrate with external scripts or pipelines:
 
@@ -466,6 +456,15 @@ Script aborts early: Check exit codes and error messages.
 
 .SH LICENSE
 MIT License. - Copyright (c) 2025-2026 Thomas Kuhlmann.
+
+.SH ETHICAL STATEMENT
+This project is released under the MIT License because I believe in free and open-source software and the freedom to use, study, modify, and share it.
+.PP
+However, granting these freedoms does not mean that I endorse every possible use of my work.
+.PP
+I strongly oppose the use of this software, directly or indirectly, for malicious purposes, violations of human rights, or systems designed to harm or kill people.
+.PP
+This statement expresses my personal ethical convictions. It does not impose any additional restrictions on the MIT License.
 
 .SH DEDICATION
 This project is dedicated to 'Motzli' \- my real-life companion and friend. To that quiet, resilient cat whose presence still lives within me and keeps me standing up, no matter how often life burns everything down to ashes. For the strength, the gentleness, and the stubborn hope that never leaves \- and will never be forgotten.
