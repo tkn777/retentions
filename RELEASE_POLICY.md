@@ -2,6 +2,14 @@
 
 This project follows a deliberately minimal and conservative release model.
 
+## Version Selection
+
+Versions use the form `<major>.<minor>.<patch>`:
+
+* **Major:** breaking changes or other far-reaching changes.
+* **Minor:** a significant new feature.
+* **Patch:** all other changes.
+
 ## Branches
 
 * `master` is the only long-lived integration branch.
