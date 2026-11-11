@@ -224,7 +224,7 @@ python3 retentions.py <path> <file_pattern> [options]
 - `atime` may not reliable, check your platform, your filesystem and your mount options
 - `birthtime` may not available on your platform or your filesystem
 - ❗`retentions` checks the availability of the selected `age-type`, but not the semantic
-- Selected timestamps before `1970-01-01 00:00:00 UTC` are not supported.
+- Timestamps are rounded to whole seconds.
 
 💡 See section [Folder Mode](#-folder-mode---folder-mode) for details about `--folder-mode`
 
@@ -457,7 +457,7 @@ The format uses Python's [date/time format codes ↗](https://docs.python.org/3/
 
 - **Language:** Textual fields such as `%b` and `%B` depend on Python's current `LC_TIME` locale. `retentions` does not change this locale or translate names. A normal standalone run uses the default `C` locale and expects English month names, regardless of the operating system's display language. Numeric fields such as `%m` avoid language dependence.
 
-- **Matching rules:** If multiple valid timestamps occur, the match with the earliest start position wins; at that position, the longest valid substring wins. Contiguous runs of digits are never split. Except for the unsupported `%Z` directive, the format is not validated in advance. Names without a valid timestamp are ignored, with a warning at verbosity WARN or higher (`--verbose WARN`, or the default verbosity of `--dry-run`). Ignored files can still be deleted by an explicit companion rule.
+- **Matching rules:** If multiple valid timestamps occur, the match with the earliest start position wins; at that position, the longest valid substring wins. Contiguous runs of digits are never split. Except for the unsupported `%Z` directive, the format is not validated in advance. Names without a valid timestamp are excluded from sorting, retention, and decision output, with a warning at verbosity WARN or higher (`--verbose WARN`, or the default verbosity of `--dry-run`). Ignored files can still be deleted by an explicit companion rule.
 
 ---
 

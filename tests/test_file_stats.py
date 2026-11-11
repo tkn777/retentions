@@ -26,7 +26,7 @@ def test_file_stats_cache_and_sort_files(tmp_path: Path) -> None:
 
     cache = FileStats("mtime")
     # Check that the cache returns the correct timestamp and size
-    assert cache.get_file_seconds(file_old) == int(old_time)
+    assert cache.get_file_seconds(file_old) == round(old_time)
     assert cache.get_file_bytes(file_old) == len("old")
 
     # Sorting should return files with newest mtime first
@@ -167,7 +167,7 @@ def test_filestats_folder_mode_path_time_source_valid(
     monkeypatch.chdir(tmp_path)
 
     time_file = folder / time_path
-    ts = int(time_file.resolve().stat().st_mtime)
+    ts = round(time_file.resolve().stat().st_mtime)
 
     stats = FileStats(
         age_type="mtime",
@@ -374,8 +374,8 @@ def test_filestats_path_time_source_rejects_windows_anchored_paths(tmp_path: Pat
 
 @pytest.mark.parametrize("age_type", ["mtime", "atime", "ctime", "birthtime"])
 @pytest.mark.parametrize("time_source", [None, "folder", "path=time.txt", "youngest-file", "oldest-file"])
-@pytest.mark.parametrize("seconds", [-1, -0.5, 0, 0.5])
-def test_filestats_timestamp_epoch_boundary(tmp_path: Path, monkeypatch, age_type, time_source, seconds) -> None:
+@pytest.mark.parametrize("seconds", [-1.6, -1, -0.5, 0, 0.5, 1.6])
+def test_filestats_timestamp_rounding(tmp_path: Path, monkeypatch, age_type, time_source, seconds) -> None:
     folder = tmp_path / "folder"
     folder.mkdir()
     source = folder / "time.txt"
@@ -393,10 +393,6 @@ def test_filestats_timestamp_epoch_boundary(tmp_path: Path, monkeypatch, age_typ
     monkeypatch.setattr(Path, "stat", source_stat)
     stats = FileStats(age_type, folder_mode=time_source is not None, folder_mode_time_src=time_source)
     target = source if time_source is None else folder
-    if seconds < 0:
-        with pytest.raises(ValueError, match="before 1970-01-01 00:00:00 UTC") as exc:
-            stats.get_file_seconds(target)
-        assert str(target) in str(exc.value)
-        assert age_type in str(exc.value)
-    else:
-        assert stats.get_file_seconds(target) == int(seconds)
+    result = stats.get_file_seconds(target)
+    assert isinstance(result, int)
+    assert result == round(seconds)
