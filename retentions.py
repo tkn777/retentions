@@ -82,18 +82,18 @@ class FileStats:
     _folder_mode_time_src: Optional[str]
     _age_type: str
     __file_stats_cache: Cache[stat_result]
-    __file_seconds_cache: Cache[int]
+    __file_seconds_cache: Cache[Optional[int]]
 
     def __init__(self, age_type: str, folder_mode: bool = False, folder_mode_time_src: Optional[str] = None, filename_format: Optional[str] = None) -> None:
         self._age_type = age_type
         self._folder_mode = folder_mode
         self._folder_mode_time_src = folder_mode_time_src
         self.__file_stats_cache: Cache[stat_result] = Cache()
-        self.__file_seconds_cache: Cache[int] = Cache()
+        self.__file_seconds_cache: Cache[Optional[int]] = Cache()
         self._filename_extractor = self.make_cached_extractor(filename_format or "")
         self.logger: Optional[Logger] = None
 
-    def make_cached_extractor(self, date_format: str) -> Callable[[str], int]:
+    def make_cached_extractor(self, date_format: str) -> Callable[[str], Optional[int]]:
         edge = {f"%{code}": r"[ \d]" for code in "dmHIMSfjUWVwu"}
         edge.update({"%Y": r"\d{4}", "%G": r"\d{4}"})
         edge.update({"%y": r"\d{2}", "%w": r"\d", "%u": r"\d"})
@@ -110,7 +110,7 @@ class FileStats:
                 tuple(i for i in reversed(boundaries) if stops.match(shape, i)),
             )
 
-        def extract(filename: str) -> int:
+        def extract(filename: str) -> Optional[int]:
             shape = "".join("0" if char.isdecimal() else char for char in filename)
             beginnings, endings = positions(shape)
             # Preserve the same selection order on cache hits and misses.
@@ -119,26 +119,26 @@ class FileStats:
                     if end <= start:
                         break
                     try:
-                        return int(datetime.strptime(filename[start:end], date_format).timestamp())
+                        return round(datetime.strptime(filename[start:end], date_format).timestamp())
                     except (ValueError, OverflowError, OSError):
                         continue
                     except re.error as error:
                         if self.logger is None:
                             raise
                         self.logger.verbose(LogLevel.WARN, f"Invalid filename timestamp format '{date_format}': {error} -> File is ignored: {filename}")
-                        return -1
+                        return None
             if self.logger is None:
                 raise RuntimeError(f"Cannot report an invalid filename timestamp without a logger: {filename}")
             self.logger.verbose(LogLevel.WARN, f"No valid filename timestamp found -> It is ignored: {filename}")
-            return -1
+            return None
 
         return extract
 
-    def get_file_seconds(self, file: Path) -> int:
+    def get_file_seconds(self, file: Path) -> Optional[int]:
         return self.__file_seconds_cache.compute_if_absent(file, lambda f: self._get_file_seconds_internal(f))
 
-    def _get_file_seconds_internal(self, file: Path) -> int:
-        seconds: float
+    def _get_file_seconds_internal(self, file: Path) -> Optional[int]:
+        seconds: Optional[float]
         extractor = self._filename_extractor
         # Use the file itself, or the folder itself with the "folder" time source.
         if not self._folder_mode or self._folder_mode_time_src == "folder":
@@ -165,13 +165,13 @@ class FileStats:
             # Both youngest-file and oldest-file inspect contained files recursively.
             files = [f for f in file.rglob("*") if f.is_file() and not f.is_symlink()]
             if self._age_type == "filename":
-                # Cache parsed timestamps and exclude unrecognized names (-1).
-                timestamps = [timestamp for time_file in files if (timestamp := self.__file_seconds_cache.compute_if_absent(time_file, lambda f: extractor(f.name))) != -1]
+                # Cache parsed timestamps and exclude unrecognized names.
+                timestamps = [timestamp for time_file in files if (timestamp := self.__file_seconds_cache.compute_if_absent(time_file, lambda f: extractor(f.name))) is not None]
                 if not timestamps:
                     if self.logger is None:
                         raise RuntimeError(f"Cannot report missing filename timestamps without a logger: {file}")
                     self.logger.verbose(LogLevel.WARN, f"Folder '{file}' contains no valid filename timestamps -> It is ignored")
-                    return -1
+                    return None
             else:
                 if not files:
                     raise ValueError(f"Folder '{file}' contains no files, cannot compute time source for folder with mode: {self._age_type}")
@@ -182,11 +182,7 @@ class FileStats:
                 seconds = min(timestamps)
             else:
                 raise ValueError(f"Invalid or missing time source for folder mode: {self._folder_mode_time_src}")
-        if self._age_type == "filename" and seconds == -1:
-            return -1
-        if seconds < 0:
-            raise ValueError(f"The selected {self._age_type} timestamp for '{file}' is before 1970-01-01 00:00:00 UTC: {seconds}")
-        return int(seconds)
+        return None if seconds is None else round(seconds)
 
     def get_file_bytes(self, file: Path) -> int:
         if self._folder_mode:
@@ -195,7 +191,8 @@ class FileStats:
 
 
 def sort_files(files: Iterable[Path], file_stats: FileStats) -> list[Path]:
-    return sorted((f for f in files if file_stats.get_file_seconds(f) != -1), key=lambda f: (-file_stats.get_file_seconds(f), f.name))
+    files_with_seconds = ((file, seconds) for file in files if (seconds := file_stats.get_file_seconds(file)) is not None)
+    return [file for file, _ in sorted(files_with_seconds, key=lambda item: (-item[1], item[0].name))]
 
 
 class LogLevel(IntEnum):
@@ -229,7 +226,9 @@ class Logger:
         self._decisions: dict[Path, list[tuple[str, Optional[str]]]] = defaultdict(list)
 
     def _get_file_attributes(self, file: Path, args: ConfigNamespace, file_stats: FileStats) -> str:
-        return f"{args.age_type}: {datetime.fromtimestamp(file_stats.get_file_seconds(file))}, size: {ModernStrictArgumentParser.format_size(file_stats.get_file_bytes(file))}"
+        if (seconds := file_stats.get_file_seconds(file)) is None:
+            return ""
+        return f"{args.age_type}: {datetime.fromtimestamp(seconds)}, size: {ModernStrictArgumentParser.format_size(file_stats.get_file_bytes(file))}"
 
     def has_log_level(self, level: LogLevel) -> bool:
         return int(level) <= int(self._args.verbose)
@@ -244,7 +243,7 @@ class Logger:
             self._raw_verbose(level, message, file, prefix)
 
     def add_decision(self, level: LogLevel, file: Path, message: str, debug: Optional[str] = None, append: bool = False) -> None:
-        if self._args.age_type == "filename" and self._file_stats.get_file_seconds(file) == -1:
+        if self._file_stats.get_file_seconds(file) is None:
             return
         if self.has_log_level(LogLevel.DEBUG):  # Decision history and debug message and file details only with debug log level
             if append:
@@ -761,14 +760,13 @@ class RetentionLogic:
             if self._skip_by_filesize(file):
                 continue
             ts = self._file_stats.get_file_seconds(file)
+            if ts is None:
+                continue
             key = self._get_bucket_key(retention_mode, ts)
             buckets.setdefault(key, []).append(file)
         # newest file first inside each bucket
-        for files_in_bucket in buckets.values():
-            files_in_bucket.sort(
-                key=lambda f: self._file_stats.get_file_seconds(f),
-                reverse=True,
-            )
+        for key in buckets:
+            buckets[key] = sort_files(buckets[key], self._file_stats)
         return buckets
 
     def _process_retention_buckets(self, retention_mode: str, retention_mode_count: int, buckets: dict[str, list[Path]], last_keep_time: int) -> int:
@@ -779,12 +777,12 @@ class RetentionLogic:
         for key in sorted(buckets.keys(), reverse=True):
             if cutoff_key is not None and key >= cutoff_key:  # Skip buckets already consumed by finer-grained retention modes
                 continue
-            files = [file for file in buckets[key] if file not in self._keep and self._file_stats.get_file_seconds(file) < last_keep_time]
+            files = [(file, timestamp) for file in buckets[key] if file not in self._keep and (timestamp := self._file_stats.get_file_seconds(file)) is not None and timestamp < last_keep_time]
             if count < retention_mode_count and len(files) > 0:
-                file_keep = files[0]
+                file_keep, file_keep_time = files[0]
                 self._logger.add_decision(LogLevel.INFO, file_keep, f"Keeping for mode '{retention_mode}' {count + 1:02d} / {retention_mode_count:02d}", debug=f"bucket: {key}")
                 self._keep.add(file_keep)
-                last_keep_time = self._file_stats.get_file_seconds(file_keep)
+                last_keep_time = file_keep_time
                 count += 1
         return last_keep_time
 
@@ -827,7 +825,7 @@ class RetentionLogic:
             threshold = SCRIPT_START - int(self._args.max_age_seconds)
             for file in sorted_keep:
                 file_time = self._file_stats.get_file_seconds(file)
-                if file_time <= threshold:
+                if file_time is not None and file_time <= threshold:
                     self._filter_file(file, f"Filtering: max total age exceeded: {ModernStrictArgumentParser.format_time(int(SCRIPT_START - file_time))} > {self._args.max_age}")
 
     def process_retention_logic(self) -> RetentionsResult:

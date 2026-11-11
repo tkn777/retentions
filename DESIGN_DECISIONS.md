@@ -53,7 +53,7 @@ retentions **enforces internal consistency checks** before executing destructive
 - A **lock file** prevents concurrent retention runs on the same directory by default.
 - Protected, retained, pruned, and lock files are not allowed to be removed as companion files.
 - `--no-lock-file` disables only the lock file; it does not disable the other companion-file protections.
-- A selected timestamp before `1970-01-01 00:00:00 UTC`, including a folder time source, aborts the run with `ValueError` (exit code 2) before deletion.
+- Timestamp availability is kept separate from its numeric value. Valid timestamps, including negative values, are rounded to whole seconds. Entries without a usable timestamp are excluded from sorting, retention, and decision output.
 
 ---
 

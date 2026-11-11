@@ -37,7 +37,7 @@ from retentions import ConfigNamespace, FileStats, Logger, LogLevel, create_pars
 def test_extractor_format_and_filename_matrix(date_format, prefix, suffix):
     value = datetime(2024, 2, 29, 13, 24, 35, 123456, tzinfo=timezone(timedelta(hours=1)))
     text = value.strftime(date_format)
-    expected = int(datetime.strptime(text, date_format).timestamp())
+    expected = round(datetime.strptime(text, date_format).timestamp())
     extract = FileStats("filename").make_cached_extractor(date_format)
     assert extract(prefix + text + suffix) == expected
     assert extract(prefix + text + suffix) == expected
@@ -70,8 +70,8 @@ def test_extractor_rejects_invalid_candidates(date_format, filename, with_logger
         stats.logger = Logger(ConfigNamespace(verbose=LogLevel.ERROR, age_type="filename"), stats)
     extract = stats.make_cached_extractor(date_format)
     if with_logger:
-        assert extract(filename) == -1
-        assert extract(filename) == -1
+        assert extract(filename) is None
+        assert extract(filename) is None
     else:
         with pytest.raises(RuntimeError, match="without a logger"):
             extract(filename)
@@ -87,8 +87,8 @@ def test_regex_format_errors_warn_once_per_file(tmp_path, capsys, date_format, v
     stats = FileStats("filename", filename_format=date_format)
     stats.logger = Logger(ConfigNamespace(verbose=verbose, age_type="filename"), stats)
 
-    assert stats.get_file_seconds(file) == -1
-    assert stats.get_file_seconds(file) == -1
+    assert stats.get_file_seconds(file) is None
+    assert stats.get_file_seconds(file) is None
     assert sort_files([file], stats) == []
 
     output = capsys.readouterr()
@@ -98,6 +98,58 @@ def test_regex_format_errors_warn_once_per_file(tmp_path, capsys, date_format, v
         assert date_format in output.out
         assert filename in output.out
         assert "redefinition of group name" in output.out
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("1969-12-31T23-59-58.400000+0000", -2),
+        ("1969-12-31T23-59-58.600000+0000", -1),
+        ("1969-12-31T23-59-59.400000+0000", -1),
+        ("1969-12-31T23-59-59.500000+0000", 0),
+        ("1970-01-01T00-00-00.500000+0000", 0),
+        ("1970-01-01T00-00-00.600000+0000", 1),
+        ("1970-01-01T00-00-01.500000+0000", 2),
+    ],
+)
+def test_filename_timestamp_rounding(tmp_path, text, expected):
+    stats = FileStats("filename", filename_format="%Y-%m-%dT%H-%M-%S.%f%z")
+    result = stats.get_file_seconds(tmp_path / f"backup-{text}.txt")
+    assert isinstance(result, int)
+    assert result == expected
+
+
+@pytest.mark.parametrize("mode", [None, "folder", "path", "youngest-file", "oldest-file"])
+@pytest.mark.parametrize("seconds", [-2_208_988_800, -1, 0])
+def test_filename_pre_epoch_time_sources(tmp_path, mode, seconds):
+    date_format = "%Y-%m-%dT%H-%M-%S%z"
+    text = (datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=seconds)).strftime(date_format)
+    folder = tmp_path / f"backup-{text}"
+    folder.mkdir()
+    source = folder / f"time-{text}.txt"
+    source.write_text("backup")
+    (folder / "README.txt").write_text("no date")
+    if mode in ("youngest-file", "oldest-file"):
+        (folder / "time-1970-01-01T00-00-02+0000.txt").write_text("newer")
+    stats = FileStats("filename", mode is not None, f"path={source.name}" if mode == "path" else mode, date_format)
+    stats.logger = Logger(ConfigNamespace(verbose=LogLevel.ERROR, age_type="filename"), stats)
+    target = source if mode is None else folder
+    expected = 2 if mode == "youngest-file" else seconds
+    assert stats.get_file_seconds(target) == expected
+    assert stats.get_file_seconds(target) == expected
+    assert sort_files([target], stats) == [target]
+
+
+def test_sort_filename_timestamps_ignores_only_none(tmp_path):
+    stats = FileStats("filename", filename_format="%Y-%m-%dT%H-%M-%S%z")
+    stats.logger = Logger(ConfigNamespace(verbose=LogLevel.ERROR, age_type="filename"), stats)
+    old = tmp_path / "backup-1900-01-01T00-00-00+0000.txt"
+    minus_one = tmp_path / "backup-1969-12-31T23-59-59+0000.txt"
+    zero = tmp_path / "backup-1970-01-01T00-00-00+0000.txt"
+    positive = tmp_path / "backup-1970-01-01T00-00-01+0000.txt"
+    invalid = tmp_path / "README.txt"
+    assert sort_files(iter([invalid, old, zero, positive, minus_one, positive]), stats) == [positive, positive, zero, minus_one, old]
+    assert stats.get_file_seconds(invalid) is None
 
 
 @pytest.mark.parametrize("history", [[], ["backup-2026-02-31.tgz"], ["backup-2026-01-02.tgz", "README.txt"], [f"shape{chr(65 + i)}-2026-01-02.tgz" for i in range(40)]])
@@ -125,15 +177,15 @@ def test_extractor_selection_is_independent_of_cache_history(history, filename, 
     [
         ("+01:00:30", timedelta(hours=1, seconds=30), timedelta(hours=1)),
         ("-02:00:45", -timedelta(hours=2, seconds=45), -timedelta(hours=2)),
-        ("+01:00:30.5", timedelta(hours=1, seconds=30, microseconds=500000), timedelta(hours=1, seconds=30)),
+        ("+01:00:30.6", timedelta(hours=1, seconds=30, microseconds=600000), timedelta(hours=1, seconds=30)),
     ],
 )
 def test_extractor_prefers_longest_valid_match_at_same_start(offset, full_offset, short_offset, warm_cache):
     extract = FileStats("filename").make_cached_extractor("%Y-%m-%dT%H-%M-%S%z")
     if warm_cache:
         extract(f"backup-2025-11-12T11-22-33{offset}.tgz")
-    expected = int(datetime(2026, 1, 2, 12, 34, 56, tzinfo=timezone(full_offset)).timestamp())
-    shorter = int(datetime(2026, 1, 2, 12, 34, 56, tzinfo=timezone(short_offset)).timestamp())
+    expected = round(datetime(2026, 1, 2, 12, 34, 56, tzinfo=timezone(full_offset)).timestamp())
+    shorter = round(datetime(2026, 1, 2, 12, 34, 56, tzinfo=timezone(short_offset)).timestamp())
     assert expected != shorter
     assert extract(f"backup-2026-01-02T12-34-56{offset}.tgz") == expected
 
@@ -173,7 +225,7 @@ def test_existing_age_types_still_use_file_attributes(tmp_path, age_type):
         pytest.skip(f"{age_type} is unavailable on this filesystem")
     args, _ = create_parser().parse_known_args([str(tmp_path), "*", "--age-type", age_type])
     assert args.filename_format is None
-    assert FileStats(age_type).get_file_seconds(file) == int(getattr(file.stat(), "st_" + age_type))
+    assert FileStats(age_type).get_file_seconds(file) == round(getattr(file.stat(), "st_" + age_type))
 
 
 @pytest.mark.parametrize("verbose", list(LogLevel))
@@ -191,7 +243,7 @@ def test_filename_seconds_and_failures_are_cached(tmp_path, capsys, verbose, inv
         return original(name)
 
     stats._filename_extractor = counted_extract
-    expected = -1 if invalid else int(datetime(2026, 1, 2).timestamp())
+    expected = None if invalid else int(datetime(2026, 1, 2).timestamp())
     assert stats.get_file_seconds(file) == expected
     assert stats.get_file_seconds(file) == expected
     assert sort_files(iter([file]), stats) == ([] if invalid else [file])
@@ -215,10 +267,10 @@ def test_folder_filename_time_source_matrix(tmp_path, capsys, mode, valid_count,
     source = f"path={files[0].relative_to(folder)}" if mode == "path" else mode
     stats = FileStats("filename", True, source, date_format)
     stats.logger = Logger(ConfigNamespace(verbose=LogLevel.WARN, age_type="filename"), stats)
-    expected = -1 if not valid_count else int(dates[1 if mode == "youngest-file" and valid_count == 2 else 0].timestamp())
+    expected = None if not valid_count else int(dates[1 if mode == "youngest-file" and valid_count == 2 else 0].timestamp())
     assert stats.get_file_seconds(folder) == expected
     assert stats.get_file_seconds(folder) == expected
-    assert sort_files([folder], stats) == ([] if expected == -1 else [folder])
+    assert sort_files([folder], stats) == ([] if expected is None else [folder])
     assert stats.get_file_bytes(folder) == 8
     warnings = capsys.readouterr().out
     if not valid_count:
@@ -234,8 +286,8 @@ def test_folder_without_any_files_has_no_filename_timestamp(tmp_path, capsys, mo
     stats = FileStats("filename", True, mode, "%Y-%m-%d")
     if with_logger:
         stats.logger = Logger(ConfigNamespace(verbose=LogLevel.WARN, age_type="filename"), stats)
-        assert stats.get_file_seconds(folder) == -1
-        assert stats.get_file_seconds(folder) == -1
+        assert stats.get_file_seconds(folder) is None
+        assert stats.get_file_seconds(folder) is None
     else:
         with pytest.raises(RuntimeError, match="without a logger"):
             stats.get_file_seconds(folder)
@@ -292,13 +344,44 @@ def test_folder_sources_cache_child_timestamps(tmp_path, capsys, mode, invalid):
         return original(name)
 
     stats._filename_extractor = counted_extract
-    expected = -1 if invalid else int(datetime(2026, 1, 2).timestamp())
+    expected = None if invalid else int(datetime(2026, 1, 2).timestamp())
     assert stats.get_file_seconds(folder) == expected
     assert stats.get_file_seconds(folder) == expected
     assert stats.get_file_seconds(source) == expected
     assert calls == [source.name]
     output = capsys.readouterr().out
     assert output.count(f"It is ignored: {source.name}") == int(invalid)
+
+
+@pytest.mark.parametrize("mode", [None, "folder", "youngest-file", "oldest-file"])
+@pytest.mark.parametrize(
+    "options,deleted",
+    [([], []), (["--last", "1"], [0, 1]), (["--minutes", "1"], [0, 1]), (["--last", "3", "--max-files", "1"], [0, 1]), (["--max-size", "1"], [0, 1]), (["--max-age", "1d"], [0, 1, 2])],
+)
+def test_cli_retains_pre_epoch_timestamps_and_ignores_none(tmp_path, monkeypatch, capsys, mode, options, deleted):
+    date_format = "%Y-%m-%dT%H-%M-%S%z"
+    targets = []
+    for text in ["1900-01-01T00-00-00+0000", "1969-12-31T23-59-59+0000", "1970-01-01T00-00-00+0000", "no-date"]:
+        target = tmp_path / f"backup-{text}"
+        if mode is None:
+            target.write_text("x")
+        else:
+            target.mkdir()
+            (target / f"time-{text}.txt").write_text("x")
+        targets.append(target)
+    argv = ["retentions.py", str(tmp_path), "backup-*", "--age-type", f"filename={date_format}", "--verbose", "DEBUG", *options]
+    if mode is not None:
+        argv.extend(["--folder-mode", mode])
+    monkeypatch.setattr(sys, "argv", argv)
+
+    main()
+
+    assert [index for index, target in enumerate(targets) if not target.exists()] == deleted
+    assert not (tmp_path / retentions.LOCK_FILE_NAME).exists()
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert "[WARN]" in output.out
+    assert not any(line.startswith("[INFO] backup-no-date") for line in output.out.splitlines())
 
 
 @pytest.mark.parametrize("regex", [False, True])

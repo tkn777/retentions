@@ -254,7 +254,7 @@ def test_invalid_folder_time_source_aborts_before_deletion(tmp_path, monkeypatch
 
 @pytest.mark.parametrize("time_source", [None, "folder", "path=time.txt", "youngest-file", "oldest-file"])
 @pytest.mark.parametrize("seconds", [-1, -0.5])
-def test_pre_epoch_timestamp_aborts_before_deletion(tmp_path, monkeypatch, capsys, time_source, seconds):
+def test_pre_epoch_timestamp_participates_in_retention(tmp_path, monkeypatch, capsys, time_source, seconds):
     old = tmp_path / "backup-old"
     new = tmp_path / "backup-new"
     sources = []
@@ -268,17 +268,14 @@ def test_pre_epoch_timestamp_aborts_before_deletion(tmp_path, monkeypatch, capsy
             source.write_text("backup")
             sources.append(target if time_source == "folder" else source)
     os.utime(sources[0], (seconds, seconds))
-    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "backup-*", "--last", "1", *(["--folder-mode", time_source] if time_source is not None else [])])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "backup-*", "--last", "1", "--verbose", "DEBUG", *(["--folder-mode", time_source] if time_source is not None else [])])
 
-    with pytest.raises(SystemExit) as exc:
-        main()
+    main()
 
-    assert exc.value.code == 2
-    assert old.exists()
+    assert not old.exists()
     assert new.exists()
     assert not (tmp_path / LOCK_FILE_NAME).exists()
     output = capsys.readouterr()
-    assert "[ERROR]" in output.err
-    assert "before 1970-01-01 00:00:00 UTC" in output.err
-    assert str(old) in output.err
-    assert "Traceback" not in output.err
+    assert output.err == ""
+    assert "backup-old" in output.out
+    assert "Pruning: not matched by any retention rule" in output.out

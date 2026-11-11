@@ -8,6 +8,24 @@ import pytest
 from retentions import FileStats, Logger, LogLevel
 
 
+@pytest.mark.parametrize("age_type", ["filename", "mtime"])
+@pytest.mark.parametrize("verbose", [LogLevel.INFO, LogLevel.DEBUG])
+def test_logger_ignores_missing_timestamps(tmp_path, monkeypatch, capsys, age_type, verbose):
+    args = SimpleNamespace(verbose=verbose, age_type=age_type)
+    stats = FileStats(age_type)
+    monkeypatch.setattr(stats, "get_file_seconds", lambda file: None)
+    logger = Logger(args, stats)
+    file = tmp_path / "not-inspected.txt"
+
+    logger.add_decision(LogLevel.INFO, file, "Must not appear", debug="No timestamp", append=True)
+    logger.print_decisions()
+
+    assert not logger._decisions
+    assert logger._get_file_attributes(file, args, stats) == ""
+    output = capsys.readouterr()
+    assert output.out == output.err == ""
+
+
 def test_logger_add_and_print_decisions(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Logger should accumulate decisions and print them based on the verbosity level."""
     # Prepare a logger with INFO level
