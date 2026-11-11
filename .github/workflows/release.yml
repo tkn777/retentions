@@ -33,6 +33,14 @@ jobs:
       # -----------------------------------------------------------
       # Install system tools + gh
       # -----------------------------------------------------------
+      - name: Configure DNS for release runner
+        run: |
+          runner_iface=$(ip -4 route show default | awk 'NR == 1 {print $5}')
+          sudo resolvectl dns "$runner_iface" 1.1.1.1 8.8.8.8
+          sudo resolvectl domain "$runner_iface" '~.'
+          sudo resolvectl flush-caches
+          getent ahostsv4 archive.ubuntu.com security.ubuntu.com azure.archive.ubuntu.com
+
       - name: Install build tools
         run: |
           sudo apt update
