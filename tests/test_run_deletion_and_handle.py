@@ -21,6 +21,8 @@ def _make_args(**overrides):
         regex_mode=None,
         protected_files=set(),
         delete_companion_set=set(),
+        delete_symlinks=None,
+        symlink_paths={},
         entity_name="file",
         folder_mode=False,
     )
@@ -124,7 +126,7 @@ def test_error_for_file_not_deleted(tmp_path, capsys, monkeypatch, verbose, is_c
 
     err = capsys.readouterr().err
     assert "[ERROR]" in err
-    assert f"Error while deleting {'(companion) ' if is_companion else ''}file" in err
+    assert f"Error while deleting ({'companion' if is_companion else 'file'}) file" in err
     assert protected.name in err
 
     # normal file is deleted
@@ -155,7 +157,7 @@ def test_exception_for_file_not_deleted(tmp_path, capsys, monkeypatch):
     # protected file triggers warning
     with pytest.raises(FileCouldNotBeDeleteError) as exc:
         run_deletion(protected, args, logger, set())
-    assert "Error while deleting file" in str(exc)
+    assert "Error while deleting (file) file" in str(exc)
     assert "protected.txt" in str(exc)
     assert protected.exists()
     assert normal.exists()

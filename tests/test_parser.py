@@ -198,3 +198,18 @@ def test_by_file_size_without_retention_options_failed(monkeypatch, capsys):
     assert exc.value.code == 2
     captured = capsys.readouterr()
     assert "--skip-by-filesize must be combined with any retention option(s)" in captured.err
+
+
+@pytest.mark.parametrize("scope", ["directory", "system"])
+def test_delete_symlinks_scope(tmp_path, scope):
+    args = create_parser().parse_args([str(tmp_path), "*", "--delete-symlinks", scope])
+    assert args.delete_symlinks == scope
+    assert args.symlink_paths == {}
+    assert create_parser().parse_args([str(tmp_path), "*"]).delete_symlinks is None
+
+
+@pytest.mark.parametrize("options", [[], ["invalid"], ["directory", "--folder-mode"], ["directory", "--list-only"], ["directory", "--list-only", ""]])
+def test_delete_symlinks_invalid_options(tmp_path, options):
+    with pytest.raises(SystemExit) as exc:
+        create_parser().parse_args([str(tmp_path), "*", "--delete-symlinks", *options])
+    assert exc.value.code == 2

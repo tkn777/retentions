@@ -24,6 +24,8 @@ def _make_args(**overrides):
         protect=None,
         protect_compiled=None,
         protected_files=set(),
+        delete_symlinks=None,
+        symlink_paths={},
         age_type="ctime",
         list_only=None,
         verbose=LogLevel.ERROR,
