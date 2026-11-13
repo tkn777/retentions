@@ -554,6 +554,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             # Init some defaults
             ns.protected_files = set()
             ns.symlink_paths = {}
+            ns.symlink_companions = set()
 
         except BaseException as e:
             self.add_error(str(e))
@@ -723,7 +724,9 @@ def read_symlinks(args: ConfigNamespace, matches: list[Path], logger: Logger) ->
     symlinks: defaultdict[Path, list[Path]] = defaultdict(list)
     matches_set = set(matches)
     for file in matches:
-        matches_set.update(get_companion_paths(file, args))
+        companions = get_companion_paths(file, args)
+        matches_set.update(companions)
+        args.symlink_companions.update(path for path in companions if path.is_symlink())
 
     for directory, dirs, files in os.walk(root, followlinks=not directory_only):
         real_directory = Path(directory).resolve()
@@ -956,11 +959,10 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
         print(file.absolute(), end=args.list_only)  # List mode
     else:
         companions = get_companion_paths(file, args)
-        symlink_companions = {path for path in companions if path.is_symlink()}
         deletion_count += delete_file(file, args, logger, FILETYPE_PATH)
         # delete companion files (if any)
         for companion_file in companions:
-            if companion_file in symlink_companions or companion_file.is_symlink():
+            if companion_file in args.symlink_companions or companion_file.is_symlink():
                 logger.verbose(LogLevel.WARN, f"Companion file is a symlink -> It is ignored: {companion_file}")
                 continue
             if companion_file in disallowed_companions or (args.protect and ((args.regex_mode and args.protect_compiled.match(companion_file.name)) or fnmatch(companion_file.name, args.protect))):

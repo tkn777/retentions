@@ -1,5 +1,6 @@
 """Symlink cleanup, with system-wide traversal restricted to temporary test roots."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -164,6 +165,24 @@ def test_companion_protection_with_symlink_cleanup(backup_links, symlink_compani
         assert exc.value.code == 7
         assert companion.read_text() == "checksum"
         assert (links / "checksum.link").is_symlink()
+
+
+@pytest.mark.parametrize("target_first", [False, True])
+def test_shared_symlink_companion_remains_unprotected_after_cleanup(backup_links, target_first):
+    base, _, _ = backup_links
+    target = base / "backup.tar"
+    other = base / "other.tar"
+    other.write_text("backup")
+    companion = base / "shared.sha256"
+    companion.symlink_to(target)
+    os.utime(target, (1700000000, 1700000100 if target_first else 1700000000))
+    os.utime(other, (1700000000, 1700000000 if target_first else 1700000100))
+    sys.argv[2] = "*.tar"
+    sys.argv.extend(["--delete-companions", "prefix:backup.tar:shared.sha256", "prefix:other.tar:shared.sha256", "--protect", "*.sha256"])
+    retentions.main()
+    assert not target.exists()
+    assert not other.exists()
+    assert not companion.is_symlink()
 
 
 @pytest.fixture

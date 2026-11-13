@@ -23,6 +23,7 @@ def _make_args(**overrides):
         delete_companion_set=set(),
         delete_symlinks=None,
         symlink_paths={},
+        symlink_companions=set(),
         entity_name="file",
         folder_mode=False,
     )
