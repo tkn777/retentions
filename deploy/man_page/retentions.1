@@ -386,7 +386,7 @@ Symlink companions are skipped as regular companions. --delete-symlinks handles 
 .SH SYMBOLIC LINKS
 Symlinks are ignored as retention objects and, by default, are not deleted separately. A symlink supplied as the base directory is resolved to its target.
 .PP
---delete-symlinks directory searches only direct entries of the base directory (depth 0). Links in subdirectories or outside that directory remain untouched. --delete-symlinks system searches recursively from /, with the limitations described under KNOWN ISSUES & TRADE-OFFS.
+--delete-symlinks directory searches only direct entries of the base directory (depth 0). Links in subdirectories or outside that directory remain untouched. --delete-symlinks system searches recursively from / and follows directory symlinks. Already visited target directories are skipped to prevent loops and repeated traversal. See KNOWN ISSUES & TRADE-OFFS for search limitations.
 .PP
 Relative and absolute links, including link chains, are matched by their resolved targets. The shared search includes possible companions. Unrelated and already broken links remain. The file pattern selects main files, not link names.
 .PP
@@ -465,7 +465,7 @@ done
 .SH KNOWN ISSUES & TRADE-OFFS
 The following behaviors are known, intentional trade-offs rather than bugs.
 .PP
-Symlink search: directory has depth 0. system searches recursively from /, but on Windows covers only the current drive, not all drives or network shares. Directory links are not followed. The top-level directories dev, proc, sys and run are excluded from system searches.
+Symlink search: directory has depth 0 and does not follow directory links. system follows directory links recursively from /. On Windows, it starts at the current drive root; other drives and network shares are not enumerated, but can be reached through directory links. The top-level directories dev, proc, sys and run remain excluded, including through directory links.
 .PP
 System searches can take a long time on large or network filesystems. The search runs during file discovery, even if retention later keeps all files. Inaccessible areas and unresolvable or cyclic links can be skipped silently. Concurrent filesystem changes can prevent complete cleanup. Removal of every link on the system is not guaranteed; support and access depend on the platform, filesystem and permissions.
 

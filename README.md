@@ -515,7 +515,7 @@ Symbolic links are ignored as retention objects. By default, they are not delete
 Use `--delete-symlinks directory|system` to remove links to files and companions after their targets have been successfully deleted:
 
 - **`directory`** searches only direct entries of the base directory (**depth 0**). Links in subdirectories or outside the base directory remain untouched.
-- **`system`** searches recursively from `/`. The search limits and Windows behavior are described under [Known Issues & Trade-offs](#-known-issues--trade-offs).
+- **`system`** searches recursively from `/` and follows directory symlinks. Already visited target directories are skipped to prevent loops and repeated traversal. The search limits and Windows behavior are described under [Known Issues & Trade-offs](#-known-issues--trade-offs).
 - Relative and absolute links, including link chains, are matched by their resolved target. Unrelated and already broken links are left in place.
 - Link names are **never protected by `--protect`**. Protection still applies to the main files and regular companions. The file pattern selects main files, not link names.
 - `--dry-run` reports planned link deletions without removing files or links. If a target cannot be deleted, its links remain. Link deletion errors use ERROR logging and respect `--fail-on-delete-error`.
@@ -575,7 +575,7 @@ done
 
 The following behaviors are known, intentional trade-offs rather than bugs.
 
-- **Symlink search scope:** `--delete-symlinks directory` has depth 0. `system` searches recursively from `/`, but on Windows this means only the current drive, not all drives or network shares. Directory symlinks are not followed. The top-level directories `dev`, `proc`, `sys` and `run` are excluded from the system search.
+- **Symlink search scope:** `--delete-symlinks directory` has depth 0 and does not follow directory symlinks. `system` follows directory symlinks recursively from `/`. On Windows, it starts at the root of the current drive; other drives and network shares are not enumerated, but can be reached through directory symlinks. The top-level directories `dev`, `proc`, `sys` and `run` are excluded from the system search, including when reached through directory symlinks.
 
 - **Symlink search cost and completeness:** A system search can take a long time on large or network filesystems. It runs during file discovery, even if retention later keeps all files. Inaccessible areas and unresolvable or cyclic links can be skipped silently. Concurrent filesystem changes can also prevent complete cleanup. The option does not guarantee removal of every link on the system; symlink support and access depend on the platform, filesystem and permissions.
 

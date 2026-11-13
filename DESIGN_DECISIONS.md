@@ -63,7 +63,7 @@ Symbolic links are intentionally handled in a restrictive and explicit manner to
 
 ### General Policy
 - Symbolic-link entries are ignored as retention objects and regular companion targets. Separate link deletion requires `--delete-symlinks directory|system`.
-- `directory` searches direct children only (depth 0); `system` searches recursively from `/`, skips top-level `dev`, `proc`, `sys` and `run`, and does not follow directory links. On Windows, `/` refers to the current drive only.
+- `directory` searches direct children only (depth 0) without following directory links. `system` follows directory links recursively from `/`; resolved target directories are visited once to prevent loops and repeated traversal. Top-level `dev`, `proc`, `sys` and `run` remain excluded, including through directory links. On Windows, the search starts at the current drive root; other drives or shares are only reached through directory links, not enumerated.
 - One search during file discovery indexes links by resolved target, including possible companions and link chains. The shared companion-path function is also used during deletion.
 - Target deletion must succeed before its captured links are removed. Symlink companions are identified before main-file deletion and skipped before companion-protection checks. `--protect` never protects link names.
 - Symlink cleanup supports dry-run and the existing deletion-error policy, but is incompatible with folder mode and list-only.
@@ -94,7 +94,7 @@ Rather than attempting to interpret or constrain symlink behavior heuristically,
 retentions opts for explicit, conservative rules:
 
 - no implicit scope expansion
-- no traversal through directory links during symlink discovery
+- no repeated traversal of resolved target directories during symlink discovery
 - no link cleanup after failed target deletion
 
 This keeps retention decisions deterministic and the safety model easy to reason about.
