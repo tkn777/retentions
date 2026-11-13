@@ -718,12 +718,19 @@ def read_symlinks(args: ConfigNamespace, matches: list[Path], logger: Logger) ->
     directory_only = args.delete_symlinks == "directory"
     root = Path(args.path) if directory_only else Path("/")
     excluded = {"dev", "proc", "sys", "run"}
+    excluded_paths: set[Path] = {root.resolve() / name for name in excluded} if not directory_only else set()
+    visited: set[Path] = set()
     symlinks: defaultdict[Path, list[Path]] = defaultdict(list)
     matches_set = set(matches)
     for file in matches:
         matches_set.update(get_companion_paths(file, args))
 
-    for directory, dirs, files in os.walk(root):
+    for directory, dirs, files in os.walk(root, followlinks=not directory_only):
+        real_directory = Path(directory).resolve()
+        if real_directory in visited or any(real_directory.is_relative_to(path) for path in excluded_paths):
+            dirs.clear()
+            continue
+        visited.add(real_directory)
         if not directory_only and Path(directory) == root:
             dirs[:] = [d for d in dirs if d not in excluded]
 
