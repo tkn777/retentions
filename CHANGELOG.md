@@ -1,4 +1,4 @@
-### [Unreleased]
+### 1.3.10 - 13.11.2026
 - Add `--delete-symlinks directory|system` to remove links after successful file and companion deletion, with dry-run support, depth-zero or recursive search, directory-symlink traversal with loop detection, shared symlink-companion handling, shell completions and documented search limitations
 
 ### 1.3.9 - 11.11.2026
