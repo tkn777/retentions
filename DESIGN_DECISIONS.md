@@ -62,11 +62,14 @@ retentions **enforces internal consistency checks** before executing destructive
 Symbolic links are intentionally handled in a restrictive and explicit manner to preserve a strict, predictable, and auditable execution scope.
 
 ### General Policy
-- Symbolic links are never deleted.
-- Symbolic-link entries are ignored as retention or deletion targets.
+- Symbolic-link entries are ignored as retention objects and regular companion targets. Separate link deletion requires `--delete-symlinks directory|system`.
+- `directory` searches direct children only (depth 0) without following directory links. `system` follows directory links recursively from `/`; resolved target directories are visited once to prevent loops and repeated traversal. Top-level `dev`, `proc`, `sys` and `run` remain excluded, including through directory links. On Windows, the search starts at the current drive root; other drives or shares are only reached through directory links, not enumerated.
+- One search during file discovery indexes links by resolved target, including possible companions and link chains. The shared companion-path function is also used during deletion.
+- Target deletion must succeed before its captured links are removed. Symlink companions are identified before main-file deletion and skipped before companion-protection checks. `--protect` never protects link names.
+- Symlink cleanup supports dry-run and the existing deletion-error policy, but is incompatible with folder mode and list-only.
 - Folder age and size calculations skip symbolic-link files; the base directory itself is resolved deliberately.
 
-This applies uniformly across files, folders, companion files, and deletion logic.
+The search can be slow, may run even when retention later keeps all files, and can silently skip inaccessible areas or links that cannot be resolved. It does not guarantee complete system-wide cleanup.
 
 ### Base Directory Resolution
 User-supplied base paths are resolved before further processing.  
@@ -83,7 +86,7 @@ When using `path=<file>` as a folder time source:
 
 Invalid time sources raise `ValueError` and abort the run with exit code 2 before deletion.
 
-Symbolic links are not deleted, but resolved paths may be used as time references if they point to a valid file within the folder scope.
+Symlink cleanup is unavailable in folder mode, but resolved paths may be used as time references if they point to a valid file within the folder scope.
 
 ### Rationale
 Symbolic links introduce ambiguity in scope, traversal, and intent.
@@ -91,8 +94,8 @@ Rather than attempting to interpret or constrain symlink behavior heuristically,
 retentions opts for explicit, conservative rules:
 
 - no implicit scope expansion
-- no filesystem topology inference
-- no special cases during deletion
+- no repeated traversal of resolved target directories during symlink discovery
+- no link cleanup after failed target deletion
 
 This keeps retention decisions deterministic and the safety model easy to reason about.
 

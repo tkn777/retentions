@@ -11,6 +11,7 @@
 #
 
 import argparse
+import os
 import re
 import shlex
 import shutil
@@ -29,7 +30,7 @@ from types import SimpleNamespace
 from typing import Callable, Generic, NoReturn, Optional, TextIO, TypeVar, no_type_check
 
 
-VERSION: str = "dev-1.3.9"
+VERSION: str = "dev-1.3.x"
 
 SCRIPT_START = int(datetime.now().timestamp())
 
@@ -544,12 +545,16 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
             validate(lambda: ns.list_only and ns.verbose > LogLevel.ERROR, "--list-only and --verbose (> ERROR) cannot be used together")
             validate(lambda: ns.list_only and ns.delete_companions, "--list-only and --delete-companions must not be combined, because list-only is not for companions")
+            validate(lambda: ns.list_only is not None and ns.delete_symlinks, "--list-only and --delete-symlinks must not be combined")
+            validate(lambda: ns.folder_mode and ns.delete_symlinks, "--folder-mode and --delete-symlinks must not be combined")
             validate(lambda: ns.folder_mode and ns.skip_by_filesize, "--folder-mode and --skip-by-filesize must not be combined")
             validate(lambda: ns.folder_mode and ns.delete_companions, "--folder-mode and --delete-companions must not be combined")
             validate(lambda: ns.skip_by_filesize and not has_retention_options, "--skip-by-filesize must be combined with any retention option(s)")
 
             # Init some defaults
             ns.protected_files = set()
+            ns.symlink_paths = {}
+            ns.symlink_companions = set()
 
         except BaseException as e:
             self.add_error(str(e))
@@ -636,10 +641,12 @@ def create_parser() -> ModernStrictArgumentParser:
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep", help="Output only file/folder paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
     g_behavior.add_argument("--verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
                             help="Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)")
-    # fmt: on
 
     # experts options
     g_expert.add_argument("--delete-companions", type=str, metavar="rule", nargs="+", help="Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5')")
+    g_expert.add_argument( "--delete-symlinks", choices=["directory", "system"],
+                          help="Delete symlinks to deleted files/companions (directory: direct children only; system: recursive from root, current drive on Windows). Ignores --protect; incompatible with --list-only and --folder-mode.", )
+    # fmt: on
 
     # developers options
     g_developers.add_argument("--stacktrace", action="store_true", help="Add output of stacktrace in case of errors")
@@ -696,8 +703,51 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
     # Ignore lock file (in any case, even if it is is disabled by user)
     matches = [m for m in matches if m.name != LOCK_FILE_NAME]
 
+    if args.delete_symlinks:
+        args.symlink_paths = read_symlinks(args, matches, logger)
+
     # sort by time (youngest first)
     return sort_files(matches, file_stats)
+
+
+def get_companion_paths(file: Path, args: ConfigNamespace) -> set[Path]:
+    return {rule.replace(file) for rule in args.delete_companion_set if rule.matches(file)}
+
+
+def read_symlinks(args: ConfigNamespace, matches: list[Path], logger: Logger) -> dict[Path, list[Path]]:
+    logger.verbose(LogLevel.INFO, "Searching for symlinks")
+    directory_only = args.delete_symlinks == "directory"
+    root = Path(args.path) if directory_only else Path("/")
+    excluded = {"dev", "proc", "sys", "run"}
+    excluded_paths: set[Path] = {root.resolve() / name for name in excluded} if not directory_only else set()
+    visited: set[Path] = set()
+    symlinks: defaultdict[Path, list[Path]] = defaultdict(list)
+    matches_set = set(matches)
+    for file in matches:
+        companions = get_companion_paths(file, args)
+        matches_set.update(companions)
+        args.symlink_companions.update(path for path in companions if path.is_symlink())
+
+    for directory, dirs, files in os.walk(root, followlinks=not directory_only):
+        real_directory = Path(directory).resolve()
+        if real_directory in visited or any(real_directory.is_relative_to(path) for path in excluded_paths):
+            dirs.clear()
+            continue
+        visited.add(real_directory)
+        if not directory_only and Path(directory) == root:
+            dirs[:] = [d for d in dirs if d not in excluded]
+
+        for name in dirs + files:
+            try:
+                if (path := Path(directory, name)).is_symlink() and (target := path.resolve()) in matches_set:
+                    symlinks[target].append(path)
+            except (OSError, RuntimeError):
+                continue
+
+        if directory_only:
+            dirs.clear()
+
+    return symlinks
 
 
 @dataclass(frozen=True)
@@ -872,24 +922,33 @@ def is_file_to_delete(keep: set[Path], prune: set[Path], file: Path) -> bool:
     return file not in keep and file in prune
 
 
-def delete_file(file: Path, args: ConfigNamespace, logger: Logger, is_companion: bool = False) -> int:
-    if file.parent.resolve() != Path(args.path).resolve():
-        raise IntegrityCheckFailedError(f"{'(Companion) ' if is_companion else ''}{args.entity_name.capitalize()} '{file}' is not a child of parent directory '{file.parent}'")
+FILETYPE_PATH = "file"
+FILETYPE_COMPANION = "companion"
+FILETYPE_SYMLINK = "symlink"
+
+
+def delete_file(file: Path, args: ConfigNamespace, logger: Logger, type: str) -> int:
+    counter = 0
+    if (type != FILETYPE_SYMLINK or args.delete_symlinks == "directory") and file.parent.resolve() != Path(args.path).resolve():
+        raise IntegrityCheckFailedError(f"{args.entity_name.capitalize()} '{file}' is not a child of parent directory '{file.parent}'")
     if args.dry_run:
-        logger.verbose(LogLevel.INFO, f"Dry-run: deleting{' (companion)' if is_companion else ''}: {file.name}")  # Just simulate deletion
+        logger.verbose(LogLevel.INFO, f"Dry-run: deleting ({type}): {file.name}")  # Just simulate deletion
     else:
-        logger.verbose(LogLevel.INFO, f"Deleting{' (companion)' if is_companion else ''}: {file.name}")
+        logger.verbose(LogLevel.INFO, f"Deleting ({type}): {file.name}")
         try:
             if args.folder_mode:
                 shutil.rmtree(file)
             else:
                 file.unlink()
         except OSError as e:
-            error_message = f"Error while deleting {'(companion) ' if is_companion else ''}{args.entity_name} '{file.name}': {e}"
+            error_message = f"Error while deleting ({type}) {args.entity_name} '{file.name}': {e}"
             if args.fail_on_delete_error:
                 raise FileCouldNotBeDeleteError(error_message)
             logger.verbose(LogLevel.ERROR, error_message, file=sys.stderr)
-    return 1
+            return 0
+    for symlink in args.symlink_paths.get(file, []):
+        counter += delete_file(symlink, args, logger, FILETYPE_SYMLINK)
+    return counter + 1
 
 
 def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_companions: set[Path]) -> int:
@@ -899,16 +958,17 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
     if args.list_only:
         print(file.absolute(), end=args.list_only)  # List mode
     else:
-        deletion_count += delete_file(file, args, logger)
+        companions = get_companion_paths(file, args)
+        deletion_count += delete_file(file, args, logger, FILETYPE_PATH)
         # delete companion files (if any)
-        for companion_file in {companion_rule.replace(file) for companion_rule in args.delete_companion_set if companion_rule.matches(file)}:
-            if companion_file in disallowed_companions or (args.protect and ((args.regex_mode and args.protect_compiled.match(companion_file.name)) or fnmatch(companion_file.name, args.protect))):
-                raise IntegrityCheckFailedError(f"Companion file '{companion_file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
-            if companion_file.is_symlink():
+        for companion_file in companions:
+            if companion_file in args.symlink_companions or companion_file.is_symlink():
                 logger.verbose(LogLevel.WARN, f"Companion file is a symlink -> It is ignored: {companion_file}")
                 continue
+            if companion_file in disallowed_companions or (args.protect and ((args.regex_mode and args.protect_compiled.match(companion_file.name)) or fnmatch(companion_file.name, args.protect))):
+                raise IntegrityCheckFailedError(f"Companion file '{companion_file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
             if companion_file.exists() and companion_file.is_file():
-                deletion_count += delete_file(companion_file, args, logger, is_companion=True)
+                deletion_count += delete_file(companion_file, args, logger, FILETYPE_COMPANION)
     return deletion_count
 
 

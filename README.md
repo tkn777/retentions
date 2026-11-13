@@ -98,7 +98,7 @@ In this document, "retain" refers to the selection process, while "keep" refers 
 ## 🧱 Non-goals
 
 `retentions` is intentionally **not** designed to:
-- perform recursive directory traversal
+- apply retention rules recursively (the optional system-wide symlink search is recursive)
 - act as a full backup solution
 - manage retention across multiple directories
 - provide interactive safety prompts
@@ -285,8 +285,11 @@ python3 retentions.py <path> <file_pattern> [options]
 | Expert options | Description |
 |--------|--------------|
 | `--delete-companions rule [rule ...]` | Delete companion files defined by the rules (prefix\|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5') |
+| `--delete-symlinks directory\|system` | Remove links after successful file/companion deletion. `directory`: direct children only; `system`: recursive search. Incompatible with `--folder-mode` and `--list-only`. |
 
 💡 See section [Delete Companions](#-delete-companions---delete-companions) for details
+
+💡 See section [Symbolic links](#-symbolic-links) for `--delete-symlinks` and its search scopes.
 <br>
 <br>
 
@@ -352,6 +355,13 @@ python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
 
 ```bash
 retentions /data/backups 'backup-*.tar.gz' --age-type 'filename=%Y-%m-%d' --days 7 --dry-run
+```
+
+#### Symbolic links
+
+```bash
+retentions /data/backups '*.tar.gz' --last 7 --delete-symlinks directory --dry-run
+retentions /data/backups '*.tar.gz' --last 7 --delete-companions 'suffix:.tar.gz:.sha256' --delete-symlinks system --dry-run
 ```
 
 #### 🗓️ Hierarchical calendar-based retention example
@@ -494,16 +504,21 @@ TYPE:MATCH:COMPANIONS
 - Companion paths are deduplicated.
 - Protected or otherwise disallowed companions abort deletion (e.g. files marked as kept or pruned).
 - Rules must be quoted.
+- Symlink companions are skipped as regular companions; `--delete-symlinks` handles links to deleted targets separately, without applying `--protect` to link names.
 
 ---
 
 ### ➡️ Symbolic links
 
-Symbolic links are intentionally **not supported**.
+Symbolic links are ignored as retention objects. By default, they are not deleted separately. A symlink supplied as the base directory is resolved to its target.
 
-All paths must refer to real filesystem objects.  
+Use `--delete-symlinks directory|system` to remove links to files and companions after their targets have been successfully deleted:
 
-This restriction ensures a strict, predictable retention scope and avoids ambiguous or hard-to-reason-about filesystem behavior.
+- **`directory`** searches only direct entries of the base directory (**depth 0**). Links in subdirectories or outside the base directory remain untouched.
+- **`system`** searches recursively from `/` and follows directory symlinks. Already visited target directories are skipped to prevent loops and repeated traversal. The search limits and Windows behavior are described under [Known Issues & Trade-offs](#-known-issues--trade-offs).
+- Relative and absolute links, including link chains, are matched by their resolved target. Unrelated and already broken links are left in place.
+- Link names are **never protected by `--protect`**. Protection still applies to the main files and regular companions. The file pattern selects main files, not link names.
+- `--dry-run` reports planned link deletions without removing files or links. If a target cannot be deleted, its links remain. Link deletion errors use ERROR logging and respect `--fail-on-delete-error`.
 
 ---
 
@@ -560,7 +575,11 @@ done
 
 The following behaviors are known, intentional trade-offs rather than bugs.
 
-- Retention option `months`, `quarters` and `years` are truly months, quarters and years, but filter options are 
+- **Symlink search scope:** `--delete-symlinks directory` has depth 0 and does not follow directory symlinks. `system` follows directory symlinks recursively from `/`. On Windows, it starts at the root of the current drive; other drives and network shares are not enumerated, but can be reached through directory symlinks. The top-level directories `dev`, `proc`, `sys` and `run` are excluded from the system search, including when reached through directory symlinks.
+
+- **Symlink search cost and completeness:** A system search can take a long time on large or network filesystems. It runs during file discovery, even if retention later keeps all files. Inaccessible areas and unresolvable or cyclic links can be skipped silently. Concurrent filesystem changes can also prevent complete cleanup. The option does not guarantee removal of every link on the system; symlink support and access depend on the platform, filesystem and permissions.
+
+- **Filter time intervals (`--max-age`):** The retention options `--months`, `--quarters` and `--years` use calendar buckets, while `--max-age` uses fixed durations:
   - `xm` => x * 30 days
   - `xq` => x * 90 days
   - `xy` => x * 365 days
