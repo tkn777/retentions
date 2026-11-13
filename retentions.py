@@ -544,6 +544,8 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
             validate(lambda: ns.list_only and ns.verbose > LogLevel.ERROR, "--list-only and --verbose (> ERROR) cannot be used together")
             validate(lambda: ns.list_only and ns.delete_companions, "--list-only and --delete-companions must not be combined, because list-only is not for companions")
+            validate(lambda: ns.list_only is not None and ns.delete_symlinks, "--list-only and --delete-symlinks must not be combined")
+            validate(lambda: ns.folder_mode and ns.delete_symlinks, "--folder-mode and --delete-symlinks must not be combined")
             validate(lambda: ns.folder_mode and ns.skip_by_filesize, "--folder-mode and --skip-by-filesize must not be combined")
             validate(lambda: ns.folder_mode and ns.delete_companions, "--folder-mode and --delete-companions must not be combined")
             validate(lambda: ns.skip_by_filesize and not has_retention_options, "--skip-by-filesize must be combined with any retention option(s)")
@@ -636,10 +638,12 @@ def create_parser() -> ModernStrictArgumentParser:
     g_behavior.add_argument("--list-only", "-L", nargs="?", const="\n", default=None, metavar="sep", help="Output only file/folder paths that would be deleted (incompatible with --verbose) (optional separator (sep): e.g. '\\0')")
     g_behavior.add_argument("--verbose", "-V", "-v", type=parser.verbose_argument, default=None, nargs="?", const=LogLevel.INFO, metavar="lev",
                             help="Verbosity level: 0 = error, 1 = warn, 2 = info, 3 = debug (default: 'info', if specified without value; 'error' otherwise; use numbers or names)")
-    # fmt: on
 
     # experts options
     g_expert.add_argument("--delete-companions", type=str, metavar="rule", nargs="+", help="Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5')")
+    g_expert.add_argument( "--delete-symlinks", choices=["directory", "system"],
+                          help="Delete symlinks to deleted files/companions (directory: recursive inside path; system: system-wide). Ignores --protect; incompatible with --list-only and --folder-mode.", )
+    # fmt: on
 
     # developers options
     g_developers.add_argument("--stacktrace", action="store_true", help="Add output of stacktrace in case of errors")
