@@ -927,7 +927,7 @@ FILETYPE_SYMLINK = "symlink"
 def delete_file(file: Path, args: ConfigNamespace, logger: Logger, type: str) -> int:
     counter = 0
     if (type != FILETYPE_SYMLINK or args.delete_symlinks == "directory") and file.parent.resolve() != Path(args.path).resolve():
-        raise IntegrityCheckFailedError(f"'({type}) args.entity_name.capitalize() '{file}' is not a child of parent directory '{file.parent}'")
+        raise IntegrityCheckFailedError(f"{args.entity_name.capitalize()} '{file}' is not a child of parent directory '{file.parent}'")
     if args.dry_run:
         logger.verbose(LogLevel.INFO, f"Dry-run: deleting ({type}): {file.name}")  # Just simulate deletion
     else:
