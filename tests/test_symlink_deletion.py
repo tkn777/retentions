@@ -164,3 +164,78 @@ def test_companion_protection_with_symlink_cleanup(backup_links, symlink_compani
         assert exc.value.code == 7
         assert companion.read_text() == "checksum"
         assert (links / "checksum.link").is_symlink()
+
+
+@pytest.fixture
+def bounded_system_search(backup_links, monkeypatch):
+    base, links, outside = backup_links
+    walk = retentions.os.walk
+    visits = []
+
+    def local_path(*parts):
+        return base if parts == ("/",) else Path(*parts)
+
+    def bounded_walk(root, *args, **kwargs):
+        assert Path(root) == base
+        for directory, dirs, files in walk(root, *args, **kwargs):
+            assert len(visits) < 30, "Directory traversal did not stop at symlink loops"
+            visits.append((Path(directory), dirs))
+            yield directory, dirs, files
+
+    monkeypatch.setattr(retentions, "Path", local_path)
+    monkeypatch.setattr(retentions.os, "walk", bounded_walk)
+    sys.argv[-1] = "system"
+    return base, links, outside, visits
+
+
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_system_follows_directory_symlink_to_external_tree(bounded_system_search, dry_run, capsys):
+    base, _, outside, visits = bounded_system_search
+    if dry_run:
+        sys.argv.append("--dry-run")
+    args = retentions.parse_arguments()
+    logger = retentions.Logger(args, retentions.FileStats("mtime"))
+    args.symlink_paths = retentions.read_symlinks(args, [base / "backup.tar"], logger)
+    retentions.run_deletion(base / "backup.tar", args, logger, set())
+    assert (base / "backup.tar").exists() == dry_run
+    assert (outside / "external.link").is_symlink() == dry_run
+    assert (base / "escape").is_symlink()
+    assert any(directory == base / "escape" for directory, _ in visits)
+    assert not any(directory == outside for directory, _ in visits)
+    if dry_run:
+        assert "external.link" in capsys.readouterr().out
+
+
+def test_system_stops_loops_and_indexes_each_link_once(bounded_system_search):
+    base, links, outside, visits = bounded_system_search
+    (base / "second-escape").symlink_to(outside, target_is_directory=True)
+    args = retentions.parse_arguments()
+    logger = retentions.Logger(args, retentions.FileStats("mtime"))
+    found = retentions.read_symlinks(args, [base / "backup.tar"], logger)
+    expected = {links / "latest.link", links / "absolute.link", links / "chain.link", base / "nested" / "nested.link", outside / "external.link"}
+    captured = found[base / "backup.tar"]
+    assert len(captured) == len(expected)
+    assert {link.parent.resolve() / link.name for link in captured} == expected
+    for alias in [base / "alias", base / "loop"]:
+        assert any(directory == alias and not dirs for directory, dirs in visits)
+    assert len(visits) < 30
+
+
+@pytest.mark.parametrize("excluded", ["dev", "proc", "sys", "run"])
+def test_system_exclusions_apply_through_directory_symlinks(bounded_system_search, excluded):
+    base, _, _, visits = bounded_system_search
+    hidden = base / excluded / "child"
+    (hidden / "deeper").mkdir(parents=True)
+    forbidden = hidden / "forbidden.link"
+    forbidden.symlink_to(base / "backup.tar")
+    (hidden / "deeper" / "also-forbidden.link").symlink_to(base / "backup.tar")
+    alias = base / f"alias-{excluded}"
+    alias.symlink_to(hidden, target_is_directory=True)
+    args = retentions.parse_arguments()
+    logger = retentions.Logger(args, retentions.FileStats("mtime"))
+    found = retentions.read_symlinks(args, [base / "backup.tar"], logger)
+    assert any(directory == alias and not dirs for directory, dirs in visits)
+    assert not any(directory.is_relative_to(base / excluded) for directory, _ in visits)
+    assert not any(directory.is_relative_to(alias / "deeper") for directory, _ in visits)
+    assert all("forbidden" not in link.name for link in found[base / "backup.tar"])
+    assert forbidden.is_symlink()
