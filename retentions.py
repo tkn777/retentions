@@ -30,7 +30,7 @@ from types import SimpleNamespace
 from typing import Callable, Generic, NoReturn, Optional, TextIO, TypeVar, no_type_check
 
 
-VERSION: str = "dev-1.3.9"
+VERSION: str = "dev-1.3.x"
 
 SCRIPT_START = int(datetime.now().timestamp())
 
@@ -948,14 +948,16 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
     if args.list_only:
         print(file.absolute(), end=args.list_only)  # List mode
     else:
+        companions = get_companion_paths(file, args)
+        symlink_companions = {path for path in companions if path.is_symlink()}
         deletion_count += delete_file(file, args, logger, FILETYPE_PATH)
         # delete companion files (if any)
-        for companion_file in get_companion_paths(file, args):
-            if companion_file in disallowed_companions or (args.protect and ((args.regex_mode and args.protect_compiled.match(companion_file.name)) or fnmatch(companion_file.name, args.protect))):
-                raise IntegrityCheckFailedError(f"Companion file '{companion_file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
-            if companion_file.is_symlink():
+        for companion_file in companions:
+            if companion_file in symlink_companions or companion_file.is_symlink():
                 logger.verbose(LogLevel.WARN, f"Companion file is a symlink -> It is ignored: {companion_file}")
                 continue
+            if companion_file in disallowed_companions or (args.protect and ((args.regex_mode and args.protect_compiled.match(companion_file.name)) or fnmatch(companion_file.name, args.protect))):
+                raise IntegrityCheckFailedError(f"Companion file '{companion_file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
             if companion_file.exists() and companion_file.is_file():
                 deletion_count += delete_file(companion_file, args, logger, FILETYPE_COMPANION)
     return deletion_count
