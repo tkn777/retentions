@@ -644,7 +644,7 @@ def create_parser() -> ModernStrictArgumentParser:
     # experts options
     g_expert.add_argument("--delete-companions", type=str, metavar="rule", nargs="+", help="Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5')")
     g_expert.add_argument( "--delete-symlinks", choices=["directory", "system"],
-                          help="Delete symlinks to deleted files/companions (directory: recursive inside path; system: system-wide). Ignores --protect; incompatible with --list-only and --folder-mode.", )
+                          help="Delete symlinks to deleted files/companions (directory: direct children only; system: recursive from root, current drive on Windows). Ignores --protect; incompatible with --list-only and --folder-mode.", )
     # fmt: on
 
     # developers options

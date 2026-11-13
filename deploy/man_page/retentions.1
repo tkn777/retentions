@@ -11,7 +11,7 @@ retentions is a small, feature-rich cross-platform CLI tool to apply backup-styl
 
 It keeps only the most recent or representative files according to simple time-based rules and removes the rest.
 
-retentions is deterministic and non-recursive.
+Retention selection is deterministic and non-recursive. The optional system-wide symlink search is recursive.
 It deletes files unless \-\-dry-run or \-\-list-only is specified.
 
 .SH OVERVIEW
@@ -86,7 +86,7 @@ In this document, "retain" refers to the selection process, while "keep" refers 
 .SH NON-GOALS
 retentions is intentionally not designed to:
 .IP \(bu 2
-perform recursive directory traversal
+apply retention rules recursively
 .IP \(bu 2
 act as a full backup solution
 .IP \(bu 2
@@ -228,6 +228,9 @@ Using --dry-run is a good option to start with retentions.
 .TP
 --delete-companions rule-def [rule-def, ...]
 Delete companion files defined by the rules (prefix|suffix:match:companions, e.g. 'suffix:tar.gz:sha256,md5')
+.TP
+--delete-symlinks directory|system
+Remove links after successful file or companion deletion. directory searches direct children of the base directory only (depth 0); system searches recursively from /. Link names are never protected by --protect. Incompatible with --folder-mode and --list-only. See SYMBOLIC LINKS and KNOWN ISSUES & TRADE-OFFS.
 
 .SS Developer options
 .TP
@@ -280,6 +283,12 @@ $ retentions /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
 .SS Filename timestamps
 .nf
 retentions /data/backups 'backup-*.tar.gz' --age-type 'filename=%Y-%m-%d' --days 7 --dry-run
+.fi
+
+.SS Symbolic links
+.nf
+retentions /data/backups '*.tar.gz' --last 7 --delete-symlinks directory --dry-run
+retentions /data/backups '*.tar.gz' --last 7 --delete-companions 'suffix:.tar.gz:.sha256' --delete-symlinks system --dry-run
 .fi
 
 .SH FOLDER MODE
@@ -371,13 +380,19 @@ Companion paths are deduplicated.
 Protected or disallowed companions abort deletion.
 .IP \(bu 2
 Rules must be quoted.
+.IP \(bu 2
+Symlink companions are skipped as regular companions. --delete-symlinks handles links to deleted targets separately, without applying --protect to link names.
 
 .SH SYMBOLIC LINKS
-Symbolic links are intentionally not supported.
-
-All paths must refer to real filesystem objects.
-This restriction ensures a strict and predictable retention scope and avoids ambiguous filesystem behavior.
-
+Symlinks are ignored as retention objects and, by default, are not deleted separately. A symlink supplied as the base directory is resolved to its target.
+.PP
+--delete-symlinks directory searches only direct entries of the base directory (depth 0). Links in subdirectories or outside that directory remain untouched. --delete-symlinks system searches recursively from /, with the limitations described under KNOWN ISSUES & TRADE-OFFS.
+.PP
+Relative and absolute links, including link chains, are matched by their resolved targets. The shared search includes possible companions. Unrelated and already broken links remain. The file pattern selects main files, not link names.
+.PP
+--protect never protects link names; main files and regular companions remain protected. A target must be successfully deleted before its links are removed. --dry-run reports planned link deletions without deleting anything. Link deletion errors are logged as ERROR and respect --fail-on-delete-error.
+.PP
+--delete-symlinks cannot be combined with --folder-mode or --list-only.
 
 .SH QUOTING FILE PATTERNS
 Always use single quotes around your file patterns when calling retentions.
@@ -449,6 +464,10 @@ done
 
 .SH KNOWN ISSUES & TRADE-OFFS
 The following behaviors are known, intentional trade-offs rather than bugs.
+.PP
+Symlink search: directory has depth 0. system searches recursively from /, but on Windows covers only the current drive, not all drives or network shares. Directory links are not followed. The top-level directories dev, proc, sys and run are excluded from system searches.
+.PP
+System searches can take a long time on large or network filesystems. The search runs during file discovery, even if retention later keeps all files. Inaccessible areas and unresolvable or cyclic links can be skipped silently. Concurrent filesystem changes can prevent complete cleanup. Removal of every link on the system is not guaranteed; support and access depend on the platform, filesystem and permissions.
 
 Retention option months, quarters and years are truly months, quarters and years, but filter options are:
 .IP \(bu 2

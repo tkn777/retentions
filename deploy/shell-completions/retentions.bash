@@ -30,11 +30,16 @@ _retentions() {
         --no-lock-file
         --fail-on-delete-error
         --delete-companions
+        --delete-symlinks
         --version
         --help
     "
 
     case "$prev" in
+        --delete-symlinks)
+            COMPREPLY=( $(compgen -W "directory system" -- "$cur") )
+            return
+            ;;
         --regex-mode)
             COMPREPLY=( $(compgen -W "casesensitive ignorecase" -- "$cur") )
             return
