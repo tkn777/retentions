@@ -119,6 +119,28 @@ def test_fail_on_existing_lock_file(tmp_path, monkeypatch, capsys):
     assert lock.exists()
 
 
+def test_lock_created_between_check_and_creation_aborts(tmp_path, monkeypatch):
+    archive = tmp_path / "backup.txt"
+    archive.write_text("backup")
+    lock = tmp_path / LOCK_FILE_NAME
+    original_touch = retentions.Path.touch
+
+    def competing_touch(path, *args, **kwargs):
+        if path == lock:
+            lock.write_text("other process")
+        return original_touch(path, *args, **kwargs)
+
+    monkeypatch.setattr(retentions.Path, "touch", competing_touch)
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "--max-size", "1"])
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 5
+    assert archive.exists()
+    assert lock.read_text() == "other process"
+
+
 def test_output_help(tmp_path, monkeypatch, capsys):
     """Test that output is printed."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "-V", "debug"])
