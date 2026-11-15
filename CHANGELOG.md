@@ -1,4 +1,5 @@
 ### [Unreleased]
+- Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`
 
 ### 1.3.11 - 13.11.2026
 - Add `--delete-symlinks directory|system` to remove links after successful file and companion deletion, with dry-run support, depth-zero or recursive search, directory-symlink traversal with loop detection, shared symlink-companion handling, shell completions and documented search limitations

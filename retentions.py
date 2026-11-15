@@ -501,7 +501,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 ns.entity_name = "file"
 
             # dry-run implies verbose
-            if ns.dry_run and not ns.list_only and ns.verbose is None:
+            if ns.dry_run and ns.list_only is None and ns.verbose is None:
                 ns.verbose = LogLevel.INFO
 
             # Default verbosity, if none given
@@ -543,8 +543,8 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
 
             has_retention_options = ns.minutes or ns.hours or ns.days or ns.weeks or ns.week13 or ns.months or ns.quarters or ns.years or ns.last
 
-            validate(lambda: ns.list_only and ns.verbose > LogLevel.ERROR, "--list-only and --verbose (> ERROR) cannot be used together")
-            validate(lambda: ns.list_only and ns.delete_companions, "--list-only and --delete-companions must not be combined, because list-only is not for companions")
+            validate(lambda: ns.list_only is not None and ns.verbose > LogLevel.ERROR, "--list-only and --verbose (> ERROR) cannot be used together")
+            validate(lambda: ns.list_only is not None and ns.delete_companions, "--list-only and --delete-companions must not be combined, because list-only is not for companions")
             validate(lambda: ns.list_only is not None and ns.delete_symlinks, "--list-only and --delete-symlinks must not be combined")
             validate(lambda: ns.folder_mode and ns.delete_symlinks, "--folder-mode and --delete-symlinks must not be combined")
             validate(lambda: ns.folder_mode and ns.skip_by_filesize, "--folder-mode and --skip-by-filesize must not be combined")
@@ -955,7 +955,7 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
     if file.is_symlink():  # Should never happen
         raise IntegrityCheckFailedError(f"Refusing to delete symlink: {file}")
     deletion_count = 0
-    if args.list_only:
+    if args.list_only is not None:
         print(file.absolute(), end=args.list_only)  # List mode
     else:
         companions = get_companion_paths(file, args)

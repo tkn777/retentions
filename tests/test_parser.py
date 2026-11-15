@@ -104,16 +104,18 @@ def test_parse_list_only_null_byte(monkeypatch):
     assert args.list_only == "\0"
 
 
-def test_parse_list_arbitary_string(monkeypatch):
+@pytest.mark.parametrize("separator", ["foo", ""])
+def test_parse_list_arbitary_string(monkeypatch, separator):
     """Test an arbitrary --list-only argument."""
-    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "--list-only", "foo"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "--list-only", separator])
     args = parse_arguments()
-    assert args.list_only == "foo"
+    assert args.list_only == separator
 
 
-def test_combine_verbose_list_failed(monkeypatch, capsys):
+@pytest.mark.parametrize("separator", [[], [""]])
+def test_combine_verbose_list_failed(monkeypatch, capsys, separator):
     """Test that the verbose > ERROR must not be combined with list-only."""
-    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-X", "-V 3", "-L"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-X", "-V 3", "-L", *separator])
     with pytest.raises(SystemExit) as exc:
         parse_arguments()
     assert exc.value.code == 2
@@ -121,9 +123,10 @@ def test_combine_verbose_list_failed(monkeypatch, capsys):
     assert "--list-only and --verbose (> ERROR) cannot be used together" in captured.err
 
 
-def test_combine_companions_list_failed(monkeypatch, capsys):
+@pytest.mark.parametrize("separator", [[], [""]])
+def test_combine_companions_list_failed(monkeypatch, capsys, separator):
     """Test that the delete-companions must not be combined with delete-companions."""
-    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-X", "--delete-companions", "suffix::.bak", "-L"])
+    monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-X", "--delete-companions", "suffix::.bak", "-L", *separator])
     with pytest.raises(SystemExit) as exc:
         parse_arguments()
     assert exc.value.code == 2

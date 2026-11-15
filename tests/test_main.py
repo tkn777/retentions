@@ -23,10 +23,13 @@ class DummyRetentionLogic:
         return Result()
 
 
-def test_list_only_empty_separator_does_not_delete(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_list_only_empty_separator_does_not_delete(tmp_path, monkeypatch, capsys, dry_run):
     file = tmp_path / "backup.txt"
     file.write_text("backup")
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "--max-size", "1", "--list-only", ""])
+    if dry_run:
+        sys.argv.append("--dry-run")
 
     main()
 
