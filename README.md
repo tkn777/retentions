@@ -109,7 +109,7 @@ In this document, "retain" refers to the selection process, while "keep" refers 
 
 You can install **retentions** in several ways, depending on your system and preference.
 
-All installation methods require **Python 3.9+** (tested against Python 3.9 to 3.15).
+All installation methods require **Python 3.9+** (tested against Python 3.9 to 3.15). CI also includes Python 3.16 pre-releases.
 
 _Upstream support ended for Python 3.9 in October 2025 and ends for Python 3.10 in October 2026. Both versions remain supported by retentions. Distribution-provided packages may receive security updates beyond upstream end of life, such as Python 3.9 in RHEL 9. Use a Python installation that receives security updates from either the Python project or your distribution vendor._
 
@@ -601,7 +601,7 @@ By default retentions writes a lock file `.retentions.lock` - This can be used b
 Reliability is especially important for a tool that deletes backup files. `retentions` is therefore backed by several layers of quality assurance:
 
 - **Automated tests** with approximately 95% code coverage, including extensive testing of retention and deletion logic.
-- **Automated code quality checks** using Ruff for linting and formatting, and mypy for static type checking, executed through GitHub Actions across Python 3.9–3.15.
+- **Automated code quality checks** using Ruff for linting and formatting, and mypy for static type checking, executed through GitHub Actions across Python 3.9–3.15 and Python 3.16 pre-releases.
 - **Manual regression testing** using dry-run mode to verify behavior across various scenarios.
 - **AI-assisted security and code review** performed using ChatGPT.
 - **Real-world validation** through extensive use across multiple backup locations, with no known issues.
