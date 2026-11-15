@@ -37,6 +37,28 @@ def test_list_only_empty_separator_does_not_delete(tmp_path, monkeypatch, capsys
     assert capsys.readouterr().out == str(file.absolute())
 
 
+def test_failed_deletion_is_not_counted_as_deleted(tmp_path, monkeypatch, capsys):
+    file = tmp_path / "backup.txt"
+    file.write_text("backup")
+    original_unlink = retentions.Path.unlink
+
+    def failing_unlink(path, *args, **kwargs):
+        if path == file:
+            raise PermissionError("simulated deletion failure")
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(retentions.Path, "unlink", failing_unlink)
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "--max-size", "1", "--verbose", "INFO"])
+
+    main()
+
+    assert file.exists()
+    output = capsys.readouterr()
+    assert "[ERROR]" in output.err
+    assert "Total files to delete: 001" in output.out
+    assert "Total files deleted:   000" in output.out
+
+
 def test_create_lockfile(tmp_path, monkeypatch, capsys):
     """Test that lock file is created and removed on exit."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt"])
