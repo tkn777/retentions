@@ -171,6 +171,21 @@ def test_protected_companion_outside_file_pattern(tmp_path, monkeypatch, capsys,
     assert "must not be deleted" in capsys.readouterr().err
 
 
+def test_no_lock_file_preserves_lock_file_as_companion(tmp_path, monkeypatch, capsys):
+    archive = tmp_path / "backup.tar"
+    lock = tmp_path / LOCK_FILE_NAME
+    archive.write_text("backup")
+    lock.write_text("existing lock")
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.tar", "--max-size", "1", "--no-lock-file", "--delete-companions", f"prefix:backup.tar:{LOCK_FILE_NAME}"])
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 7
+    assert lock.read_text() == "existing lock"
+    assert "must not be deleted" in capsys.readouterr().err
+
+
 def test_no_lock_file_keeps_disallowed_companion_protection(tmp_path, monkeypatch, capsys):
     archive = tmp_path / "archive.tar"
     companion = tmp_path / "archive.keep"
