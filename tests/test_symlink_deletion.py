@@ -91,8 +91,8 @@ def test_dry_run_reports_links_without_deleting_them(backup_links, capsys):
     assert "latest.link" in output
 
 
-@pytest.mark.parametrize("failed_name,retained_link,deleted_link", [("backup.tar", "latest.link", "checksum.link"), ("backup.sha256", "checksum.link", "latest.link")])
-def test_cleanup_only_after_successful_target_deletion(backup_links, monkeypatch, capsys, failed_name, retained_link, deleted_link):
+@pytest.mark.parametrize("failed_name,retained_link,deleted_link,deleted_count", [("backup.tar", "latest.link", "checksum.link", 2), ("backup.sha256", "checksum.link", "latest.link", 4)])
+def test_cleanup_only_after_successful_target_deletion(backup_links, monkeypatch, capsys, failed_name, retained_link, deleted_link, deleted_count):
     base, links, _ = backup_links
     unlink = Path.unlink
 
@@ -102,11 +102,13 @@ def test_cleanup_only_after_successful_target_deletion(backup_links, monkeypatch
         return unlink(path, *args, **kwargs)
 
     monkeypatch.setattr(Path, "unlink", failing_unlink)
-    sys.argv.extend(["--delete-companions", "suffix:.tar:.sha256"])
+    sys.argv.extend(["--delete-companions", "suffix:.tar:.sha256", "--verbose", "INFO"])
     retentions.main()
     assert (base / failed_name).exists()
     assert (links / retained_link).is_symlink()
-    assert "[ERROR]" in capsys.readouterr().err
+    output = capsys.readouterr()
+    assert "[ERROR]" in output.err
+    assert f"Total files deleted:   {deleted_count:03d}" in output.out
     assert not (links / deleted_link).is_symlink()
 
 
@@ -150,6 +152,7 @@ def test_link_deletion_error(backup_links, monkeypatch, capsys, fail_fast):
         return unlink(path, *args, **kwargs)
 
     monkeypatch.setattr(Path, "unlink", failing_unlink)
+    sys.argv.extend(["--verbose", "INFO"])
     if fail_fast:
         sys.argv.append("--fail-on-delete-error")
         with pytest.raises(SystemExit) as exc:
@@ -159,8 +162,10 @@ def test_link_deletion_error(backup_links, monkeypatch, capsys, fail_fast):
         retentions.main()
     assert not (base / "backup.tar").exists()
     assert failed.is_symlink()
-    error = capsys.readouterr().err
-    assert "[ERROR]" in error and "latest.link" in error
+    output = capsys.readouterr()
+    assert "[ERROR]" in output.err and "latest.link" in output.err
+    if not fail_fast:
+        assert "Total files deleted:   003" in output.out
 
 
 @pytest.mark.parametrize("symlink_companion", [False, True])

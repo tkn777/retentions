@@ -64,6 +64,26 @@ def test_failed_deletion_is_not_counted_as_deleted(tmp_path, monkeypatch, capsys
     assert f"Total files deleted:   {successful_files:03d}" in output.out
 
 
+def test_failed_folder_deletion_is_not_counted(tmp_path, monkeypatch, capsys):
+    folder = tmp_path / "backup-old"
+    folder.mkdir()
+    (folder / "backup.txt").write_text("backup")
+
+    def failing_rmtree(path, *args, **kwargs):
+        raise PermissionError("simulated deletion failure")
+
+    monkeypatch.setattr(retentions.shutil, "rmtree", failing_rmtree)
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "backup-*", "--folder-mode", "folder", "--max-size", "1", "--verbose", "INFO"])
+
+    main()
+
+    assert (folder / "backup.txt").exists()
+    output = capsys.readouterr()
+    assert "[ERROR]" in output.err
+    assert "Total folders to delete: 001" in output.out
+    assert "Total folders deleted:   000" in output.out
+
+
 def test_create_lockfile(tmp_path, monkeypatch, capsys):
     """Test that lock file is created and removed on exit."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt"])
