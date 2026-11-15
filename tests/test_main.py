@@ -23,6 +23,17 @@ class DummyRetentionLogic:
         return Result()
 
 
+def test_list_only_empty_separator_does_not_delete(tmp_path, monkeypatch, capsys):
+    file = tmp_path / "backup.txt"
+    file.write_text("backup")
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "--max-size", "1", "--list-only", ""])
+
+    main()
+
+    assert file.exists()
+    assert capsys.readouterr().out == str(file.absolute())
+
+
 def test_create_lockfile(tmp_path, monkeypatch, capsys):
     """Test that lock file is created and removed on exit."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt"])
