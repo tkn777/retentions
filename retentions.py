@@ -1000,9 +1000,10 @@ def main() -> None:
 
         if args.use_lock_file:
             lock_file = Path(args.path + f"/{LOCK_FILE_NAME}").resolve()
-            if lock_file.exists():
-                raise ConcurrencyError(f"A retention process is already running on {args.path} (or there is a stale lockfile)")
-            lock_file.touch()
+            try:
+                lock_file.touch(exist_ok=False)
+            except FileExistsError as e:
+                raise ConcurrencyError(f"A retention process is already running on {args.path} (or there is a stale lockfile)") from e
             created_lock_file = True
 
         if args.age_type == "atime":

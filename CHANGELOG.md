@@ -3,6 +3,7 @@
 - Fix deletion totals to count successful deletions including companions and symlinks, and label simulated totals with `Dry-run:`
 - Fix swapped petabyte (`P`) and exabyte (`E`) units in size formatting
 - Protect the lock file from companion deletion even with `--no-lock-file`
+- Create the lock file atomically to prevent concurrent runs from passing the lock check
 
 ### 1.3.11 - 13.11.2026
 - Add `--delete-symlinks directory|system` to remove links after successful file and companion deletion, with dry-run support, depth-zero or recursive search, directory-symlink traversal with loop detection, shared symlink-companion handling, shell completions and documented search limitations
