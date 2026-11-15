@@ -219,6 +219,8 @@ def test_parse_positive_time_arguments_invalid(text: str):
         (1024**2, "1M"),
         (1024**2 * 2.5, "2.5M"),
         (1024**3, "1G"),
+        (1024**5, "1P"),
+        (1024**6, "1E"),
     ],
 )
 def test_format_size_valid(value, expected) -> None:
