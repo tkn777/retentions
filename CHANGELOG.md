@@ -1,6 +1,7 @@
 ### [Unreleased]
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`
 - Fix deletion totals to count successful deletions including companions and symlinks, and label simulated totals with `Dry-run:`
+- Fix swapped petabyte (`P`) and exabyte (`E`) units in size formatting
 
 ### 1.3.11 - 13.11.2026
 - Add `--delete-symlinks directory|system` to remove links after successful file and companion deletion, with dry-run support, depth-zero or recursive search, directory-symlink traversal with loop detection, shared symlink-companion handling, shell completions and documented search limitations

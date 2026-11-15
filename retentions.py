@@ -415,7 +415,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
     def format_size(bytes: int) -> str:
         if bytes < 0:
             raise ValueError("bytes must be >= 0")
-        units = ["", "K", "M", "G", "T", "E", "P"]
+        units = ["", "K", "M", "G", "T", "P", "E"]
         idx, value = 0, float(bytes)
         while value >= 1024 and idx < len(units) - 1:
             value /= 1024
