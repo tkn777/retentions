@@ -1038,7 +1038,7 @@ def main() -> None:
 
         if deletion_started:
             logger.verbose(LogLevel.INFO, "Deletion phase completed")
-            logger.verbose(LogLevel.INFO, f"Total {args.entity_name}s deleted:   {len(retentions_result.prune):03d}")
+            logger.verbose(LogLevel.INFO, f"{'Dry-run: ' if args.dry_run else ''}Total {args.entity_name}s deleted:   {deletion_count:03d}")
 
     except OSError as e:
         handle_exception(e, 1, args.stacktrace if args is not None else True)

@@ -64,6 +64,22 @@ def test_delete_companion_links(backup_links):
     assert not (links / "md5.link").is_symlink()
 
 
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_deletion_count_includes_companions_and_links(backup_links, capsys, dry_run):
+    base, links, _ = backup_links
+    sys.argv.extend(["--delete-companions", "suffix:.tar:.sha256", "--verbose", "INFO"])
+    if dry_run:
+        sys.argv.append("--dry-run")
+    retentions.main()
+    assert (base / "backup.tar").exists() == dry_run
+    assert (base / "backup.sha256").exists() == dry_run
+    for name in ["latest.link", "absolute.link", "chain.link", "checksum.link"]:
+        assert (links / name).is_symlink() == dry_run
+    output = capsys.readouterr().out
+    assert "Total files to delete: 001" in output
+    assert f"[INFO] {'Dry-run: ' if dry_run else ''}Total files deleted:   006" in output
+
+
 def test_dry_run_reports_links_without_deleting_them(backup_links, capsys):
     base, links, _ = backup_links
     sys.argv.append("--dry-run")

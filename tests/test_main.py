@@ -37,9 +37,13 @@ def test_list_only_empty_separator_does_not_delete(tmp_path, monkeypatch, capsys
     assert capsys.readouterr().out == str(file.absolute())
 
 
-def test_failed_deletion_is_not_counted_as_deleted(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("successful_files", [0, 1])
+def test_failed_deletion_is_not_counted_as_deleted(tmp_path, monkeypatch, capsys, successful_files):
     file = tmp_path / "backup.txt"
     file.write_text("backup")
+    other = tmp_path / "other.txt"
+    if successful_files:
+        other.write_text("backup")
     original_unlink = retentions.Path.unlink
 
     def failing_unlink(path, *args, **kwargs):
@@ -53,10 +57,11 @@ def test_failed_deletion_is_not_counted_as_deleted(tmp_path, monkeypatch, capsys
     main()
 
     assert file.exists()
+    assert not other.exists()
     output = capsys.readouterr()
     assert "[ERROR]" in output.err
-    assert "Total files to delete: 001" in output.out
-    assert "Total files deleted:   000" in output.out
+    assert f"Total files to delete: {successful_files + 1:03d}" in output.out
+    assert f"Total files deleted:   {successful_files:03d}" in output.out
 
 
 def test_create_lockfile(tmp_path, monkeypatch, capsys):
