@@ -19,6 +19,8 @@ The following behaviors are known, intentional trade-offs rather than bugs.
 
 - **Separate short options:** Combined short options such as `-Xm2`, `-Xd1` and `-XL` are rejected with exit code 2. Pass options separately, for example `-X -m 2` or `-X -m2`. Single options with attached values, such as `-m2` and `-d1`, remain valid. This keeps option handling explicit and prevents combinations from bypassing duplicate-option checks.
 
+- **Bash completion argument order:** Bash completion assumes the documented `retentions path 'pattern' [options]` order. Although the parser accepts options before or between the positional arguments, directory completion may not work correctly for those arrangements. This affects suggestions only; the command remains valid. Use the documented order for reliable Bash completion.
+
 ## Non-atomic behavior
 
 retentions does not operate atomically. Since the underlying filesystem is not atomic, directory contents may change while retentions is scanning or evaluating files.
