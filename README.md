@@ -241,7 +241,7 @@ python3 retentions.py <path> <file_pattern> [options]
 | `-q, --quarters <int>` | Retain one file per quarter from the last N quarters (quarter by months) |
 | `--week13 <int>` | Retain one file per 13-week block from the last N 13-week blocks (quarter by weeks) |
 | `-y, --years <int>` | Retain one file per year from the last N years |
-| `-l, --last <int>` | Always retains the N most recently modified files |
+| `-l, --last <int>` | Always retain the N most recent files according to the selected age source (`--age-type`). |
 | `-i, --skip-by-filesize <size>` | Skip (and delete) files smaller than <size> (e.g. 12, 2K, 1.5M) |
 
 📝 Every retention option can be combined with any (or all) others
