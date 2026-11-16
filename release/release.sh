@@ -207,6 +207,7 @@ echo "==> Extracting payload..."
 tail -n +"$ARCHIVE_LINE" "$0" | tar xz -C "$TMPDIR"
 
 echo "==> Installing executable..."
+mkdir -p "${PREFIX}/bin"
 install -m 755 "$TMPDIR/retentions.py" "${PREFIX}/bin/retentions"
 
 echo "==> Installing documentation..."

@@ -14,6 +14,7 @@
 - Parse size limits without losing integer-byte precision through floating-point conversion
 - Document acceptance of overflowing max-age values as an infinite age limit in `TRADEOFFS.md`
 - Resolve release build paths independently of the caller's working directory
+- Create the executable destination directory before running the Linux installer
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`
