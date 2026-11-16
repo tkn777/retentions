@@ -116,6 +116,28 @@ def test_size_parsig(monkeypatch) -> None:
     assert args.max_size_bytes == 1024
 
 
+@pytest.mark.parametrize(
+    "size, expected",
+    [
+        ("9007199254740993", 9_007_199_254_740_993),
+        ("9007199254740995", 9_007_199_254_740_995),
+        ("8.000000000000001P", 9_007_199_254_740_993),
+        ("1K", 1024),
+        ("1M", 1024**2),
+        ("1G", 1024**3),
+        ("1T", 1024**4),
+        ("1P", 1024**5),
+        ("1E", 1024**6),
+        ("1.5M", 1_572_864),
+        ("1.1K", 1126),
+        ("0.9", 0),
+        ("1.", 1),
+    ],
+)
+def test_size_parser_preserves_byte_precision(size, expected) -> None:
+    assert ModernStrictArgumentParser()._parse_positive_size_argument(size) == expected
+
+
 def test_age_parsig(monkeypatch) -> None:
     """Test that the --max-age argument is parsed correctly."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-a", "3", "d"])

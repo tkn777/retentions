@@ -392,13 +392,15 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             companion_rule_set.update(CompanionRule(CompanionType.by_name(type), match.strip(), companion.strip(), companion_rule_string) for companion in split_escaped(",", companions_string, "companion", companion_rule_string))
         return companion_rule_set
 
-    def _parse_positive_size_argument(self, size_str: str) -> float:
+    def _parse_positive_size_argument(self, size_str: str) -> int:
         size_str = size_str.strip().upper()
         re_match = re.match(r"^([0-9]+(?:\.[0-9]*)?)\s*([KMGTPE]?)$", size_str)
         if not re_match:
             raise argparse.ArgumentTypeError(f"Invalid size format: '{size_str}'")
         multipliers = {"": 1, "K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4, "P": 1024**5, "E": 1024**6}
-        return int(float(re_match.group(1)) * multipliers[re_match.group(2)])
+        whole, _, fraction = re_match.group(1).partition(".")
+        scale: int = 10 ** len(fraction)
+        return int(whole + fraction) * multipliers[re_match.group(2)] // scale
 
     def _parse_positive_time_argument(self, time_str: str) -> float:
         time_str = time_str.strip(" ")
