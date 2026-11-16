@@ -106,6 +106,7 @@ This keeps retention decisions deterministic and the safety model easy to reason
 - **ModernStrictArgumentParser** overrides `error()` to produce clearer, trace-free error messages that behave consistently in CLI environments.
 - **Option suggestions** are based on distance + fallback heuristics (Levenshtein-inspired) to improve UX without sacrificing performance.
 - **Prohibit duplicate flags** to avoid ambiguous behavior.
+- **Separate short options:** Combined short options such as `-Xm2` are rejected with exit code 2. Use `-X -m 2` or `-X -m2`; single options with attached values remain supported. Validation uses the registered argument definitions to distinguish options from attached values and respects the `--` separator.
 - **Argument groups** structure the CLI help output into logically human-readable sections.
 - **No error recovery**: invalid or ambiguous CLI input is rejected immediately instead of being interpreted heuristically.
 - **Validation before execution**: all arguments are fully validated and normalized before file discovery, retention decisions, or deletion begins. The optional lock file is created afterward to prevent concurrent runs.

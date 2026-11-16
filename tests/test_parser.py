@@ -63,6 +63,37 @@ def test_explicit_days_options_are_accepted(tmp_path, option) -> None:
     assert args.days == 2
 
 
+@pytest.mark.parametrize("options", [["-Xm2"], ["-Xd1", "-d2"], ["-Xd1", "--days", "2"], ["-XL"], ["-XH"], ["-XR"], ["-Hm2"], ["-HL"], ["-HR"], ["-Rd1"], ["-RL"], ["-RH"]])
+def test_combined_short_options_are_rejected(tmp_path, capsys, options) -> None:
+    with pytest.raises(SystemExit) as exc:
+        create_parser().parse_args([str(tmp_path), "*", *options])
+    assert exc.value.code == 2
+    assert "Combined short options are not supported" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "options, attribute, expected",
+    [
+        (["-m2"], "months", 2),
+        (["-d1"], "days", 1),
+        (["-d=1"], "days", 1),
+        (["-X", "-m", "2"], "months", 2),
+        (["-X", "-m2"], "months", 2),
+        (["-p-Xm2"], "protect", "-Xm2"),
+        (["--protect=-Xm2"], "protect", "-Xm2"),
+        (["-L-Xm2"], "list_only", "-Xm2"),
+    ],
+)
+def test_separate_short_options_and_attached_values_are_accepted(tmp_path, options, attribute, expected) -> None:
+    args = create_parser().parse_args([str(tmp_path), "*", *options])
+    assert getattr(args, attribute) == expected
+
+
+def test_combined_short_option_text_after_separator_is_positional(tmp_path) -> None:
+    args = create_parser().parse_args([str(tmp_path), "--", "-Xm2"])
+    assert args.file_pattern == "-Xm2"
+
+
 def test_compile_regex_valid_and_invalid() -> None:
     """The internal _compile_regex method should compile valid patterns and collect errors for invalid ones."""
     parser = ModernStrictArgumentParser()

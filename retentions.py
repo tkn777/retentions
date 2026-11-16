@@ -454,15 +454,20 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         seen = set()
 
         for tok in raw_args:
+            if tok == "--":
+                break
             if not tok.startswith("-"):
                 continue
 
             # Extract option (handles -w3, -w=3, --x=5)
             opt = tok.split("=", 1)[0]
 
-            # Handle -w3 → -w
+            # Handle attached values (-w3 → -w), but reject short-option groups.
             if len(opt) > 2 and opt.startswith("-") and not opt.startswith("--"):
                 opt = opt[:2]
+                action = self._option_string_actions.get(opt)
+                if action is not None and action.nargs == 0:
+                    self.error(f"Combined short options are not supported: {tok}. Use separate options.")
 
             key = alias.get(opt, opt)
 
