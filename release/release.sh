@@ -13,7 +13,7 @@ VERSION="$1"
 APP="retentions"
 
 # Determine project root directory (parent of release/)
-ROOT_DIR="$(dirname "$(dirname "$0")")"
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
 BUILD_DIR="${ROOT_DIR}/build"
 PKG_DIR="${BUILD_DIR}/${APP}-${VERSION}"
