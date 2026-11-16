@@ -1009,7 +1009,7 @@ def main() -> None:
         logger.verbose(LogLevel.DEBUG, f"Parsed arguments: {args}")
 
         if args.use_lock_file:
-            lock_file = Path(args.path + f"/{LOCK_FILE_NAME}").resolve()
+            lock_file = Path(args.path).resolve() / LOCK_FILE_NAME
             try:
                 lock_file.touch(exist_ok=False)
             except FileExistsError as e:

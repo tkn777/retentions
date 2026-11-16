@@ -139,6 +139,55 @@ def test_fail_on_existing_lock_file(tmp_path, monkeypatch, capsys):
     assert lock.exists()
 
 
+@pytest.mark.parametrize("target_exists", [False, True])
+@pytest.mark.parametrize("outside_base", [False, True])
+def test_lock_file_symlink_aborts(tmp_path, monkeypatch, symlinks_supported, target_exists, outside_base):
+    if not symlinks_supported:
+        pytest.skip("Symlinks not supported on this platform")
+    base = tmp_path / "base"
+    base.mkdir()
+    archive = base / "backup.tar"
+    archive.write_text("backup")
+    target = (tmp_path if outside_base else base) / "actual.lock"
+    if target_exists:
+        target.write_text("existing target")
+    lock = base / LOCK_FILE_NAME
+    lock.symlink_to(target)
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(base), "*", "--last", "1", "--skip-by-filesize", "1"])
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 5
+    assert lock.is_symlink()
+    assert os.readlink(lock) == str(target)
+    assert archive.read_text() == "backup"
+    if target_exists:
+        assert target.read_text() == "existing target"
+    else:
+        assert not target.exists()
+
+
+def test_locking_with_base_directory_symlink(tmp_path, monkeypatch, symlinks_supported):
+    if not symlinks_supported:
+        pytest.skip("Symlinks not supported on this platform")
+    base = tmp_path / "base"
+    base.mkdir()
+    link = tmp_path / "linked-base"
+    link.symlink_to(base, target_is_directory=True)
+    lock = base / LOCK_FILE_NAME
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(link), "*"])
+
+    def check_lock(args, logger, cache):
+        assert lock.is_file()
+        return []
+
+    monkeypatch.setattr(retentions, "read_filelist", check_lock)
+    main()
+    assert not lock.exists()
+    assert link.is_symlink()
+
+
 def test_lock_created_between_check_and_creation_aborts(tmp_path, monkeypatch):
     archive = tmp_path / "backup.txt"
     archive.write_text("backup")
