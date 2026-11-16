@@ -135,6 +135,11 @@ def test_size_parsig(monkeypatch) -> None:
     ],
 )
 def test_size_parser_preserves_byte_precision(size, expected) -> None:
+    assert ModernStrictArgumentParser()._parse_positive_size_argument(size, round_down=True) == expected
+
+
+@pytest.mark.parametrize("size, expected", [("1.1K", 1127), ("0.9", 1), ("1.", 1), ("9007199254740993", 9_007_199_254_740_993), ("8.000000000000001P", 9_007_199_254_740_994)])
+def test_size_parser_rounds_up_by_default(size, expected) -> None:
     assert ModernStrictArgumentParser()._parse_positive_size_argument(size) == expected
 
 

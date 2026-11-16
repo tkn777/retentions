@@ -392,7 +392,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             companion_rule_set.update(CompanionRule(CompanionType.by_name(type), match.strip(), companion.strip(), companion_rule_string) for companion in split_escaped(",", companions_string, "companion", companion_rule_string))
         return companion_rule_set
 
-    def _parse_positive_size_argument(self, size_str: str) -> int:
+    def _parse_positive_size_argument(self, size_str: str, round_down: bool = False) -> int:
         size_str = size_str.strip().upper()
         re_match = re.match(r"^([0-9]+(?:\.[0-9]*)?)\s*([KMGTPE]?)$", size_str)
         if not re_match:
@@ -400,7 +400,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
         multipliers = {"": 1, "K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4, "P": 1024**5, "E": 1024**6}
         whole, _, fraction = re_match.group(1).partition(".")
         scale: int = 10 ** len(fraction)
-        return int(whole + fraction) * multipliers[re_match.group(2)] // scale
+        return (int(whole + fraction) * multipliers[re_match.group(2)] + (0 if round_down else scale - 1)) // scale
 
     def _parse_positive_time_argument(self, time_str: str) -> float:
         time_str = time_str.strip(" ")
@@ -533,7 +533,7 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             # max-size parsing
             if ns.max_size is not None:
                 ns.max_size = "".join(token.strip() for token in ns.max_size)
-                ns.max_size_bytes = self._parse_positive_size_argument(ns.max_size)
+                ns.max_size_bytes = self._parse_positive_size_argument(ns.max_size, round_down=True)
 
             # max-age parsing
             if ns.max_age is not None:

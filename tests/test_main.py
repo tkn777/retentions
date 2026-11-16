@@ -37,6 +37,34 @@ def test_list_only_empty_separator_does_not_delete(tmp_path, monkeypatch, capsys
     assert capsys.readouterr().out == str(file.absolute())
 
 
+@pytest.mark.parametrize(
+    "option, limit, size, delete",
+    [
+        ("--skip-by-filesize", "1.1K", 1126, True),
+        ("--skip-by-filesize", "1.1K", 1127, False),
+        ("--skip-by-filesize", "1126", 1126, False),
+        ("--max-size", "1.1K", 1126, False),
+        ("--max-size", "1.1K", 1127, True),
+        ("--max-size", "1126", 1126, False),
+    ],
+)
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_size_limits_round_in_the_correct_direction(tmp_path, monkeypatch, capsys, option, limit, size, delete, dry_run):
+    file = tmp_path / "backup.tar"
+    file.write_bytes(b"x" * size)
+    argv = ["retentions.py", str(tmp_path), "*.tar", "--last", "1", option, limit, "--verbose", "INFO"]
+    if dry_run:
+        argv.append("--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    main()
+
+    assert file.exists() == (dry_run or not delete)
+    output = capsys.readouterr()
+    assert "[ERROR]" not in output.err
+    assert f"Total files to delete: {int(delete):03d}" in output.out
+
+
 @pytest.mark.parametrize("successful_files", [0, 1])
 def test_failed_deletion_is_not_counted_as_deleted(tmp_path, monkeypatch, capsys, successful_files):
     file = tmp_path / "backup.txt"
