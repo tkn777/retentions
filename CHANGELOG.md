@@ -7,6 +7,7 @@
 - Disable implicit long-option abbreviations; accept only explicitly defined options and aliases, as documented in `TRADEOFFS.md`
 - Reject combined short options while preserving attached values, with regression tests for dry-run, help and version prefixes; document the rule in `TRADEOFFS.md` and `DESIGN_DECISIONS.md`
 - Fix invalid quoting in Zsh completion option definitions
+- Preserve spaces and glob characters in directory names during Bash completion
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`

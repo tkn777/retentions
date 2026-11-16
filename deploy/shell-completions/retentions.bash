@@ -67,7 +67,10 @@ _retentions() {
     # positional arguments
     # 1st: path
     if [[ $COMP_CWORD -eq 1 ]]; then
-        COMPREPLY=( $(compgen -d -- "$cur") )
+        local directory
+        while IFS= read -r directory; do
+            COMPREPLY+=("$directory")
+        done < <(compgen -d -- "$cur")
         return
     fi
 
