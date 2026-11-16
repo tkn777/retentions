@@ -206,6 +206,30 @@ def test_run_deletion_preserves_companion_after_main_failure(tmp_path, monkeypat
     assert companion.read_text() == "companion"
 
 
+@pytest.mark.parametrize("regex_mode", [None, "casesensitive", "ignorecase"])
+@pytest.mark.parametrize("protect", [None, ""])
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_run_deletion_companion_empty_protection(tmp_path, regex_mode, protect, dry_run) -> None:
+    main = tmp_path / "data.tar"
+    companion = tmp_path / "data.tar.md5"
+    main.write_text("main")
+    companion.write_text("companion")
+    args = _make_args(path=str(tmp_path), delete_companion_set={_DummyCompanionRule(companion)}, regex_mode=regex_mode, protect=protect, dry_run=dry_run)
+    if regex_mode and protect is not None:
+        args.protect_compiled = retentions.ModernStrictArgumentParser()._compile_regex(protect, regex_mode)
+    logger = Logger(args, FileStats("mtime"))
+
+    # Exercise the companion guard independently of main-file protection.
+    if regex_mode and protect == "":
+        with pytest.raises(IntegrityCheckFailedError):
+            run_deletion(main, args, logger, set())
+        assert companion.read_text() == "companion"
+    else:
+        assert run_deletion(main, args, logger, set()) == 2
+        assert companion.exists() == dry_run
+    assert main.exists() == dry_run
+
+
 @pytest.mark.parametrize("protect", [None, "*.keep"])
 @pytest.mark.parametrize("dry_run", [False, True])
 def test_run_deletion_with_companion_deleted(tmp_path, capsys, protect, dry_run) -> None:

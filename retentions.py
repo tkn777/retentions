@@ -697,7 +697,7 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
         if not Path(file).parent.resolve() == base.resolve():
             raise ValueError(f"{args.entity_name.capitalize()} '{file}' is not a child of base directory '{base}'")
 
-    if args.protect:
+    if args.protect is not None:
         protected: set[Path] = set()
         for file in matches:
             if args.protect_compiled.match(file.name) if args.regex_mode else fnmatch(file.name, args.protect):
@@ -973,7 +973,7 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
             if companion_file in args.symlink_companions or companion_file.is_symlink():
                 logger.verbose(LogLevel.WARN, f"Companion file is a symlink -> It is ignored: {companion_file}")
                 continue
-            if companion_file in disallowed_companions or (args.protect and (args.protect_compiled.match(companion_file.name) if args.regex_mode else fnmatch(companion_file.name, args.protect))):
+            if companion_file in disallowed_companions or (args.protect is not None and (args.protect_compiled.match(companion_file.name) if args.regex_mode else fnmatch(companion_file.name, args.protect))):
                 raise IntegrityCheckFailedError(f"Companion file '{companion_file}' must not be deleted, because it is e.g. kept, pruned, protected, the lock-file, ...")
             if companion_file.exists() and companion_file.is_file():
                 deletion_count += delete_file(companion_file, args, logger, FILETYPE_COMPANION)

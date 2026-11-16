@@ -97,6 +97,29 @@ def test_read_filelist_regex_and_protect(tmp_path) -> None:
     assert result and result[0].name == "report1.txt"
 
 
+@pytest.mark.parametrize("regex_mode", [None, "casesensitive", "ignorecase"])
+@pytest.mark.parametrize("protect", [None, ""])
+def test_read_filelist_empty_protection(tmp_path, regex_mode, protect) -> None:
+    file = tmp_path / "backup.tar"
+    file.write_text("backup")
+    args = _make_args(path=str(tmp_path), file_pattern=".*" if regex_mode else "*", regex_mode=regex_mode, protect=protect)
+    if regex_mode:
+        parser = ModernStrictArgumentParser()
+        args.regex_compiled = parser._compile_regex(args.file_pattern, regex_mode)
+        if protect is not None:
+            args.protect_compiled = parser._compile_regex(protect, regex_mode)
+    cache = FileStats("mtime")
+
+    result = read_filelist(args, Logger(args, cache), cache)
+
+    if regex_mode and protect == "":
+        assert result == []
+        assert args.protected_files == {file}
+    else:
+        assert result == [file]
+        assert args.protected_files == set()
+
+
 def test_read_filelist_errors(tmp_path, capsys) -> None:
     """read_filelist should raise appropriate errors for invalid inputs."""
     cache = FileStats("mtime")

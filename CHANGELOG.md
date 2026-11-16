@@ -9,6 +9,7 @@
 - Fix invalid quoting in Zsh completion option definitions
 - Preserve spaces and glob characters in directory names during Bash completion
 - Clarify that `--last` uses the selected age source, including filename timestamps and folders
+- Honor explicitly supplied empty protection patterns in regex mode, including companions
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`
