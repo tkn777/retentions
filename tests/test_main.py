@@ -103,6 +103,52 @@ def test_create_lockfile(tmp_path, monkeypatch, capsys):
     assert not lock.exists()
 
 
+@pytest.mark.parametrize("processing_error", [False, True])
+@pytest.mark.parametrize("stacktrace", [False, True])
+def test_lock_cleanup_error_preserves_exit_status(tmp_path, monkeypatch, capsys, processing_error, stacktrace):
+    lock = tmp_path / LOCK_FILE_NAME
+    original_unlink = retentions.Path.unlink
+
+    def failing_unlink(path, *args, **kwargs):
+        if path == lock:
+            raise PermissionError("simulated lock cleanup failure")
+        return original_unlink(path, *args, **kwargs)
+
+    def fake_read_filelist(args, logger, cache):
+        if processing_error:
+            raise IntegrityCheckFailedError("simulated processing failure")
+        return []
+
+    monkeypatch.setattr(retentions.Path, "unlink", failing_unlink)
+    monkeypatch.setattr(retentions, "read_filelist", fake_read_filelist)
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", *(["--stacktrace"] if stacktrace else [])])
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == (7 if processing_error else 1)
+    assert lock.exists()
+    error = capsys.readouterr().err
+    assert "[ERROR]" in error
+    assert "simulated lock cleanup failure" in error
+    if processing_error:
+        assert "simulated processing failure" in error
+    assert ("Traceback (most recent call last)" in error) == stacktrace
+
+
+def test_already_missing_lock_file_during_cleanup(tmp_path, monkeypatch):
+    lock = tmp_path / LOCK_FILE_NAME
+
+    def remove_lock(args, logger, cache):
+        lock.unlink()
+        return []
+
+    monkeypatch.setattr(retentions, "read_filelist", remove_lock)
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt"])
+    main()
+    assert not lock.exists()
+
+
 def test_create_no_lockfile(tmp_path, monkeypatch, capsys):
     """Test that no lock file is created."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt", "--no-lock-file"])

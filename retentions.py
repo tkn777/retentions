@@ -1062,7 +1062,14 @@ def main() -> None:
         handle_exception(e, 9, args.stacktrace if args is not None else True, prefix="UNEXPECTED ERROR")
     finally:
         if created_lock_file and lock_file is not None:
-            lock_file.unlink(missing_ok=True)
+            try:
+                lock_file.unlink(missing_ok=True)
+            except OSError as e:
+                if args is not None and args.stacktrace:
+                    traceback.print_exc()
+                print(f"[ERROR] Could not remove lock file '{lock_file}': {e}", file=sys.stderr)
+                if e.__context__ is None:
+                    sys.exit(1)
 
 
 if __name__ == "__main__":

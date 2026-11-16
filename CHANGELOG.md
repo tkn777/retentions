@@ -19,6 +19,7 @@
 - Mark optional option arguments as optional in Zsh completion specifications
 - Fix the quoted backup-file example to use a glob pattern in README and man page
 - Refuse existing lock-file symlinks instead of following them when acquiring the lock
+- Handle lock-file cleanup errors without masking an earlier failure status
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`
