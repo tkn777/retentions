@@ -47,7 +47,7 @@ Apart from creating the optional lock file, no destructive filesystem modificati
 
 ## Integrity and Safety Guarantees
 
-retentions **enforces internal consistency checks** before executing destructive actions:
+retentions **enforces internal consistency checks** during retention selection and deletion:
 - Every file must end up in exactly one of the sets: **keep or prune**.
 - Mismatches between computed decisions and deletion candidates **abort execution**.
 - A **lock file** prevents concurrent retention runs on the same directory by default.
@@ -119,7 +119,7 @@ This keeps retention decisions deterministic and the safety model easy to reason
 - **Decision logging**: for each file, retentions records not only the final action, but also the reasoning behind it. At higher verbosity levels, the full decision chain is preserved.
 - **Single-directory scope**: retention rules are applied only to direct children of the given base directory.
 - **Folder Mode:** In folder mode, retention is always applied to top-level directories only. Recursive traversal is used exclusively to derive a directory's age. Depth-based selection is intentionally not supported.
-- **Companion deletion:** `--delete-companions` is restricted to files in the base directory. Protected, retained, pruned, and lock files are rejected as companions, and symbolic-link companions are skipped.
+- **Companion deletion:** `--delete-companions` is restricted to files in the base directory. Protected, retained, pruned, and lock files are rejected as companions, and symbolic-link companions are skipped. Companion checks happen after successful main-file deletion. An integrity abort (exit code 7) does not restore the main file or any companions already deleted.
 
 ---
 

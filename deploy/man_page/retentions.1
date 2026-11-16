@@ -377,7 +377,7 @@ Only existing regular files are deleted.
 .IP \(bu 2
 Companion paths are deduplicated.
 .IP \(bu 2
-Protected or disallowed companions abort deletion.
+Main-file deletion precedes companion checks and deletion. Protected or disallowed companions abort the run with exit code 7. The main file and any companions already deleted remain deleted; no rollback is performed.
 .IP \(bu 2
 Rules must be quoted.
 .IP \(bu 2

@@ -502,7 +502,7 @@ TYPE:MATCH:COMPANIONS
 
 - Only existing regular files are deleted.
 - Companion paths are deduplicated.
-- Protected or otherwise disallowed companions abort deletion (e.g. files marked as kept or pruned).
+- Main-file deletion precedes companion checks and deletion. Protected or otherwise disallowed companions (e.g. files marked as kept or pruned) abort the run with exit code 7. The main file and any companions already deleted remain deleted; no rollback is performed.
 - Rules must be quoted.
 - Symlink companions are skipped as regular companions; `--delete-symlinks` handles links to deleted targets separately, without applying `--protect` to link names.
 
