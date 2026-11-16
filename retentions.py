@@ -633,8 +633,8 @@ def create_parser() -> ModernStrictArgumentParser:
     g_ret.add_argument("--quarters", "-q", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per quarter from the last N quarters (quarter by months)")
     g_ret.add_argument("--week13", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per 13-week block from the last N 13-week blocks (quarter by weeks)")
     g_ret.add_argument("--years", "-y", type=parser.positive_int_argument, metavar="N", help="Retain one file/folder per year from the last N years")
-    g_ret.add_argument("--last", "-l", type=parser.positive_int_argument, metavar="N", help="Always retain the N most recent files according to the selected age source (--age-type).")
-    g_ret.add_argument("--skip-by-filesize", "-i", type=str, metavar="size", nargs="+", help="Skip (and delete) files smaller than <size> (e.g. 12, 2K, 1.5M)")
+    g_ret.add_argument("--last", "-l", type=parser.positive_int_argument, metavar="N", help="Always retain the N most recent files/folders according to the selected age source (--age-type).")
+    g_ret.add_argument("--skip-by-filesize", "-i", type=str, metavar="size", nargs="+", help="Skip (and delete) files/folders smaller than <size> (e.g. 12, 2K, 1.5M)")
 
     # filter options
     g_filter.add_argument("--max-size", "-s", type=str, metavar="size", nargs="+", help="Keep maximum within total size N (e.g. 12, 10.5M, 500 G, 3E)")
