@@ -590,6 +590,7 @@ def create_parser() -> ModernStrictArgumentParser:
         epilog="Use with caution!! This tool deletes files unless --dry-run or --list-only is set.",
         formatter_class=ModernHelpFormatter,
         add_help=False,
+        allow_abbrev=False,
     )
 
     g_main = parser.add_argument_group("Main arguments")

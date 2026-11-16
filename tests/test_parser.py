@@ -48,6 +48,21 @@ def test_unknown_option_suggestion_or_error(argv, suggest, error, capsys: pytest
         assert error in str(captured.err)
 
 
+@pytest.mark.parametrize("options", [["--day", "2"], ["--day=2"], ["--days", "1", "--day", "2"]])
+def test_long_option_abbreviations_are_rejected(tmp_path, capsys, options) -> None:
+    parser = create_parser()
+    with pytest.raises(SystemExit) as exc:
+        parser.parse_args([str(tmp_path), "*", *options])
+    assert exc.value.code == 2
+    assert "Unknown option: --day" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("option", ["--days", "-d"])
+def test_explicit_days_options_are_accepted(tmp_path, option) -> None:
+    args = create_parser().parse_args([str(tmp_path), "*", option, "2"])
+    assert args.days == 2
+
+
 def test_compile_regex_valid_and_invalid() -> None:
     """The internal _compile_regex method should compile valid patterns and collect errors for invalid ones."""
     parser = ModernStrictArgumentParser()

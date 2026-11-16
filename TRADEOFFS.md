@@ -13,6 +13,8 @@ The following behaviors are known, intentional trade-offs rather than bugs.
 
 - **Companion protection checks after main-file deletion:** Main-file deletion precedes companion checks and deletion. Protected or otherwise disallowed companions (e.g. files marked as kept or pruned) abort the run with exit code 7. The main file and any companions already deleted remain deleted; no rollback is performed.
 
+- **Explicit option names:** Long options must be spelled out; only explicitly defined aliases are accepted. For example, `--days` and `-d` are valid, while `--day` is rejected with exit code 2. This avoids implicit spellings that bypass duplicate-option checks. Scripts using abbreviated long options must switch to full names or supported aliases.
+
 ## Non-atomic behavior
 
 retentions does not operate atomically. Since the underlying filesystem is not atomic, directory contents may change while retentions is scanning or evaluating files.

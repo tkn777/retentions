@@ -4,6 +4,7 @@
 - Document companion protection checks after main-file deletion and the absence of rollback on integrity aborts
 - Move README trade-offs to `TRADEOFFS.md`, including companion protection checks, and include it in release documentation
 - Use regex matching exclusively for protection checks in regex mode, including companions
+- Disable implicit long-option abbreviations; accept only explicitly defined options and aliases, as documented in `TRADEOFFS.md`
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`
