@@ -6,31 +6,31 @@ _retentions() {
   _arguments -C -s \
     '1:path:base directory:_files -/' \
     '2:file_pattern:glob or regex pattern:->pattern' \
-    '--regex-mode'[treat file_pattern and protect patterns as regex]:mode:(casesensitive ignorecase) \
-    '--age-type'[file/folder age source]:time:(ctime mtime atime birthtime filename=) \
-    '--folder-mode'[use folders instead of files]:time source:(youngest-file oldest-file folder path=) \
-    '--protect'[protect files from deletion]:pattern:->protect \
-    '--hours'[retain one per hour]:N: \
-    '--days'[retain one per day]:N: \
-    '--weeks'[retain one per week]:N: \
-    '--months'[retain one per month]:N: \
-    '--quarters'[retain one per quarter]:N: \
-    '--week13'[retain one per 13-week block]:N: \
-    '--years'[retain one per year]:N: \
-    '--last'[retain last N]:N: \
-    '--skip-by-filesize'[Skip and delete files smaller than size]:size: \
-    '--max-size'[maximum total size]:size: \
-    '--max-files'[maximum total files/folders]:count: \
-    '--max-age'[maximum total age]:age: \
-    '--list-only'[list files/folders only, optional separator]:sep: \
-    '--verbose'[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3) \
-    '--dry-run'[dry run, do not delete anything] \
-    '--no-lock-file'[disable lock file] \
-    '--fail-on-delete-error'[fail and exit on delete error] \
-    '--delete-companions'[delete companion files defined by rules]:pattern:->companions \
+    '--regex-mode[treat file_pattern and protect patterns as regex]:mode:(casesensitive ignorecase)' \
+    '--age-type[file/folder age source]:time:(ctime mtime atime birthtime filename=)' \
+    '--folder-mode[use folders instead of files]:time source:(youngest-file oldest-file folder path=)' \
+    '--protect[protect files from deletion]:pattern:->protect' \
+    '--hours[retain one per hour]:N:' \
+    '--days[retain one per day]:N:' \
+    '--weeks[retain one per week]:N:' \
+    '--months[retain one per month]:N:' \
+    '--quarters[retain one per quarter]:N:' \
+    '--week13[retain one per 13-week block]:N:' \
+    '--years[retain one per year]:N:' \
+    '--last[retain last N]:N:' \
+    '--skip-by-filesize[Skip and delete files smaller than size]:size:' \
+    '--max-size[maximum total size]:size:' \
+    '--max-files[maximum total files/folders]:count:' \
+    '--max-age[maximum total age]:age:' \
+    '--list-only[list files/folders only, optional separator]:sep:' \
+    '--verbose[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3)' \
+    '--dry-run[dry run, do not delete anything]' \
+    '--no-lock-file[disable lock file]' \
+    '--fail-on-delete-error[fail and exit on delete error]' \
+    '--delete-companions[delete companion files defined by rules]:pattern:->companions' \
     '--delete-symlinks[remove links after successful file or companion deletion]:scope:(directory system)' \
-    '--version'[show version and exit] \
-    '--help'[show help and exit]
+    '--version[show version and exit]' \
+    '--help[show help and exit]'
 
   case $state in
     pattern|protect|companions)
