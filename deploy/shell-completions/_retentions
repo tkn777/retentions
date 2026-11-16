@@ -6,9 +6,9 @@ _retentions() {
   _arguments -C -s \
     '1:path:base directory:_files -/' \
     '2:file_pattern:glob or regex pattern:->pattern' \
-    '--regex-mode[treat file_pattern and protect patterns as regex]:mode:(casesensitive ignorecase)' \
+    '--regex-mode[treat file_pattern and protect patterns as regex]::mode:(casesensitive ignorecase)' \
     '--age-type[file/folder age source]:time:(ctime mtime atime birthtime filename=)' \
-    '--folder-mode[use folders instead of files]:time source:(youngest-file oldest-file folder path=)' \
+    '--folder-mode[use folders instead of files]::time source:(youngest-file oldest-file folder path=)' \
     '--protect[protect files from deletion]:pattern:->protect' \
     '--hours[retain one per hour]:N:' \
     '--days[retain one per day]:N:' \
@@ -22,8 +22,8 @@ _retentions() {
     '--max-size[maximum total size]:size:' \
     '--max-files[maximum total files/folders]:count:' \
     '--max-age[maximum total age]:age:' \
-    '--list-only[list files/folders only, optional separator]:sep:' \
-    '--verbose[verbosity level]:level:(ERROR WARN INFO DEBUG 0 1 2 3)' \
+    '--list-only[list files/folders only, optional separator]::sep:()' \
+    '--verbose[verbosity level]::level:(ERROR WARN INFO DEBUG 0 1 2 3)' \
     '--dry-run[dry run, do not delete anything]' \
     '--no-lock-file[disable lock file]' \
     '--fail-on-delete-error[fail and exit on delete error]' \
