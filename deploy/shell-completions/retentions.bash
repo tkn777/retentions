@@ -35,6 +35,11 @@ _retentions() {
         --help
     "
 
+    if [[ "$cur" == --* && ( "$prev" == --regex-mode || "$prev" == --folder-mode || "$prev" == --verbose ) ]]; then
+        COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+        return
+    fi
+
     case "$prev" in
         --delete-symlinks)
             COMPREPLY=( $(compgen -W "directory system" -- "$cur") )
