@@ -442,11 +442,11 @@ retentions does not operate atomically. Since the underlying filesystem is not a
 By default retentions writes a lock file .retentions.lock \- this can be used by other tools.
 
 .SH TIP
-Use --list-only to integrate with external scripts or pipelines:
+Use --list-only to integrate with external scripts or pipelines (linux only):
 
 .nf
-retentions /data/logs '*.log' -d 3 -w 2 --list-only | while read f; do
-    echo "Would delete $f"
+retentions /data/logs '*.log' -d 3 -w 2 --list-only | while IFS= read -r f; do
+    printf 'Would delete %s\en' "$f"
 done
 .fi
 

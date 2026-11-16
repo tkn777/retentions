@@ -27,6 +27,7 @@
 - Document the Bash completion argument-order limitation in `TRADEOFFS.md`
 - Clarify in README that periods without matching files do not count towards retention limits
 - Abort release builds on documentation copy errors instead of silently producing incomplete packages
+- Preserve backslashes and surrounding whitespace in the README and manpage pipeline examples
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`

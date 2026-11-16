@@ -562,11 +562,11 @@ retentions itself handles pattern matching internally using glob or regex, so qu
 
 ### 💡 Tip
 
-Use `--list-only` to integrate with external scripts or pipelines:
+Use `--list-only` to integrate with external scripts or pipelines (linux only):
 
 ```bash
-python3 retentions.py /data/logs '*.log' -d 3 -w 2 --list-only | while read f; do
-    echo "Would delete $f"
+python3 retentions.py /data/logs '*.log' -d 3 -w 2 --list-only | while IFS= read -r f; do
+    printf 'Would delete %s\n' "$f"
 done
 ```
 
