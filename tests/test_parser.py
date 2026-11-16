@@ -48,6 +48,30 @@ def test_unknown_option_suggestion_or_error(argv, suggest, error, capsys: pytest
         assert error in str(captured.err)
 
 
+@pytest.mark.parametrize("options, message", [(["--unknown"], "Unknown option"), (["--days", "0"], "Invalid value"), (["--days"], "expected one argument")])
+@pytest.mark.parametrize("list_only", [False, True])
+def test_argument_errors_write_only_to_stderr(tmp_path, capsys, options, message, list_only) -> None:
+    argv = [str(tmp_path), "*", *(["--list-only"] if list_only else []), *options]
+    with pytest.raises(SystemExit) as exc:
+        create_parser().parse_args(argv)
+    assert exc.value.code == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert "usage:" in output.err
+    assert message in output.err
+    assert "Hint: Try '--help'" in output.err
+
+
+@pytest.mark.parametrize("option, message", [("--help", "usage:"), ("--version", "retentions")])
+def test_help_and_version_write_to_stdout(capsys, option, message) -> None:
+    with pytest.raises(SystemExit) as exc:
+        create_parser().parse_args([option])
+    assert exc.value.code == 0
+    output = capsys.readouterr()
+    assert message in output.out
+    assert output.err == ""
+
+
 @pytest.mark.parametrize("options", [["--day", "2"], ["--day=2"], ["--days", "1", "--day", "2"]])
 def test_long_option_abbreviations_are_rejected(tmp_path, capsys, options) -> None:
     parser = create_parser()

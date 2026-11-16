@@ -362,11 +362,11 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
             self._errors.append(msg)
 
     def error(self, message: str) -> NoReturn:
-        self.print_usage()
+        self.print_usage(file=sys.stderr)
         print("\nError(s):", file=sys.stderr)
         for line in message.split("\n"):
             print(f"  • {line}", file=sys.stderr)
-        print("\nHint: Try '--help' for more information (or 'man retentions' or the README.md at https://github.com/tkn777/retentions).")
+        print("\nHint: Try '--help' for more information (or 'man retentions' or the README.md at https://github.com/tkn777/retentions).", file=sys.stderr)
         sys.exit(2)
 
     # Argument type helpers
