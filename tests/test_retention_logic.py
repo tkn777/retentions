@@ -7,7 +7,7 @@ from typing import Optional, no_type_check
 
 import pytest
 
-from retentions import SCRIPT_START, ConfigNamespace, FileStats, Logger, LogLevel, RetentionLogic, sort_files
+from retentions import SCRIPT_START, ConfigNamespace, FileStats, Logger, LogLevel, ModernStrictArgumentParser, RetentionLogic, sort_files
 
 
 @no_type_check
@@ -265,6 +265,21 @@ def test_filter_max_age(tmp_path: Path) -> None:
     assert len(result.prune) == 2
     assert "Keeping for mode 'days'" in logger._decisions[files[0]][0][0]
     assert "Filtering: max total age exceeded" in logger._decisions[files[4]][0][0]
+
+
+@pytest.mark.parametrize("max_age, offsets, kept_count", [("1.5", [1, 2], 1), ("0.001h", [3, 4], 1), ("1", [0, 1], 1), ("2", [1, 2], 1)])
+def test_filter_max_age_preserves_fractional_limits(tmp_path: Path, monkeypatch, max_age, offsets, kept_count) -> None:
+    start = 1_700_000_000
+    monkeypatch.setattr("retentions.SCRIPT_START", start)
+    files = _create_files_with_times(tmp_path, offsets, mod_time=start)
+    args = _make_args(last=len(files), max_age=max_age, max_age_seconds=ModernStrictArgumentParser()._parse_positive_time_argument(max_age))
+    cache = FileStats("mtime")
+    logger = Logger(args, cache)
+
+    result = RetentionLogic(files, args, logger, cache).process_retention_logic()
+
+    assert result.keep == set(files[:kept_count])
+    assert result.prune == set(files[kept_count:])
 
 
 @no_type_check
