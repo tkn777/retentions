@@ -532,7 +532,7 @@ If you omit the quotes, your shell (e.g. Bash, Zsh, PowerShell) will expand the 
 ```bash
 python3 retentions.py /data/backups '*.tar.gz'
 python3 retentions.py /data/logs 'log-*.txt'
-python3 retentions.py /data/temp '.*\.bak'
+python3 retentions.py /data/temp '*.bak'
 ```
 
 #### ❌ Incorrect

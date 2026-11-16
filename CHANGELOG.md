@@ -17,6 +17,7 @@
 - Create the executable destination directory before running the Linux installer
 - Complete following options when optional Bash completion arguments are omitted
 - Mark optional option arguments as optional in Zsh completion specifications
+- Fix the quoted backup-file example to use a glob pattern in README and man page
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`
