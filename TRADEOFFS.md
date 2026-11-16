@@ -11,6 +11,8 @@ The following behaviors are known, intentional trade-offs rather than bugs.
   - `xq` => x * 90 days
   - `xy` => x * 365 days
 
+- **Extremely large age limits:** Numeric `--max-age` values that overflow the floating-point representation, either directly or after unit conversion, are accepted as an infinite age limit. The age filter then leaves all retained files unchanged; other retention rules and filters still apply. Explicit finite-value validation is intentionally omitted for this extreme input range.
+
 - **Companion protection checks after main-file deletion:** Main-file deletion precedes companion checks and deletion. Protected or otherwise disallowed companions (e.g. files marked as kept or pruned) abort the run with exit code 7. The main file and any companions already deleted remain deleted; no rollback is performed.
 
 - **Explicit option names:** Long options must be spelled out; only explicitly defined aliases are accepted. For example, `--days` and `-d` are valid, while `--day` is rejected with exit code 2. This avoids implicit spellings that bypass duplicate-option checks. Scripts using abbreviated long options must switch to full names or supported aliases.
