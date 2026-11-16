@@ -618,7 +618,7 @@ def create_parser() -> ModernStrictArgumentParser:
     g_flags.add_argument("--regex-mode", "-r", type=str, choices=["casesensitive", "ignorecase"], metavar="mode", const="casesensitive", nargs="?", default=None,
         help="file_pattern / protect is a regex (otherwise: glob pattern) - mode: casesensitive, ignorecase, default: casesensitive")
     g_flags.add_argument("--protect", "-p", type=str, default=None, metavar="protect", help="Protect files from deletion (using regex or glob, like file_pattern)")
-    g_flags.add_argument("--age-type", type=str, metavar="time-attr", default="mtime", nargs="?",
+    g_flags.add_argument("--age-type", type=str, metavar="time-attr", default="mtime",
         help="Used age source: mtime (default), ctime, atime, birthtime, or 'filename=<format>' (Python date/time format). File attributes are OS and filesystem dependent; see README.md or man page.")
     g_flags.add_argument("--folder-mode", type=str, metavar="time-src", default=None, nargs="?", const="youngest-file",
         help="Use folders instead of files. Time source: youngest-file (default), oldest-file, folder, or path=<path> (relative, inside each folder). youngest-file and oldest-file search recursively.")

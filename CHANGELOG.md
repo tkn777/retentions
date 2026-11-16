@@ -23,6 +23,7 @@
 - Round fractional minimum-size thresholds up while keeping max-size limits rounded down
 - Use an architecture-independent timestamp sentinel for retention selection
 - Write argument-error usage and hints to stderr instead of the list-output stream
+- Require a value when `--age-type` is specified; retain `mtime` as the default when the option is omitted
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`

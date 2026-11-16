@@ -167,6 +167,34 @@ def test_size_parser_rounds_up_by_default(size, expected) -> None:
     assert ModernStrictArgumentParser()._parse_positive_size_argument(size) == expected
 
 
+@pytest.mark.parametrize("options", [["--age-type"], ["--age-type", "--dry-run"]])
+def test_age_type_requires_a_value(tmp_path, capsys, options) -> None:
+    with pytest.raises(SystemExit) as exc:
+        create_parser().parse_args([str(tmp_path), "*", *options])
+    assert exc.value.code == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert "--age-type: expected one argument" in output.err
+    assert "does not support age-type" not in output.err
+
+
+@pytest.mark.parametrize(
+    "options, expected",
+    [
+        ([], "mtime"),
+        (["--age-type", "mtime"], "mtime"),
+        (["--age-type", "ctime"], "ctime"),
+        (["--age-type", "atime"], "atime"),
+        (["--age-type", "filename=%Y-%m-%d"], "filename"),
+    ],
+)
+def test_age_type_default_and_explicit_values(tmp_path, options, expected) -> None:
+    args = create_parser().parse_args([str(tmp_path), "*", *options])
+    assert args.age_type == expected
+    if expected == "filename":
+        assert args.filename_format == "%Y-%m-%d"
+
+
 def test_age_parsig(monkeypatch) -> None:
     """Test that the --max-age argument is parsed correctly."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", ".", "*.txt", "-a", "3", "d"])
