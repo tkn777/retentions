@@ -23,6 +23,27 @@ class DummyRetentionLogic:
         return Result()
 
 
+@pytest.mark.parametrize("rule_type", ["prefix", "suffix"])
+@pytest.mark.parametrize("separator", [os.sep] + ([os.altsep] if os.altsep else []))
+def test_invalid_companion_path_is_rejected_before_deletion(tmp_path, monkeypatch, capsys, rule_type, separator):
+    newer = tmp_path / "new.txt"
+    older = tmp_path / "old.tar"
+    for file, age in [(newer, 100), (older, 200)]:
+        file.write_text(file.name)
+        os.utime(file, (retentions.SCRIPT_START - age, retentions.SCRIPT_START - age))
+    match = "old" if rule_type == "prefix" else ".tar"
+    rule = f"{rule_type}:{match}:..{separator}checksum"
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*", "--max-age", "1", "--delete-companions", rule])
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 2
+    assert newer.read_text() == "new.txt"
+    assert older.read_text() == "old.tar"
+    assert "must not contain path separators" in capsys.readouterr().err
+
+
 @pytest.mark.parametrize("dry_run", [False, True])
 def test_list_only_empty_separator_does_not_delete(tmp_path, monkeypatch, capsys, dry_run):
     file = tmp_path / "backup.txt"

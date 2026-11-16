@@ -29,6 +29,7 @@
 - Abort release builds on documentation copy errors instead of silently producing incomplete packages
 - Preserve backslashes and surrounding whitespace in the README and manpage pipeline examples
 - Document repeated reporting and counting of shared companion files in dry-run as a trade-off
+- Reject companion replacement paths containing platform-specific directory separators before processing files
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`

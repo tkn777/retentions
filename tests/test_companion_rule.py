@@ -1,5 +1,6 @@
 # mypy: ignore-errors
 
+import os
 from pathlib import Path
 
 import pytest
@@ -45,6 +46,16 @@ def test_companionrule_matches_empty_match_always_true(tmp_path):
 # ---------------------------------------------------------------------------
 # tests for CompanionRule.replace()
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(os.sep == "\\", reason="Backslashes are path separators on Windows")
+@pytest.mark.parametrize("rule_type", [CompanionType.PREFIX, CompanionType.SUFFIX])
+def test_companionrule_allows_backslash_in_filename(tmp_path, rule_type):
+    rule = CompanionRule(rule_type, "archive", r"backup\name")
+    result = rule.replace(tmp_path / "archive")
+
+    assert result.name == r"backup\name"
+    assert result.parent == tmp_path
 
 
 def test_companionrule_replace_prefix(tmp_path):

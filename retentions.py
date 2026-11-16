@@ -299,6 +299,8 @@ class CompanionRule:
             raise ValueError(f"CompanionRule \"{self._rule_def if self._rule_def is not None else '<unspecified>'}\": 'match' and 'companion' must be different")
         if not self._companion:
             raise ValueError(f"CompanionRule \"{self._rule_def if self._rule_def is not None else '<unspecified>'}\": 'companion' must not be empty")
+        if any(separator in self._companion for separator in (os.sep, os.altsep) if separator):
+            raise ValueError(f"CompanionRule \"{self._rule_def if self._rule_def is not None else '<unspecified>'}\": 'companion' must not contain path separators")
 
     def matches(self, file: Path) -> bool:
         if len(self._match) == 0:
