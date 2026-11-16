@@ -1,5 +1,6 @@
 ### [Unreleased]
 - Add Python 3.16 pre-releases to the test and lint CI matrices
+- Preserve companion files when deletion of the main file fails
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`

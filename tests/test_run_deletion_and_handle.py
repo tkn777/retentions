@@ -177,8 +177,38 @@ class _DummyCompanionRule:
         return self._companion
 
 
+@pytest.mark.parametrize("fail_on_delete_error", [False, True])
+def test_run_deletion_preserves_companion_after_main_failure(tmp_path, monkeypatch, fail_on_delete_error) -> None:
+    main = tmp_path / "data.tar"
+    companion = tmp_path / "data.tar.md5"
+    main.write_text("main")
+    companion.write_text("companion")
+    original_unlink = Path.unlink
+
+    def failing_unlink(path, *args, **kwargs):
+        if path == main:
+            raise PermissionError("simulated deletion failure")
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", failing_unlink)
+    args = _make_args(path=str(tmp_path), delete_companion_set={_DummyCompanionRule(companion)}, fail_on_delete_error=fail_on_delete_error)
+    logger = Logger(args, FileStats("mtime"))
+
+    if fail_on_delete_error:
+        with pytest.raises(FileCouldNotBeDeleteError):
+            run_deletion(main, args, logger, set())
+    else:
+        deletion_count = run_deletion(main, args, logger, set())
+        assert companion.exists()
+        assert deletion_count == 0
+
+    assert main.read_text() == "main"
+    assert companion.read_text() == "companion"
+
+
 @pytest.mark.parametrize("protect", [None, "*.keep"])
-def test_run_deletion_with_companion_deleted(tmp_path, capsys, protect) -> None:
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_run_deletion_with_companion_deleted(tmp_path, capsys, protect, dry_run) -> None:
     main = tmp_path / "data.tar"
     companion = tmp_path / "data.tar.md5"
 
@@ -188,7 +218,7 @@ def test_run_deletion_with_companion_deleted(tmp_path, capsys, protect) -> None:
     cache = FileStats("mtime")
     args = _make_args(
         path=str(tmp_path),
-        dry_run=False,
+        dry_run=dry_run,
         delete_companion_set={_DummyCompanionRule(companion)},
         protect=protect,
     )
@@ -196,14 +226,14 @@ def test_run_deletion_with_companion_deleted(tmp_path, capsys, protect) -> None:
 
     disallowed_companions = set()
 
-    run_deletion(main, args, logger, disallowed_companions)
+    assert run_deletion(main, args, logger, disallowed_companions) == 2
 
-    assert not main.exists()
-    assert not companion.exists()
+    assert main.exists() == dry_run
+    assert companion.exists() == dry_run
 
     out = capsys.readouterr().out
-    assert "Deleting" in out
-    assert "Deleting (companion)" in out
+    assert ("Dry-run: deleting (file)" if dry_run else "Deleting (file)") in out
+    assert ("Dry-run: deleting (companion)" if dry_run else "Deleting (companion)") in out
     assert main.name in out
     assert companion.name in out
 

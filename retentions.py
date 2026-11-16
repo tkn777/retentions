@@ -960,6 +960,8 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
     else:
         companions = get_companion_paths(file, args)
         deletion_count += delete_file(file, args, logger, FILETYPE_PATH)
+        if deletion_count == 0:
+            return 0
         # delete companion files (if any)
         for companion_file in companions:
             if companion_file in args.symlink_companions or companion_file.is_symlink():

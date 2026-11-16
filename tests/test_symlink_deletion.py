@@ -91,7 +91,7 @@ def test_dry_run_reports_links_without_deleting_them(backup_links, capsys):
     assert "latest.link" in output
 
 
-@pytest.mark.parametrize("failed_name,retained_link,deleted_link,deleted_count", [("backup.tar", "latest.link", "checksum.link", 2), ("backup.sha256", "checksum.link", "latest.link", 4)])
+@pytest.mark.parametrize("failed_name,retained_link,deleted_link,deleted_count", [("backup.tar", "latest.link", "checksum.link", 0), ("backup.sha256", "checksum.link", "latest.link", 4)])
 def test_cleanup_only_after_successful_target_deletion(backup_links, monkeypatch, capsys, failed_name, retained_link, deleted_link, deleted_count):
     base, links, _ = backup_links
     unlink = Path.unlink
@@ -109,7 +109,8 @@ def test_cleanup_only_after_successful_target_deletion(backup_links, monkeypatch
     output = capsys.readouterr()
     assert "[ERROR]" in output.err
     assert f"Total files deleted:   {deleted_count:03d}" in output.out
-    assert not (links / deleted_link).is_symlink()
+    assert (links / deleted_link).is_symlink() == (failed_name == "backup.tar")
+    assert (base / "backup.sha256").exists()
 
 
 def test_without_option_leaves_links_untouched(backup_links):
