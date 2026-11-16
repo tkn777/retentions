@@ -182,6 +182,33 @@ def test_output_help(tmp_path, monkeypatch, capsys):
     assert "Total files to delete" in captured.out
 
 
+@pytest.mark.parametrize("is_companion", [False, True])
+@pytest.mark.parametrize("regex_mode", ["casesensitive", "ignorecase"])
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_regex_protection_does_not_use_glob(tmp_path, monkeypatch, capsys, is_companion, regex_mode, dry_run):
+    file = tmp_path / "backup.tar$"
+    file.write_text("backup")
+    file_pattern = r"^backup[.]tar\$$"
+    argv = ["retentions.py", str(tmp_path), file_pattern, "--regex-mode", regex_mode, "--max-size", "1", "--protect", "backup[.]tar$", "--verbose", "INFO"]
+    if is_companion:
+        archive = tmp_path / "archive.tar"
+        archive.write_text("archive")
+        argv[2] = r"^archive[.]tar$"
+        argv.extend(["--delete-companions", "prefix:archive.tar:backup.tar$"])
+    if dry_run:
+        argv.append("--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    main()
+
+    assert file.exists() == dry_run
+    if is_companion:
+        assert archive.exists() == dry_run
+    output = capsys.readouterr()
+    assert "[ERROR]" not in output.err
+    assert f"[INFO] {'Dry-run: ' if dry_run else ''}Total files deleted:   {2 if is_companion else 1:03d}" in output.out
+
+
 @pytest.mark.parametrize(
     "file_pattern,protect,regex_mode",
     [
