@@ -248,6 +248,7 @@ python3 retentions.py <path> <file_pattern> [options]
 <br>
 
 🧠 Logic:
+- Periods without matching files do not count. For example, `--days 7` can retain files older than one week.
 - The retention periods are applied cumulatively. For example, a file that is marked as keep with the retention `--days` **cannot** be marked as keep with the retention `--weeks`.
 - Retention buckets are hierarchical. Coarser buckets only select data strictly older than all finer-grained selections
 - One exception here is `--last`. It always marks the last `N` files as retained, regardless of all other retentions.
