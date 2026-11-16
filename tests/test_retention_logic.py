@@ -83,6 +83,33 @@ def test_equal_timestamps_select_first_filename(tmp_path: Path, options) -> None
     assert result.prune == {tmp_path / "b.txt"}
 
 
+@pytest.mark.parametrize(
+    "names, options, expected_keep",
+    [
+        (["2040-01-01"], {"years": 1}, {"2040-01-01"}),
+        (["2040-01-02", "2040-01-01", "2039-12-31", "2039-01-01"], {"days": 1, "years": 1}, {"2040-01-02", "2039-12-31"}),
+    ],
+)
+def test_retention_beyond_32_bit_timestamp_sentinel(tmp_path: Path, monkeypatch, names, options, expected_keep) -> None:
+    try:
+        datetime.fromtimestamp(datetime(2040, 1, 1).timestamp())
+    except (OverflowError, OSError, ValueError):
+        pytest.skip("Platform does not support timestamps beyond 2038")
+    # Simulate the former 32-bit sentinel, including after its removal.
+    monkeypatch.setattr("retentions.MAX_FILE_SIZE", 2**31 - 1, raising=False)
+    files = [tmp_path / name for name in names]
+    for file in files:
+        file.write_text("backup")
+    args = _make_args(age_type="filename", **options)
+    stats = FileStats("filename", filename_format="%Y-%m-%d")
+    logger = Logger(args, stats)
+
+    result = RetentionLogic(sort_files(files, stats), args, logger, stats).process_retention_logic()
+
+    assert {file.name for file in result.keep} == expected_keep
+    assert {file.name for file in result.prune} == set(names) - expected_keep
+
+
 @no_type_check
 def test_hours_retention(tmp_path: Path) -> None:
     """When hours retention is specified, one file should be kept per hour for the newest N hours."""
