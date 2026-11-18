@@ -526,6 +526,8 @@ class ModernStrictArgumentParser(argparse.ArgumentParser):
                 ns.regex_compiled = self._compile_regex(ns.file_pattern, ns.regex_mode)
                 if ns.protect is not None:
                     ns.protect_compiled = self._compile_regex(ns.protect, ns.regex_mode)
+            elif Path(ns.file_pattern).anchor:
+                self.add_error(f"Invalid glob pattern '{ns.file_pattern}': must be relative to path")
 
             # skip by filesize
             if ns.skip_by_filesize is not None:

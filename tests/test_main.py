@@ -23,6 +23,43 @@ class DummyRetentionLogic:
         return Result()
 
 
+@pytest.mark.parametrize("pattern", [None, "/Backups/*.tar.gz"] + ([r"\Backups\*.tar.gz", "C:*.tar.gz", r"\\server\share\*.tar.gz"] if sys.platform == "win32" else []))
+@pytest.mark.parametrize("list_only", [False, True])
+def test_anchored_glob_is_an_argument_error(tmp_path, monkeypatch, capsys, pattern, list_only):
+    file = tmp_path / "backup.tar.gz"
+    file.write_text("backup")
+    pattern = pattern if pattern is not None else str(tmp_path / "*.tar.gz")
+    options = ["--list-only"] if list_only else ["--dry-run"]
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), pattern, *options])
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert "must be relative to path" in output.err
+    assert "UNEXPECTED ERROR" not in output.err
+    assert file.read_text() == "backup"
+
+
+@pytest.mark.parametrize("pattern, options", [("*.tar.gz", []), ("./*.tar.gz", []), (r"/?backup[.]tar[.]gz", ["--regex-mode"])])
+def test_relative_glob_and_regex_still_select_files(tmp_path, monkeypatch, capsys, pattern, options):
+    file = tmp_path / "backup.tar.gz"
+    other = tmp_path / "other.log"
+    file.write_text("backup")
+    other.write_text("other")
+    monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), pattern, "--max-size", "1", "--list-only", *options])
+
+    main()
+
+    output = capsys.readouterr()
+    assert output.out == str(file.absolute()) + "\n"
+    assert output.err == ""
+    assert file.read_text() == "backup"
+    assert other.read_text() == "other"
+
+
 @pytest.mark.parametrize("rule_type", ["prefix", "suffix"])
 @pytest.mark.parametrize("separator", [os.sep] + ([os.altsep] if os.altsep else []))
 def test_invalid_companion_path_is_rejected_before_deletion(tmp_path, monkeypatch, capsys, rule_type, separator):
