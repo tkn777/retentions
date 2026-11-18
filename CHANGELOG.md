@@ -1,3 +1,6 @@
+### [Unreleased]
+- Add a collapsible README table of contents and move examples to `EXAMPLES.md`, including four additional examples and release packaging
+
 ### 1.3.14 - 18.11.2026
 - Add Python 3.16 pre-releases to the test and lint CI matrices
 - Preserve companion files when deletion of the main file fails
