@@ -31,6 +31,7 @@
 - Document repeated reporting and counting of shared companion files in dry-run as a trade-off
 - Reject companion replacement paths containing platform-specific directory separators before processing files
 - Report anchored glob patterns as argument errors before processing files
+- Refuse release builds before modifying files when the source backup name is already occupied
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`

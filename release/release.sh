@@ -15,6 +15,11 @@ APP="retentions"
 # Determine project root directory (parent of release/)
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
+if [[ -e "${ROOT_DIR}/retentions.py.bak" || -L "${ROOT_DIR}/retentions.py.bak" ]]; then
+    echo "Refusing to overwrite existing backup: ${ROOT_DIR}/retentions.py.bak" >&2
+    exit 1
+fi
+
 BUILD_DIR="${ROOT_DIR}/build"
 PKG_DIR="${BUILD_DIR}/${APP}-${VERSION}"
 DEB_DIR="${BUILD_DIR}/deb"
