@@ -975,7 +975,7 @@ def run_deletion(file: Path, args: ConfigNamespace, logger: Logger, disallowed_c
         if deletion_count == 0:
             return 0
         # delete companion files (if any)
-        for companion_file in companions:
+        for companion_file in sorted(companions):
             if companion_file in args.symlink_companions or companion_file.is_symlink():
                 logger.verbose(LogLevel.WARN, f"Companion file is a symlink -> It is ignored: {companion_file}")
                 continue

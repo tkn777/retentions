@@ -32,6 +32,7 @@
 - Reject companion replacement paths containing platform-specific directory separators before processing files
 - Report anchored glob patterns as argument errors before processing files
 - Refuse release builds before modifying files when the source backup name is already occupied
+- Process companion deletions in sorted path order and document non-atomic deletion of main files, companions and symlinks
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`

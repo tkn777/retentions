@@ -178,6 +178,38 @@ class _DummyCompanionRule:
 
 
 @pytest.mark.parametrize("fail_on_delete_error", [False, True])
+def test_run_deletion_sorts_companions_with_delete_error(tmp_path, monkeypatch, fail_on_delete_error) -> None:
+    main = tmp_path / "backup.tar"
+    companions = [tmp_path / f"backup.{suffix}" for suffix in "abcdefgh"]
+    failed = companions[3]
+    for file in [main, *companions]:
+        file.write_text(file.name)
+    attempts = []
+    original_unlink = Path.unlink
+
+    def failing_unlink(path, *args, **kwargs):
+        attempts.append(path)
+        if path == failed:
+            raise PermissionError("simulated deletion failure")
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", failing_unlink)
+    args = _make_args(path=str(tmp_path), delete_companion_set={_DummyCompanionRule(companion) for companion in companions}, fail_on_delete_error=fail_on_delete_error)
+    logger = Logger(args, FileStats("mtime"))
+
+    if fail_on_delete_error:
+        with pytest.raises(FileCouldNotBeDeleteError):
+            run_deletion(main, args, logger, set())
+    else:
+        assert run_deletion(main, args, logger, set()) == len(companions)
+
+    assert attempts == [main, *(companions[:4] if fail_on_delete_error else companions)]
+    assert not main.exists()
+    for index, companion in enumerate(companions):
+        assert companion.exists() == (companion == failed or (fail_on_delete_error and index > 3))
+
+
+@pytest.mark.parametrize("fail_on_delete_error", [False, True])
 def test_run_deletion_preserves_companion_after_main_failure(tmp_path, monkeypatch, fail_on_delete_error) -> None:
     main = tmp_path / "data.tar"
     companion = tmp_path / "data.tar.md5"

@@ -25,6 +25,8 @@ The following behaviors are known, intentional trade-offs rather than bugs.
 
 ## Non-atomic behavior
 
+Main files, companions and associated symlinks are deleted in separate steps, not as one atomic operation. If an error occurs partway through, previously deleted files and links are not restored. Use `--dry-run` first to review the planned deletions.
+
 retentions does not operate atomically. Since the underlying filesystem is not atomic, directory contents may change while retentions is scanning or evaluating files.
 This can lead to inconsistent or incorrect results if the target path is modified concurrently.
 If you require a strictly consistent state, ensure that the directory is not modified during execution.
