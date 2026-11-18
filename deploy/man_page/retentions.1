@@ -25,9 +25,9 @@ Everything outside your defined retention scope is deleted / not kept (unless \-
 
 .SH FOLDER MODE SEMANTICS
 
-When `--folder-mode` is enabled (see below), all references to 'files' in this whole documentation refer to 'folders' instead.
+When \fB\-\-folder-mode\fR is enabled (see below), all references to 'files' in this whole documentation refer to 'folders' instead.
 
-In folder mode, retentions operates **exclusively on top-level folders**.
+In folder mode, retentions operates \fBexclusively on top-level folders\fR.
 Individual files are not considered as retention objects.
 
 .SH WARNING
@@ -121,7 +121,7 @@ File age source: ctime, mtime (default), atime, birthtime, or 'filename=<format>
 See FILENAME TIMESTAMPS for details.
 .TP
 --folder-mode [time-src]
-Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. path= must be relative to and stay inside each folder. youngest-file and oldest-file search recursively within the folder.
+Use folders instead of files in \fIpath\fR. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. path= must be relative to and stay inside each folder. youngest-file and oldest-file search recursively within the folder.
 
 .TP
 --protect <pattern>
