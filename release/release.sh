@@ -147,12 +147,12 @@ echo "    -> ${BUILD_DIR}/${APP}_${VERSION}_all.deb"
 # -----------------------------------------------------------------------------
 echo "==> Creating RPM via alien..."
 (
-    TMPDIR="$(mktemp -d)"
-    cp "${BUILD_DIR}/${APP}_${VERSION}_all.deb" "$TMPDIR/"
-    cd "$TMPDIR"
-    alien --to-rpm --scripts --version="${VERSION}-1" "${APP}_${VERSION}_all.deb" >/dev/null
+    RPM_TMP_DIR="$(mktemp -d)"
+    trap 'sudo rm -rf -- "$RPM_TMP_DIR"' EXIT
+    cp "${BUILD_DIR}/${APP}_${VERSION}_all.deb" "$RPM_TMP_DIR/"
+    cd "$RPM_TMP_DIR"
+    sudo alien --to-rpm --scripts --version="${VERSION}-1" "${APP}_${VERSION}_all.deb" >/dev/null
     mv ./*.rpm "${OLDPWD}/build/"
-    rm -rf "$TMPDIR"
 )
 
 # -----------------------------------------------------------------------------
