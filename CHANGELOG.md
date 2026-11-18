@@ -34,6 +34,7 @@
 - Refuse release builds before modifying files when the source backup name is already occupied
 - Process companion deletions in sorted path order and document non-atomic deletion of main files, companions and symlinks
 - Log protection decisions without evaluating retention timestamps for excluded files or folders
+- Document escaping equals signs in folder time-source paths, with an example in README and manpage
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`

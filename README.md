@@ -219,6 +219,8 @@ python3 retentions.py <path> <file_pattern> [options]
 | `--protect <pattern>` | Protect files from deletion (using regex or glob, like file_pattern) |
 | `--folder-mode [time-src]` | Use folders instead of files in `path`. Optional time source: youngest-file (default), oldest-file, folder, or path=<path>. path= must be relative to and stay inside each folder. youngest-file and oldest-file search recursively within the folder. |
 
+📝 `--folder-mode path=...`: Escape any `=` in the file path as `\=`.
+
 ⚠️ `age-type`: 
 - `ctime` is platform-dependent: e.g. Windows => create-time, Linux => change time of meta data
 - `atime` may not reliable, check your platform, your filesystem and your mount options
@@ -350,6 +352,14 @@ python3 retentions.py /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\0' | xar
 ```bash
 # Detailed logging
 python3 retentions.py /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
+```
+
+#### Folder time source with an equals sign
+
+If the time file is named `stamp=done.txt`, escape the `=` in its name:
+
+```bash
+retentions /data/backups '*' --folder-mode 'path=stamp\=done.txt' --last 7 --dry-run
 ```
 
 #### Filename timestamps

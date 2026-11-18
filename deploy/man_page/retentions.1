@@ -128,6 +128,9 @@ Use folders instead of files in `path`. Optional time source: youngest-file (def
 Protect files from deletion (using regex or glob, like file_pattern)
 
 .PP
+Note: With --folder-mode path=..., escape any '=' in the file path as '\e='.
+
+.PP
 Hint to age-type:
 .IP \(bu 2
 ctime is platform-dependent: e.g. Windows: create-time, Linux: change time of meta data
@@ -278,6 +281,12 @@ $ retentions /data/backups '*.tar.gz' -d 5 -w 12 --list-only '\\0' | xargs -0 rm
 .nf
 # Detailed logging
 $ retentions /data/backups '*.tar.gz' -d 3 -w 1 --verbose debug
+.fi
+
+.SS Folder time source with an equals sign
+If the time file is named stamp=done.txt, escape the '=' in its name:
+.nf
+retentions /data/backups '*' --folder-mode 'path=stamp\e=done.txt' --last 7 --dry-run
 .fi
 
 .SS Filename timestamps
