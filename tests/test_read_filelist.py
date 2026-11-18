@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from retentions import (
+    LOCK_FILE_NAME,
     ConfigNamespace,
     FileStats,
     Logger,
@@ -69,6 +70,39 @@ def test_read_filelist_glob_and_protect(tmp_path) -> None:
     result = read_filelist(args, logger, cache)
     # The lock file should be ignored and b.log protected, so only a.log should remain
     assert [p.name for p in result] == ["a.log"]
+
+
+@pytest.mark.parametrize("folder_mode", [False, True])
+@pytest.mark.parametrize("lock_kind", ["file", "directory", "symlink"])
+def test_reserved_lock_name_is_excluded_before_logging(tmp_path, capsys, symlinks_supported, folder_mode, lock_kind):
+    if lock_kind == "symlink" and not symlinks_supported:
+        pytest.skip("Symlinks not supported on this platform")
+    base = tmp_path / "base"
+    base.mkdir()
+    normal = base / "backup"
+    if folder_mode:
+        normal.mkdir()
+        (normal / "data.txt").write_text("backup")
+    else:
+        normal.write_text("backup")
+    lock = base / LOCK_FILE_NAME
+    if lock_kind == "directory":
+        lock.mkdir()
+    elif lock_kind == "symlink":
+        lock.symlink_to(normal, target_is_directory=folder_mode)
+    else:
+        lock.write_text("existing lock")
+    args = _make_args(path=str(base), file_pattern="*", protect="*", folder_mode=folder_mode, verbose=LogLevel.INFO, entity_name="folder" if folder_mode else "file")
+    cache = FileStats("mtime", folder_mode, "folder")
+
+    assert read_filelist(args, Logger(args, cache), cache) == []
+
+    assert args.protected_files == {normal}
+    output = capsys.readouterr()
+    assert LOCK_FILE_NAME not in output.out
+    assert "[WARN]" not in output.out
+    assert output.err == ""
+    assert lock.exists()
 
 
 def test_read_filelist_regex_and_protect(tmp_path) -> None:

@@ -302,6 +302,44 @@ def test_create_no_lockfile(tmp_path, monkeypatch, capsys):
     assert not lock.exists()
 
 
+@pytest.mark.parametrize("regex_mode", [None, "casesensitive", "ignorecase"])
+@pytest.mark.parametrize("protect_all", [False, True])
+@pytest.mark.parametrize("no_lock_file", [False, True])
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_lock_file_is_excluded_from_protection_logging_and_statistics(tmp_path, monkeypatch, capsys, regex_mode, protect_all, no_lock_file, dry_run):
+    files = [tmp_path / "backup-2026-11-15.tar", tmp_path / ".backup-2026-11-15.tar"]
+    for file in files:
+        file.write_text(file.name)
+    lock = tmp_path / LOCK_FILE_NAME
+    if no_lock_file:
+        lock.write_text("existing lock")
+    protect = (".*" if protect_all else r"\..*") if regex_mode else ("*" if protect_all else ".*")
+    argv = ["retentions.py", str(tmp_path), ".*" if regex_mode else "*", "--protect", protect, "--age-type", "filename=%Y-%m-%d", "--verbose", "DEBUG"]
+    if regex_mode:
+        argv.extend(["--regex-mode", regex_mode])
+    if no_lock_file:
+        argv.append("--no-lock-file")
+    if dry_run:
+        argv.append("--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    main()
+
+    output = capsys.readouterr()
+    expected_protected = 2 if protect_all else 1
+    assert f"Total files protected: {expected_protected:03d}" in output.out
+    assert f"Total files found:     {2 - expected_protected:03d}" in output.out
+    assert output.out.count("Protected by") == expected_protected
+    assert LOCK_FILE_NAME not in output.out
+    assert "[WARN]" not in output.out
+    assert output.err == ""
+    for file in files:
+        assert file.read_text() == file.name
+    assert lock.exists() == no_lock_file
+    if no_lock_file:
+        assert lock.read_text() == "existing lock"
+
+
 def test_fail_on_existing_lock_file(tmp_path, monkeypatch, capsys):
     """Test failing, if lock file exists."""
     monkeypatch.setattr(sys, "argv", ["retentions.py", str(tmp_path), "*.txt"])

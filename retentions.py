@@ -684,6 +684,9 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
     iterator = base.iterdir() if args.regex_mode else base.glob(args.file_pattern)
     matches: list[Path] = []
     for path in iterator:
+        # Ignore lock file even when locking is disabled
+        if path.name == LOCK_FILE_NAME:
+            continue
         if not (((args.folder_mode and path.is_dir()) or (not args.folder_mode and path.is_file())) and (not args.regex_mode or args.regex_compiled.match(path.name))):
             continue
         if path.is_symlink():
@@ -711,9 +714,6 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
                 protected.add(file)
         args.protected_files |= protected
         matches = [file for file in matches if file not in protected]
-
-    # Ignore lock file (in any case, even if it is is disabled by user)
-    matches = [m for m in matches if m.name != LOCK_FILE_NAME]
 
     if args.delete_symlinks:
         args.symlink_paths = read_symlinks(args, matches, logger)
