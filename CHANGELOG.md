@@ -1,4 +1,4 @@
-### [Unreleased]
+### 1.3.14 - 18.11.2026
 - Add Python 3.16 pre-releases to the test and lint CI matrices
 - Preserve companion files when deletion of the main file fails
 - Document companion protection checks after main-file deletion and the absence of rollback on integrity aborts
@@ -41,6 +41,8 @@
 - Omit the logo from packaged README copies while retaining it in the repository README
 - Replace remaining Markdown markers with roff formatting in the manpage
 
+### 1.3.13 was withdrawn. Due to GitHub release immutability, it was published as 1.3.14.
+
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`
 - Fix deletion totals to count successful deletions including companions and symlinks, and label simulated totals with `Dry-run:`
@@ -51,7 +53,7 @@
 ### 1.3.11 - 13.11.2026
 - Add `--delete-symlinks directory|system` to remove links after successful file and companion deletion, with dry-run support, depth-zero or recursive search, directory-symlink traversal with loop detection, shared symlink-companion handling, shell completions and documented search limitations
 
-### Version 1.3.10 was withdrawn. Due to GitHub release immutability, it was published as 1.3.11.
+### 1.3.10 was withdrawn. Due to GitHub release immutability, it was published as 1.3.11.
 
 ### 1.3.9 - 11.11.2026
 - Support negative timestamps, round timestamps to whole seconds, and use `None` for unavailable timestamps excluded from sorting and decision output
