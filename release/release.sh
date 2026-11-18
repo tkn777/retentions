@@ -74,6 +74,7 @@ cp retentions.py "${PKG_DIR}/${APP}.py"
 # -----------------------------------------------------------------------------
 echo "==> Copying documentation..."
 cp README.md LICENSE SECURITY.md CONTRIBUTING.md DESIGN_DECISIONS.md RELEASE_POLICY.md TRADEOFFS.md "$PKG_DIR/docs/"
+sed -i '\|<img src="resources/retentions-logo[.]png"|d' "$PKG_DIR/docs/README.md"
 
 echo "==> Copying man page..."
 cp deploy/man_page/retentions.1 "$PKG_DIR/docs/${APP}.1"
@@ -120,7 +121,7 @@ echo "==> Creating Debian package..."
 } > "$DEB_DIR/usr/bin/${APP}"
 chmod 755 "$DEB_DIR/usr/bin/${APP}"
 
-cp README.md LICENSE SECURITY.md CONTRIBUTING.md DESIGN_DECISIONS.md RELEASE_POLICY.md TRADEOFFS.md "$DEB_DIR/usr/share/doc/${APP}/"
+cp "$PKG_DIR/docs/README.md" LICENSE SECURITY.md CONTRIBUTING.md DESIGN_DECISIONS.md RELEASE_POLICY.md TRADEOFFS.md "$DEB_DIR/usr/share/doc/${APP}/"
 
 gzip -9 < deploy/man_page/retentions.1 > "$DEB_DIR/usr/share/man/man1/${APP}.1.gz"
 
@@ -174,7 +175,7 @@ mkdir -p "$INSTALLER_PAYLOAD_DIR/docs" "$INSTALLER_PAYLOAD_DIR/man"
 chmod 755 "$INSTALLER_PAYLOAD_DIR/retentions.py"
 
 # Docs
-cp README.md LICENSE SECURITY.md CONTRIBUTING.md DESIGN_DECISIONS.md RELEASE_POLICY.md TRADEOFFS.md "$INSTALLER_PAYLOAD_DIR/docs/"
+cp "$PKG_DIR/docs/README.md" LICENSE SECURITY.md CONTRIBUTING.md DESIGN_DECISIONS.md RELEASE_POLICY.md TRADEOFFS.md "$INSTALLER_PAYLOAD_DIR/docs/"
 
 # Man page
 cp deploy/man_page/retentions.1 "$INSTALLER_PAYLOAD_DIR/man/retentions.1"
