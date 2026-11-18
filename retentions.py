@@ -707,7 +707,7 @@ def read_filelist(args: ConfigNamespace, logger: Logger, file_stats: FileStats) 
         protected: set[Path] = set()
         for file in matches:
             if args.protect_compiled.match(file.name) if args.regex_mode else fnmatch(file.name, args.protect):
-                logger.add_decision(LogLevel.INFO, file, f"Protected by {'regex' if args.regex_mode else 'glob'}: '{args.protect}'")
+                logger.verbose(LogLevel.INFO, f"{file.name}: Protected by {'regex' if args.regex_mode else 'glob'}: '{args.protect}'")
                 protected.add(file)
         args.protected_files |= protected
         matches = [file for file in matches if file not in protected]

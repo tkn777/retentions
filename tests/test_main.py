@@ -23,6 +23,54 @@ class DummyRetentionLogic:
         return Result()
 
 
+@pytest.mark.parametrize("verbose", ["ERROR", "INFO", "DEBUG"])
+@pytest.mark.parametrize("protect", [False, True])
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_folder_protection_does_not_require_a_time_source(tmp_path, monkeypatch, capsys, verbose, protect, dry_run):
+    folder_a = tmp_path / "folderA"
+    folder_b = tmp_path / "folderB"
+    excluded = tmp_path / "protected"
+    for folder, age in [(folder_a, 100), (folder_b, 200)]:
+        folder.mkdir()
+        time_file = folder / "time.txt"
+        time_file.write_text(folder.name)
+        os.utime(time_file, (retentions.SCRIPT_START - age, retentions.SCRIPT_START - age))
+    excluded.mkdir()
+    (excluded / "data.txt").write_text("protected data")
+    argv = ["retentions.py", str(tmp_path), "*", "--folder-mode", "path=time.txt", "--last", "1", "--verbose", verbose]
+    if protect:
+        argv.extend(["--protect", "protected"])
+    if dry_run:
+        argv.append("--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    if protect:
+        main()
+    else:
+        with pytest.raises(SystemExit) as exc:
+            main()
+        assert exc.value.code == 2
+
+    assert (excluded / "data.txt").read_text() == "protected data"
+    assert (folder_a / "time.txt").read_text() == "folderA"
+    output = capsys.readouterr()
+    if protect:
+        assert folder_b.exists() == dry_run
+        assert output.err == ""
+        protection_message = "[INFO] protected: Protected by glob: 'protected'"
+        assert output.out.splitlines().count(protection_message) == int(verbose != "ERROR")
+        if verbose == "ERROR":
+            assert output.out == ""
+        else:
+            assert output.out.index(protection_message) < output.out.index("Found 2 folders")
+            assert "folderA : Keeping last 01/01" in output.out
+            assert "folderB : Pruning: not matched by any retention rule" in output.out
+            assert "Total folders protected: 001" in output.out
+    else:
+        assert (folder_b / "time.txt").read_text() == "folderB"
+        assert "The path value for the folder time source must be a file:" in output.err
+
+
 @pytest.mark.parametrize("pattern", [None, "/Backups/*.tar.gz"] + ([r"\Backups\*.tar.gz", "C:*.tar.gz", r"\\server\share\*.tar.gz"] if sys.platform == "win32" else []))
 @pytest.mark.parametrize("list_only", [False, True])
 def test_anchored_glob_is_an_argument_error(tmp_path, monkeypatch, capsys, pattern, list_only):

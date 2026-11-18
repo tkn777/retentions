@@ -466,19 +466,26 @@ def test_filename_folder_cli_matrix(tmp_path, monkeypatch, capsys, mode, source_
 
 @pytest.mark.parametrize("verbose", list(LogLevel))
 @pytest.mark.parametrize("dry_run", [False, True])
-def test_ignored_protected_files_have_no_decisions(tmp_path, monkeypatch, capsys, verbose, dry_run):
+@pytest.mark.parametrize("folder_mode", [False, True])
+def test_protected_entries_do_not_require_filename_timestamps(tmp_path, monkeypatch, capsys, verbose, dry_run, folder_mode):
     invalid = tmp_path / "README.txt"
-    invalid.write_text("protected")
+    if folder_mode:
+        invalid.mkdir()
+    content = invalid / "data.txt" if folder_mode else invalid
+    content.write_text("protected")
     argv = ["retentions.py", str(tmp_path), "*", "--age-type", "filename=%Y-%m-%d", "--protect", "README.txt", "--verbose", verbose.name]
+    if folder_mode:
+        argv.extend(["--folder-mode", "folder"])
     if dry_run:
         argv.append("--dry-run")
     monkeypatch.setattr(sys, "argv", argv)
     main()
-    output = capsys.readouterr().out
-    assert invalid.exists()
-    assert "Protected by" not in output
-    assert "README.txt:" not in output
-    assert output.count("[WARN]") == int(verbose >= LogLevel.WARN)
+    output = capsys.readouterr()
+    assert content.read_text() == "protected"
+    protection_message = "[INFO] README.txt: Protected by glob: 'README.txt'"
+    assert output.out.splitlines().count(protection_message) == int(verbose >= LogLevel.INFO)
+    assert "[WARN]" not in output.out
+    assert output.err == ""
 
 
 @pytest.mark.parametrize("dry_run", [False, True])
