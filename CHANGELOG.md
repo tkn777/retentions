@@ -36,6 +36,7 @@
 - Log protection decisions without evaluating retention timestamps for excluded files or folders
 - Document escaping equals signs in folder time-source paths, with an example in README and manpage
 - Exclude the reserved lock filename before protection logging and statistics, including when locking is disabled
+- Document that "found" statistics count unprotected entries remaining after exclusions
 
 ### 1.3.12 - 15.11.2026
 - Fix `--list-only ''` deleting files instead of listing them, including option validation and clean output with `--dry-run`

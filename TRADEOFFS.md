@@ -17,6 +17,8 @@ The following behaviors are known, intentional trade-offs rather than bugs.
 
 - **Shared companions in dry-run:** If multiple main files share a companion file, `--dry-run` can report and count that companion more than once because simulated deletions leave it on disk. In a real run, a successfully deleted companion is no longer present for later checks and is counted only once.
 
+- **Meaning of "found":** `Found N files` and `Total files found` count the unprotected files remaining after exclusions. Protected files are counted separately, so the "found" count can be lower than the number of files matching the pattern. The same applies to folders in folder mode.
+
 - **Explicit option names:** Long options must be spelled out; only explicitly defined aliases are accepted. For example, `--days` and `-d` are valid, while `--day` is rejected with exit code 2. This avoids implicit spellings that bypass duplicate-option checks. Scripts using abbreviated long options must switch to full names or supported aliases.
 
 - **Separate short options:** Combined short options such as `-Xm2`, `-Xd1` and `-XL` are rejected with exit code 2. Pass options separately, for example `-X -m 2` or `-X -m2`. Single options with attached values, such as `-m2` and `-d1`, remain valid. This keeps option handling explicit and prevents combinations from bypassing duplicate-option checks.
