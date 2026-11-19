@@ -19,6 +19,8 @@ retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 week
 
 It is a safe alternative to ad-hoc cleanup scripts for backups, archives, and artifacts.
 
+---
+
 <details>
 <summary><b>Table of contents</b></summary>
 
