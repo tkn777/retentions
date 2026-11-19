@@ -20,7 +20,7 @@ retentions /data/backups '*.tar.gz' -d 7 -w 4 -m 6   # Keeps last 7 days, 4 week
 It is a safe alternative to ad-hoc cleanup scripts for backups, archives, and artifacts.
 
 <details>
-<summary>Table of contents</summary>
+<summary><b>Table of contents</b></summary>
 
 - [Why retentions exists](#-why-retentions-exists)
 - [Overview](#-overview)
@@ -48,6 +48,7 @@ It is a safe alternative to ad-hoc cleanup scripts for backups, archives, and ar
 - [Dedication](#%E2%80%8D-dedication)
 
 </details>
+
 
 ---
 
